@@ -92,6 +92,51 @@
       font-weight: 900;
       color: #eef3ff;
     }
+    .setup-header{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .setup-header .section-title{ margin:0; }
+    .btn.back{
+      height: 40px;
+      width: auto;
+      flex-shrink: 0;
+      padding: 0 14px;
+      font-size: 13px;
+      background: linear-gradient(90deg, #4a5b86, #6b7da8);
+    }
+    .strategy-list{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin: 4px 0 12px;
+    }
+    .strategy-card{
+      text-align:left;
+      border: 2px solid rgba(255,255,255,.1);
+      background: rgba(20,33,61,.9);
+      border-radius: 18px;
+      padding: 14px 16px;
+      cursor: pointer;
+      color: var(--white);
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .strategy-card:hover{
+      border-color: var(--accent3);
+      background: rgba(111,137,255,.14);
+    }
+    .strategy-name{
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+    .strategy-desc{
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
     .grid{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -459,25 +504,57 @@
     </div>
 
     <h1>바카라 마틴 메이커</h1>
-    <p class="desc">1페이지에서 금액을 세팅하고 시작하면 2페이지로 넘어가 게임이 진행됩니다. 초기화하면 다시 설정 페이지로 돌아갑니다.</p>
+    <p class="desc">배팅방법을 먼저 선택하고, 금액을 세팅한 뒤 시작하면 게임이 진행됩니다. 초기화하면 같은 배팅방법의 세팅 화면으로 돌아갑니다.</p>
 
-    <div id="setupPage" class="page">
+    <div id="strategyPage" class="page">
       <section class="card">
-        <h2 class="section-title">1p 금액 세팅</h2>
+        <h2 class="section-title">배팅방법 선택</h2>
+        <p class="hint">카지노의 수학적 우위(하우스 엣지)로 인해 장기적으로 100% 이기는 전략은 없습니다. 아래 방식들은 자금을 얼마나 안전하게 운용하며 즐기는지의 차이일 뿐입니다.</p>
+        <div class="strategy-list">
+          <button type="button" class="strategy-card" data-strategy="superMartin">
+            <div class="strategy-name">슈퍼마틴</div>
+            <div class="strategy-desc">패배 시 배팅금액 급상승(1,3,7,15...), 승리 시 그 판의 배팅금액 전액이 이득. 파산 위험 매우 높음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="classicMartin">
+            <div class="strategy-name">일반마틴 (Martingale)</div>
+            <div class="strategy-desc">패배 시 배팅금액 2배 증가(1,2,4,8...), 승리 시 그동안의 손실을 회복하고 1유닛 이익. 파산 위험 매우 높음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="paroli">
+            <div class="strategy-name">파롤리 (Paroli)</div>
+            <div class="strategy-desc">역마틴게일. 패배 시 항상 1유닛, 승리 시에만 2배로 증가해 3연승까지 노림. 3연승 성공 또는 패배 시 1유닛으로 복귀. 파산 위험 매우 낮음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="system1326">
+            <div class="strategy-name">1-3-2-6 시스템</div>
+            <div class="strategy-desc">승리할 때마다 1→3→2→6 배수로 배팅, 4단계 완주 또는 패배 시 1단계로 복귀. 2연승만 성공하면 이후 손해 방어. 파산 위험 낮음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="dalembert">
+            <div class="strategy-name">달랑베르 (D'Alembert)</div>
+            <div class="strategy-desc">패배 시 1유닛 증가, 승리 시 1유닛 감소로 완만하게 조절. 급격한 파산 없이 시드를 오래 유지하는 데 적합.</div>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div id="setupPage" class="page hidden">
+      <section class="card">
+        <div class="setup-header">
+          <button id="backToStrategyBtn" class="btn back" type="button">← 배팅방법</button>
+          <h2 class="section-title" id="setupTitle">1p 금액 세팅</h2>
+        </div>
         <div class="grid">
-          <label class="field">
+          <label class="field" id="martinLimitField">
             <span class="label">마틴횟수</span>
             <input id="martinLimitInput" class="input" type="number" inputmode="numeric" min="1" placeholder="예: 4" autocomplete="off" />
           </label>
           <label class="field">
-            <span class="label">1마틴 금액</span>
+            <span class="label" id="baseBetLabel">1마틴 금액</span>
             <input id="baseBetInput" class="input" type="number" inputmode="numeric" min="0" placeholder="" autocomplete="off" />
           </label>
           <label class="field">
             <span class="label">시작금액</span>
             <input id="startAmountInput" class="input" type="number" inputmode="numeric" min="0" placeholder="자동 계산 가능" autocomplete="off" />
           </label>
-          <label class="field">
+          <label class="field" id="targetAmountField">
             <span class="label">목표금액</span>
             <input id="targetAmountInput" class="input" type="number" inputmode="numeric" min="0" placeholder="자동 계산 가능" autocomplete="off" />
           </label>
@@ -485,13 +562,13 @@
         <div class="btn-row">
           <button id="startBtn" class="btn primary">게임 시작</button>
         </div>
-        <div class="summary" id="summaryText">시작 전입니다. (시작금액+마틴횟수 → 1마틴 자동 / 1마틴+마틴횟수 → 시작금액 자동 / 목표금액 기본값 = 시작금액 + 1마틴금액×10)</div>
+        <div class="summary" id="summaryText">시작 전입니다.</div>
       </section>
     </div>
 
     <div id="gamePage" class="page hidden">
       <section class="card">
-        <h2 class="section-title">2p 게임</h2>
+        <h2 class="section-title">2p 게임 · <span id="gameStrategyLabel"></span></h2>
         <div class="game-stack">
           <div class="game-stat">
             <div class="game-stat-row">
@@ -567,7 +644,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-04", version: 4 };
+    const LAST_EDIT = { date: "2026-09-08", version: 2 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -582,12 +659,81 @@
 
     const $ = (id) => document.getElementById(id);
 
-    const startAmountInput = $("startAmountInput");
-    const baseBetInput = $("baseBetInput");
-    const martinLimitInput = $("martinLimitInput");
-    const targetAmountInput = $("targetAmountInput");
+    // 배팅 시스템 정의: 각 방식은 배팅금액 계산과 승/패 시 다음 단계 계산 방식만 다르다.
+    const STRATEGIES = {
+      superMartin: {
+        label: "슈퍼마틴",
+        baseLabel: "1마틴 금액",
+        needsMartinLimit: true,
+        autoLink: true,
+        getBet(base, stage) { return base * ((2 ** stage) - 1); },
+        getRequiredStart(base, limit) {
+          // 합계: (2^2-1) ... (2^m-1) = (2^(m+1) - 2) - m = 2^(m+1) - m - 2
+          return base * ((2 ** (limit + 1)) - limit - 2);
+        },
+        getBaseFromStart(start, limit) {
+          const divisor = (2 ** (limit + 1)) - limit - 2;
+          return divisor > 0 ? start / divisor : null;
+        },
+        onWin() { return 1; },
+        onLoss(stage, limit) { return stage >= limit ? null : stage + 1; }
+      },
+      classicMartin: {
+        label: "일반마틴",
+        baseLabel: "1마틴 금액",
+        needsMartinLimit: true,
+        autoLink: true,
+        getBet(base, stage) { return base * (2 ** (stage - 1)); },
+        getRequiredStart(base, limit) { return base * ((2 ** limit) - 1); },
+        getBaseFromStart(start, limit) {
+          const divisor = (2 ** limit) - 1;
+          return divisor > 0 ? start / divisor : null;
+        },
+        onWin() { return 1; },
+        onLoss(stage, limit) { return stage >= limit ? null : stage + 1; }
+      },
+      paroli: {
+        label: "파롤리",
+        baseLabel: "1유닛 금액",
+        needsMartinLimit: false,
+        autoLink: false,
+        getBet(base, stage) { return base * (2 ** (stage - 1)); },
+        onWin(stage) { return stage >= 3 ? 1 : stage + 1; },
+        onLoss() { return 1; }
+      },
+      system1326: {
+        label: "1-3-2-6",
+        baseLabel: "1유닛 금액",
+        needsMartinLimit: false,
+        autoLink: false,
+        sequence: [1, 3, 2, 6],
+        getBet(base, stage) { return base * STRATEGIES.system1326.sequence[stage - 1]; },
+        onWin(stage) { return stage >= 4 ? 1 : stage + 1; },
+        onLoss() { return 1; }
+      },
+      dalembert: {
+        label: "달랑베르",
+        baseLabel: "1유닛 금액",
+        needsMartinLimit: false,
+        autoLink: false,
+        getBet(base, stage) { return base * stage; },
+        onWin(stage) { return Math.max(1, stage - 1); },
+        onLoss(stage) { return stage + 1; }
+      }
+    };
+
+    const strategyPage = $("strategyPage");
     const setupPage = $("setupPage");
     const gamePage = $("gamePage");
+    const backToStrategyBtn = $("backToStrategyBtn");
+    const setupTitle = $("setupTitle");
+    const martinLimitField = $("martinLimitField");
+    const martinLimitInput = $("martinLimitInput");
+    const baseBetLabel = $("baseBetLabel");
+    const baseBetInput = $("baseBetInput");
+    const startAmountInput = $("startAmountInput");
+    const targetAmountField = $("targetAmountField");
+    const targetAmountInput = $("targetAmountInput");
     const startBtn = $("startBtn");
     const resetBtn = $("resetBtn");
     const winBtn = $("winBtn");
@@ -597,6 +743,7 @@
     const gameOverBtn = $("gameOverBtn");
     const summaryText = $("summaryText");
     const gameSummaryText = $("gameSummaryText");
+    const gameStrategyLabel = $("gameStrategyLabel");
     const roundInfo = $("roundInfo");
     const betInfo = $("betInfo");
     const moneyInfo = $("moneyInfo");
@@ -612,6 +759,7 @@
     const endTotalAmount = $("endTotalAmount");
 
     const state = {
+      strategyId: null,
       started: false,
       finished: false,
       awaitingDecision: false,
@@ -622,7 +770,7 @@
       totalProfit: 0,
       baseBet: 0,
       martinLimit: 0,
-      currentMartinRound: 1,
+      stage: 1,
       currentBet: 0,
       currentSide: null,
       history: []
@@ -634,24 +782,12 @@
       targetEdited: false
     };
 
+    function getStrategy() {
+      return state.strategyId ? STRATEGIES[state.strategyId] : null;
+    }
+
     function formatMoney(value) {
       return new Intl.NumberFormat("ko-KR").format(value);
-    }
-
-    function getMartinBet(baseBet, martinRound) {
-      return baseBet * ((2 ** martinRound) - 1);
-    }
-
-    function getRequiredStartAmount(baseBet, martinLimit) {
-      // 합계: (2^2-1) ... (2^m-1) = (2^(m+1) - 2) - m = 2^(m+1) - m - 2
-      const multiplier = (2 ** (martinLimit + 1)) - martinLimit - 2;
-      return baseBet * multiplier;
-    }
-
-    function getBaseBetFromStartAmount(startAmount, martinLimit) {
-      const divisor = (2 ** (martinLimit + 1)) - martinLimit - 2;
-      if (divisor <= 0) return null;
-      return startAmount / divisor;
     }
 
     function getRandomSide() {
@@ -687,6 +823,9 @@
       if (auto.isUpdating) return;
       auto.isUpdating = true;
       try {
+        const strategy = getStrategy();
+        if (!strategy || !strategy.autoLink) return;
+
         const m = getNum(martinLimitInput);
         const s = getNum(startAmountInput);
         const b = getNum(baseBetInput);
@@ -697,27 +836,23 @@
         // 2) 1마틴 + 마틴횟수 -> 시작금액 자동
         // 둘 다 입력된 경우: 마지막 수정한 쪽을 기준으로 반대쪽을 맞춤
         if ((s !== null && s > 0) && (b === null || b === 0)) {
-          const bb = getBaseBetFromStartAmount(s, m);
-          if (bb !== null) {
-            const bbRounded = Math.round(bb);
-            setValueSafely(baseBetInput, bbRounded);
-          }
+          const bb = strategy.getBaseFromStart(s, m);
+          if (bb !== null) setValueSafely(baseBetInput, Math.round(bb));
           return;
         }
 
         if ((b !== null && b > 0) && (s === null || s === 0)) {
-          const required = getRequiredStartAmount(b, m);
+          const required = strategy.getRequiredStart(b, m);
           setValueSafely(startAmountInput, required);
           return;
         }
 
         if ((s !== null && s > 0) && (b !== null && b > 0)) {
-          // 둘 다 값이 있으면, 마지막 수정 값을 기준으로 다른 쪽을 재계산
           if (auto.lastEdited === "start" && trigger !== "base") {
-            const bb = getBaseBetFromStartAmount(s, m);
+            const bb = strategy.getBaseFromStart(s, m);
             if (bb !== null) setValueSafely(baseBetInput, Math.round(bb));
           } else if (auto.lastEdited === "base" && trigger !== "start") {
-            const required = getRequiredStartAmount(b, m);
+            const required = strategy.getRequiredStart(b, m);
             setValueSafely(startAmountInput, required);
           }
         }
@@ -735,6 +870,7 @@
     }
 
     function showPage(page) {
+      strategyPage.classList.toggle("hidden", page !== "strategy");
       setupPage.classList.toggle("hidden", page !== "setup");
       gamePage.classList.toggle("hidden", page !== "game");
     }
@@ -770,7 +906,7 @@
       history.innerHTML = state.history.map(item => `
         <div class="history-item">
           <div class="history-top">
-            <div class="history-round">${item.round}판 · ${item.martinRound}마틴</div>
+            <div class="history-round">${item.round}판 · ${item.stage}단계</div>
             <div class="history-status ${item.result === "승리" ? "win" : item.result === "TIE" ? "tie" : item.result === "SUPER6" ? "super6" : "loss"}">${item.result}</div>
           </div>
           <div class="history-grid">
@@ -783,11 +919,11 @@
       `).join("");
     }
 
-    function showResult(side, round, martinRound, bet) {
+    function showResult(side, round, stage, bet) {
       resultSide.classList.add("show");
       sideBadge.textContent = side;
       sideBadge.className = `side-badge ${side === "플레이어" ? "player" : "banker"}`;
-      sideMeta.textContent = `${round}판 · ${martinRound}마틴 · 배팅금액 ${formatMoney(bet)}`;
+      sideMeta.textContent = `${round}판 · ${stage}단계 · 배팅금액 ${formatMoney(bet)}`;
     }
 
     function setIdleMessage(message) {
@@ -828,8 +964,9 @@
       resultSide.classList.remove("show");
       shuffleBox.classList.add("active");
 
+      const strategy = getStrategy();
       const nextRound = state.roundNumber + 1;
-      const nextBet = getMartinBet(state.baseBet, state.currentMartinRound);
+      const nextBet = strategy.getBet(state.baseBet, state.stage);
 
       if (state.currentAmount < nextBet) {
         shuffleBox.classList.remove("active");
@@ -848,7 +985,7 @@
         state.currentBet = nextBet;
         state.currentSide = getRandomSide();
         state.awaitingDecision = true;
-        showResult(state.currentSide, state.roundNumber, state.currentMartinRound, state.currentBet);
+        showResult(state.currentSide, state.roundNumber, state.stage, state.currentBet);
         summaryText.textContent = `${state.roundNumber}판 결과가 나왔습니다. 승리 또는 패배를 선택하세요.`;
         gameSummaryText.textContent = `${state.roundNumber}판 결과가 나왔습니다. 승리 또는 패배를 선택하세요.`;
         updateStatus();
@@ -858,11 +995,12 @@
 
     function recordRound(result) {
       if (!state.awaitingDecision || state.finished) return;
+      const strategy = getStrategy();
 
       if (result === "TIE") {
         state.history.unshift({
           round: state.roundNumber,
-          martinRound: state.currentMartinRound,
+          stage: state.stage,
           side: state.currentSide,
           bet: state.currentBet,
           delta: 0,
@@ -892,7 +1030,7 @@
 
       state.history.unshift({
         round: state.roundNumber,
-        martinRound: state.currentMartinRound,
+        stage: state.stage,
         side: state.currentSide,
         bet: state.currentBet,
         delta,
@@ -902,23 +1040,45 @@
       renderHistory();
 
       if (result === "승리" || result === "SUPER6") {
-        const winMsg = result === "SUPER6"
-          ? `${state.roundNumber}판 SUPER6 처리 완료 (배팅금액의 50% 수익). 다음 판은 1마틴으로 다시 시작합니다.`
-          : `${state.roundNumber}판 승리 처리 완료. 다음 판은 1마틴으로 다시 시작합니다.`;
-        summaryText.textContent = winMsg;
-        gameSummaryText.textContent = winMsg;
-        state.currentMartinRound = 1;
-      } else if (state.currentMartinRound >= state.martinLimit) {
-        finishGame(`진행 종료. ${state.martinLimit}마틴까지 모두 패배했습니다.`, true);
-        return;
+        state.stage = strategy.onWin(state.stage);
+        const label = result === "SUPER6" ? "SUPER6 처리 완료 (배팅금액의 50% 수익)" : "승리 처리 완료";
+        const msg = `${state.roundNumber}판 ${label}. 다음 판은 ${state.stage}단계로 진행합니다.`;
+        summaryText.textContent = msg;
+        gameSummaryText.textContent = msg;
       } else {
-        state.currentMartinRound += 1;
-        summaryText.textContent = `${state.roundNumber}판 패배 처리 완료. 다음 판은 ${state.currentMartinRound}마틴으로 진행합니다.`;
-        gameSummaryText.textContent = `${state.roundNumber}판 패배 처리 완료. 다음 판은 ${state.currentMartinRound}마틴으로 진행합니다.`;
+        const nextStage = strategy.onLoss(state.stage, state.martinLimit);
+        if (nextStage === null) {
+          finishGame(`진행 종료. ${state.martinLimit}마틴까지 모두 패배했습니다.`, true);
+          return;
+        }
+        state.stage = nextStage;
+        const msg = `${state.roundNumber}판 패배 처리 완료. 다음 판은 ${state.stage}단계로 진행합니다.`;
+        summaryText.textContent = msg;
+        gameSummaryText.textContent = msg;
       }
 
       updateStatus();
       requestNextRound();
+    }
+
+    function clearSetupInputs() {
+      startAmountInput.value = "";
+      baseBetInput.value = "";
+      martinLimitInput.value = "";
+      targetAmountInput.value = "";
+      auto.targetEdited = false;
+      auto.lastEdited = null;
+    }
+
+    function applyStrategyToSetupUI(strategyId) {
+      const strategy = STRATEGIES[strategyId];
+      martinLimitField.classList.toggle("hidden", !strategy.needsMartinLimit);
+      targetAmountField.classList.toggle("full", !strategy.needsMartinLimit);
+      baseBetLabel.textContent = strategy.baseLabel;
+      setupTitle.textContent = `1p 금액 세팅 · ${strategy.label}`;
+      summaryText.textContent = strategy.autoLink
+        ? "시작 전입니다. (시작금액+마틴횟수 → 1마틴 자동 / 1마틴+마틴횟수 → 시작금액 자동 / 목표금액 기본값 = 시작금액 + 1마틴금액×10)"
+        : `시작 전입니다. (${strategy.label} 방식 / 목표금액 기본값 = 시작금액 + ${strategy.baseLabel}×10)`;
     }
 
     function resetGame() {
@@ -932,16 +1092,12 @@
       state.totalProfit = 0;
       state.baseBet = 0;
       state.martinLimit = 0;
-      state.currentMartinRound = 1;
+      state.stage = 1;
       state.currentBet = 0;
       state.currentSide = null;
       state.history = [];
 
-      startAmountInput.value = "";
-      baseBetInput.value = "";
-      martinLimitInput.value = "";
-      targetAmountInput.value = "";
-      auto.targetEdited = false;
+      clearSetupInputs();
 
       history.className = "history empty";
       history.innerHTML = "아직 진행 기록이 없습니다.";
@@ -950,36 +1106,52 @@
       setDecisionButtons(false);
       setGameOverButton(false);
       setIdleMessage("시작 버튼을 눌러 첫 판을 생성하세요.");
-      summaryText.textContent = "시작 전입니다. (시작금액+마틴횟수 → 1마틴 자동 / 1마틴+마틴횟수 → 시작금액 자동 / 목표금액 기본값 = 시작금액 + 1마틴금액×10)";
       gameSummaryText.textContent = "게임 대기 중입니다.";
-      showPage("setup");
+
+      if (state.strategyId) {
+        applyStrategyToSetupUI(state.strategyId);
+        showPage("setup");
+      } else {
+        showPage("strategy");
+      }
       updateStatus();
     }
 
     function startGame() {
+      const strategy = getStrategy();
+      if (!strategy) {
+        showPage("strategy");
+        return;
+      }
+
       // 자동계산 반영 후 시작
       recalcAutoFields("start");
 
       const startAmount = Number(String(startAmountInput.value || "").trim());
       const baseBet = Number(String(baseBetInput.value || "").trim());
-      const martinLimit = Number(String(martinLimitInput.value || "").trim());
       const targetAmountRaw = String(targetAmountInput.value || "").trim();
       const targetAmount = targetAmountRaw ? Number(targetAmountRaw) : null;
+      let martinLimit = 0;
 
       if (!Number.isFinite(startAmount) || startAmount <= 0) {
         alert("시작금액은 1 이상으로 입력하세요.");
         return;
       }
       if (!Number.isFinite(baseBet) || baseBet <= 0) {
-        alert("1마틴 금액은 1 이상으로 입력하세요.");
+        alert(`${strategy.baseLabel}은 1 이상으로 입력하세요.`);
         return;
       }
-      if (!Number.isInteger(martinLimit) || martinLimit <= 0) {
-        alert("마틴횟수는 1 이상의 정수로 입력하세요.");
-        return;
+      if (strategy.needsMartinLimit) {
+        martinLimit = Number(String(martinLimitInput.value || "").trim());
+        if (!Number.isInteger(martinLimit) || martinLimit <= 0) {
+          alert("마틴횟수는 1 이상의 정수로 입력하세요.");
+          return;
+        }
       }
-      if (startAmount < getMartinBet(baseBet, 1)) {
-        alert("시작금액이 1마틴 배팅금액보다 작습니다.");
+
+      const initialBet = strategy.getBet(baseBet, 1);
+      if (startAmount < initialBet) {
+        alert("시작금액이 첫 배팅금액보다 작습니다.");
         return;
       }
       if (targetAmount !== null && (!Number.isFinite(targetAmount) || targetAmount <= startAmount)) {
@@ -997,8 +1169,8 @@
       state.totalProfit = 0;
       state.baseBet = baseBet;
       state.martinLimit = martinLimit;
-      state.currentMartinRound = 1;
-      state.currentBet = getMartinBet(baseBet, 1);
+      state.stage = 1;
+      state.currentBet = initialBet;
       state.currentSide = null;
       state.history = [];
 
@@ -1008,10 +1180,25 @@
       startBtn.disabled = true;
       setDecisionButtons(false);
       setGameOverButton(false);
+      gameStrategyLabel.textContent = strategy.label;
       showPage("game");
       updateStatus();
       requestNextRound();
     }
+
+    document.querySelectorAll(".strategy-card").forEach(card => {
+      card.addEventListener("click", () => {
+        state.strategyId = card.dataset.strategy;
+        clearSetupInputs();
+        applyStrategyToSetupUI(state.strategyId);
+        showPage("setup");
+      });
+    });
+
+    backToStrategyBtn.addEventListener("click", () => {
+      state.strategyId = null;
+      showPage("strategy");
+    });
 
     startBtn.addEventListener("click", startGame);
     resetBtn.addEventListener("click", resetGame);
@@ -1046,7 +1233,7 @@
 
     setIdleMessage("시작 버튼을 눌러 첫 판을 생성하세요.");
     setGameOverButton(false);
-    showPage("setup");
+    showPage("strategy");
     updateStatus();
   </script>
 </body>

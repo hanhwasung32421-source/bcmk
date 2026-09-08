@@ -602,16 +602,16 @@
                 <th data-key="super6_count">SUPER6</th>
                 <th data-key="win_rate">승률</th>
                 <th data-key="loss_rate">패배율</th>
-                <th data-key="total_start_amount">총시작금액</th>
-                <th data-key="total_profit">총수익</th>
+                <th data-key="total_start_amount">환산총투입액(10만기준)</th>
+                <th data-key="total_profit">환산총수익(10만기준)</th>
                 <th data-key="profit_rate">수익률</th>
-                <th data-key="avg_profit">평균수익/게임</th>
+                <th data-key="avg_profit">환산평균수익/게임</th>
               </tr>
             </thead>
             <tbody id="statsTableBody"></tbody>
           </table>
         </div>
-        <p class="hint">저장된 모든 게임 종료 기록(진행 중 초기화 포함)을 배팅방법별로 합산한 값입니다. 열 제목을 클릭하면 정렬됩니다. 승률/패배율은 TIE를 제외한 승·SUPER6·패 판수 기준입니다.</p>
+        <p class="hint">저장된 모든 게임 종료 기록(진행 중 초기화 포함)을 배팅방법별로 합산한 값입니다. 열 제목을 클릭하면 정렬됩니다. 승률/패배율은 TIE를 제외한 승·SUPER6·패 판수 기준이며, 금액 관련 지표는 실제 시작금액과 무관하게 시작금액 10만원 기준으로 환산해 배팅방법 간 공정하게 비교할 수 있도록 계산됩니다.</p>
       </section>
     </div>
 
@@ -725,7 +725,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-08", version: 3 };
+    const LAST_EDIT = { date: "2026-09-08", version: 4 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1317,6 +1317,10 @@
     let statsRows = [];
     let statsSort = { key: "session_count", dir: "desc" };
 
+    // 실제 배팅한 시작금액과 무관하게, 모든 세션을 시작금액 10만원 기준으로 환산해 합산한다.
+    // (예: 시작금액 1만원으로 +5천원 벌었다면 10만원 기준으로는 +5만원으로 환산됨 — 배팅방법 간 공정 비교 목적)
+    const STATS_NORMALIZED_START = 100000;
+
     function aggregateStats(rows) {
       const byStrategy = {};
       rows.forEach(r => {
@@ -1336,14 +1340,17 @@
           };
         }
         const agg = byStrategy[key];
+        const actualStart = Number(r.start_amount) || 0;
+        const scale = actualStart > 0 ? STATS_NORMALIZED_START / actualStart : 0;
+
         agg.session_count += 1;
         agg.total_rounds += r.rounds || 0;
         agg.win_count += r.win_count || 0;
         agg.loss_count += r.loss_count || 0;
         agg.tie_count += r.tie_count || 0;
         agg.super6_count += r.super6_count || 0;
-        agg.total_start_amount += Number(r.start_amount) || 0;
-        agg.total_profit += Number(r.total_profit) || 0;
+        agg.total_start_amount += scale > 0 ? STATS_NORMALIZED_START : 0;
+        agg.total_profit += (Number(r.total_profit) || 0) * scale;
       });
 
       return Object.values(byStrategy).map(agg => {

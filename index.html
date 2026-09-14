@@ -519,6 +519,64 @@
     }
     .stats-table tbody td.profit-pos{ color: var(--win); }
     .stats-table tbody td.profit-neg{ color: var(--loss); }
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(5,9,22,.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+    .modal-overlay.hidden{ display:none; }
+    .modal-box{
+      background: linear-gradient(180deg, #182749, #101a37);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.1);
+      box-shadow: var(--shadow);
+      max-width: 680px;
+      width: 100%;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 16px 16px 6px;
+      flex-shrink: 0;
+    }
+    .modal-title{ font-size:16px; font-weight:900; margin:0; }
+    .modal-close{
+      width:32px; height:32px;
+      flex-shrink: 0;
+      border-radius:10px;
+      border:0;
+      background: rgba(255,255,255,.08);
+      color: var(--white);
+      font-size:16px;
+      cursor:pointer;
+      line-height:1;
+    }
+    .modal-body{
+      padding: 0 16px 16px;
+      overflow-y: auto;
+    }
+    .modal-hint{
+      font-size:12.5px;
+      color: var(--text-sub);
+      margin: 0 0 10px;
+      line-height:1.5;
+    }
+    @media (max-width: 430px){
+      .modal-box{ max-height: 92vh; }
+      .stats-table{ font-size: 12px; }
+      .stats-table th, .stats-table td{ padding: 8px 7px; }
+    }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
       100%{ transform: translateX(30px) rotate(10deg); }
@@ -576,7 +634,39 @@
         <div class="btn-row">
           <button id="viewStatsBtn" class="btn secondary" type="button">통계보기</button>
         </div>
+        <div class="btn-row">
+          <button id="viewProbBtn" class="btn secondary" type="button">확률표</button>
+        </div>
       </section>
+    </div>
+
+    <div id="probModalOverlay" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">배팅법별 확률표</h3>
+          <button id="probModalClose" class="modal-close" type="button" aria-label="닫기">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-hint">시작금액 100,000 / 목표금액 120,000(+20%) 기준, "60판 컷"(딱 60판만 진행)과 "무제한"(목표달성·파산까지 진행) 두 조건 각각 100만 회 시뮬레이션 결과입니다. 열 제목을 클릭하면 정렬됩니다.</p>
+          <div class="table-scroll">
+            <table class="stats-table" id="probTable">
+              <thead>
+                <tr>
+                  <th data-key="label">배팅법</th>
+                  <th data-key="firstBet">첫배팅금액</th>
+                  <th data-key="cutGoal">60판컷 목표달성</th>
+                  <th data-key="cutBust">60판컷 파산</th>
+                  <th data-key="cutUn">60판컷 미달성</th>
+                  <th data-key="unlGoal">무제한 목표달성</th>
+                  <th data-key="unlBust">무제한 파산</th>
+                  <th data-key="unlAvgHands">무제한 평균판수</th>
+                </tr>
+              </thead>
+              <tbody id="probTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="statsPage" class="page hidden">
@@ -725,7 +815,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-08", version: 4 };
+    const LAST_EDIT = { date: "2026-09-14", version: 2 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -819,6 +909,10 @@
     const statsRefreshBtn = $("statsRefreshBtn");
     const statsStatusText = $("statsStatusText");
     const statsTableBody = $("statsTableBody");
+    const viewProbBtn = $("viewProbBtn");
+    const probModalOverlay = $("probModalOverlay");
+    const probModalClose = $("probModalClose");
+    const probTableBody = $("probTableBody");
     const backToStrategyBtn = $("backToStrategyBtn");
     const setupTitle = $("setupTitle");
     const martinLimitField = $("martinLimitField");
@@ -1447,6 +1541,77 @@
       showPage("strategy");
     });
     statsRefreshBtn.addEventListener("click", loadStats);
+
+    // 시작금액 100,000 / 목표금액 120,000(+20%) 기준, "60판 컷"과 "무제한"(목표달성·파산까지) 각각 100만 회 시뮬레이션 결과 (정적 값).
+    const PROBABILITY_DATA = [
+      { label: "슈퍼마틴(4마틴)", firstBet: 3226, cutGoal: 75.19, cutBust: 24.81, cutUn: 0, unlGoal: 75.12, unlBust: 24.88, unlAvgHands: 8.1 },
+      { label: "슈퍼마틴(5마틴)", firstBet: 1754, cutGoal: 79.84, cutBust: 20.16, cutUn: 0, unlGoal: 79.97, unlBust: 20.03, unlAvgHands: 13.7 },
+      { label: "일반마틴(4마틴)", firstBet: 6667, cutGoal: 76.35, cutBust: 23.65, cutUn: 0, unlGoal: 76.33, unlBust: 23.67, unlAvgHands: 5.5 },
+      { label: "일반마틴(5마틴)", firstBet: 3226, cutGoal: 77.03, cutBust: 22.97, cutUn: 0, unlGoal: 76.87, unlBust: 23.13, unlAvgHands: 13.7 },
+      { label: "파롤리", firstBet: 2000, cutGoal: 46.33, cutBust: 0, cutUn: 53.67, unlGoal: 79.28, unlBust: 20.68, unlAvgHands: 104 },
+      { label: "1-3-2-6", firstBet: 2000, cutGoal: 52.88, cutBust: 0.03, cutUn: 47.10, unlGoal: 78.98, unlBust: 21.02, unlAvgHands: 72.3 },
+      { label: "달랑베르", firstBet: 2000, cutGoal: 78.99, cutBust: 19.63, cutUn: 1.37, unlGoal: 79.72, unlBust: 20.28, unlAvgHands: 24.7 },
+      { label: "피보나치", firstBet: 2000, cutGoal: 55.96, cutBust: 19.06, cutUn: 24.98, unlGoal: 77.95, unlBust: 22.05, unlAvgHands: 50.9 },
+      { label: "라부셰르", firstBet: 8000, cutGoal: 78.26, cutBust: 21.74, cutUn: 0, unlGoal: 78.29, unlBust: 21.71, unlAvgHands: 8.8 }
+    ];
+    let probSort = { key: "unlGoal", dir: "desc" };
+
+    function renderProbTable() {
+      const sorted = [...PROBABILITY_DATA].sort((a, b) => {
+        const va = a[probSort.key], vb = b[probSort.key];
+        if (typeof va === "string") {
+          return probSort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        return probSort.dir === "asc" ? va - vb : vb - va;
+      });
+
+      probTableBody.innerHTML = sorted.map(r => `
+        <tr>
+          <td>${r.label}</td>
+          <td>${formatMoney(r.firstBet)}</td>
+          <td>${r.cutGoal.toFixed(2)}%</td>
+          <td>${r.cutBust.toFixed(2)}%</td>
+          <td>${r.cutUn.toFixed(2)}%</td>
+          <td>${r.unlGoal.toFixed(2)}%</td>
+          <td>${r.unlBust.toFixed(2)}%</td>
+          <td>${r.unlAvgHands}판</td>
+        </tr>
+      `).join("");
+
+      document.querySelectorAll("#probTable th[data-key]").forEach(th => {
+        th.classList.toggle("sorted-asc", th.dataset.key === probSort.key && probSort.dir === "asc");
+        th.classList.toggle("sorted-desc", th.dataset.key === probSort.key && probSort.dir === "desc");
+      });
+    }
+
+    document.querySelectorAll("#probTable th[data-key]").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        if (probSort.key === key) {
+          probSort.dir = probSort.dir === "asc" ? "desc" : "asc";
+        } else {
+          probSort.key = key;
+          probSort.dir = "desc";
+        }
+        renderProbTable();
+      });
+    });
+
+    function openProbModal() {
+      renderProbTable();
+      probModalOverlay.classList.remove("hidden");
+    }
+    function closeProbModal() {
+      probModalOverlay.classList.add("hidden");
+    }
+    viewProbBtn.addEventListener("click", openProbModal);
+    probModalClose.addEventListener("click", closeProbModal);
+    probModalOverlay.addEventListener("click", (e) => {
+      if (e.target === probModalOverlay) closeProbModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !probModalOverlay.classList.contains("hidden")) closeProbModal();
+    });
 
     document.querySelectorAll(".strategy-card").forEach(card => {
       card.addEventListener("click", () => {

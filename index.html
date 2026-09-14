@@ -647,7 +647,7 @@
           <button id="probModalClose" class="modal-close" type="button" aria-label="닫기">✕</button>
         </div>
         <div class="modal-body">
-          <p class="modal-hint">시작금액 100,000 / 목표금액 120,000(+20%) 기준, "60판 컷"(딱 60판만 진행)과 "무제한"(목표달성·파산까지 진행) 두 조건 각각 100만 회 시뮬레이션 결과입니다. 열 제목을 클릭하면 정렬됩니다.</p>
+          <p class="modal-hint">시작금액 100,000 / 목표금액 120,000(+20%) 기준, "60판 컷"(딱 60판만 진행)과 "무제한"(목표달성·파산까지 진행) 두 조건 각각 100만 회 시뮬레이션 결과입니다. "올인" 표시된 슈퍼마틴은 마지막 마틴 단계에서 정해진 공식 금액 대신 남은 금액 전부를 배팅합니다. 열 제목을 클릭하면 정렬됩니다.</p>
           <div class="table-scroll">
             <table class="stats-table" id="probTable">
               <thead>
@@ -815,7 +815,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-14", version: 2 };
+    const LAST_EDIT = { date: "2026-09-14", version: 3 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1552,7 +1552,9 @@
       { label: "1-3-2-6", firstBet: 2000, cutGoal: 52.88, cutBust: 0.03, cutUn: 47.10, unlGoal: 78.98, unlBust: 21.02, unlAvgHands: 72.3 },
       { label: "달랑베르", firstBet: 2000, cutGoal: 78.99, cutBust: 19.63, cutUn: 1.37, unlGoal: 79.72, unlBust: 20.28, unlAvgHands: 24.7 },
       { label: "피보나치", firstBet: 2000, cutGoal: 55.96, cutBust: 19.06, cutUn: 24.98, unlGoal: 77.95, unlBust: 22.05, unlAvgHands: 50.9 },
-      { label: "라부셰르", firstBet: 8000, cutGoal: 78.26, cutBust: 21.74, cutUn: 0, unlGoal: 78.29, unlBust: 21.71, unlAvgHands: 8.8 }
+      { label: "라부셰르", firstBet: 8000, cutGoal: 78.26, cutBust: 21.74, cutUn: 0, unlGoal: 78.29, unlBust: 21.71, unlAvgHands: 8.8 },
+      { label: "슈퍼마틴(5마틴,올인)", firstBet: 2000, cutGoal: 81.75, cutBust: 18.25, cutUn: 0, unlGoal: 81.70, unlBust: 18.30, unlAvgHands: 12.3 },
+      { label: "슈퍼마틴(4마틴,올인)", firstBet: 4000, cutGoal: 80.56, cutBust: 19.44, cutUn: 0, unlGoal: 80.61, unlBust: 19.39, unlAvgHands: 6.1 }
     ];
     let probSort = { key: "unlGoal", dir: "desc" };
 

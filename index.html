@@ -542,6 +542,12 @@
       flex-direction: column;
       overflow: hidden;
     }
+    #probModalOverlay .modal-box{
+      max-width: 1060px;
+    }
+    #probTable{
+      min-width: 960px;
+    }
     .modal-header{
       display:flex;
       align-items:center;
@@ -815,7 +821,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-15", version: 4 };
+    const LAST_EDIT = { date: "2026-09-15", version: 5 };
 
     function renderVersionBadge() {
       const today = new Date();

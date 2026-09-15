@@ -589,45 +589,36 @@
       cursor: pointer;
     }
     .label-link:hover{ color: var(--accent1); }
-    .guide-section{
-      margin-top: 20px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255,255,255,.1);
-    }
-    .guide-section-title{
-      font-size: 14px;
-      font-weight: 900;
-      margin: 0 0 4px;
-      color: #eef3ff;
-    }
-    .guide-card{
-      border-radius: 14px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.08);
-      padding: 12px 14px;
-      margin-bottom: 8px;
-      scroll-margin-top: 10px;
-      transition: background .25s ease, border-color .25s ease;
-    }
-    .guide-card-title{
-      font-size: 14px;
-      font-weight: 900;
-      margin-bottom: 4px;
-      color: var(--accent3);
-    }
-    .guide-card-body{
+    #guideModalOverlay{ z-index: 110; }
+    .guide-table{
+      width: 100%;
+      border-collapse: collapse;
       font-size: 13px;
-      color: var(--text-sub);
-      line-height: 1.6;
     }
-    .guide-card.highlight{
-      border-color: var(--accent1);
-      background: rgba(255,208,0,.1);
+    .guide-table td{
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .guide-table tr:first-child td{ border-top: none; }
+    .guide-table td:first-child{
+      font-weight: 900;
+      color: var(--accent3);
+      white-space: nowrap;
+      width: 1%;
+      padding-right: 16px;
+    }
+    .guide-table td:last-child{
+      color: var(--text-sub);
+      line-height: 1.65;
     }
     @media (max-width: 430px){
       .modal-box{ max-height: 92vh; }
       .stats-table{ font-size: 12px; }
       .stats-table th, .stats-table td{ padding: 8px 7px; }
+      .guide-table{ font-size: 12.5px; }
+      .guide-table td{ padding: 10px 8px; }
     }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
@@ -689,6 +680,9 @@
         <div class="btn-row">
           <button id="viewProbBtn" class="btn secondary" type="button">확률표</button>
         </div>
+        <div class="btn-row">
+          <button id="viewGuideBtn" class="btn secondary" type="button">배팅법 설명서</button>
+        </div>
       </section>
     </div>
 
@@ -717,12 +711,22 @@
               <tbody id="probTableBody"></tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="guide-section">
-            <h4 class="guide-section-title">배팅방법 설명서 (쉽게 풀어쓴 설명)</h4>
-            <p class="modal-hint">위 표에서 배팅법 이름을 누르면 여기로 바로 이동해요.</p>
-            <div id="guideList"></div>
-          </div>
+    <div id="guideModalOverlay" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title" id="guideModalTitle">배팅방법 설명서</h3>
+          <button id="guideModalClose" class="modal-close" type="button" aria-label="닫기">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-hint" id="guideModalHint">초등학생도 이해할 수 있게 쉽게 풀어썼어요.</p>
+          <button id="guideShowAllBtn" class="btn back hidden" type="button" style="margin-bottom:10px;">← 전체 설명 목록 보기</button>
+          <table class="guide-table" id="guideTable">
+            <tbody id="guideTableBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -873,7 +877,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-15", version: 6 };
+    const LAST_EDIT = { date: "2026-09-15", version: 7 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -971,7 +975,13 @@
     const probModalOverlay = $("probModalOverlay");
     const probModalClose = $("probModalClose");
     const probTableBody = $("probTableBody");
-    const guideList = $("guideList");
+    const viewGuideBtn = $("viewGuideBtn");
+    const guideModalOverlay = $("guideModalOverlay");
+    const guideModalClose = $("guideModalClose");
+    const guideModalTitle = $("guideModalTitle");
+    const guideModalHint = $("guideModalHint");
+    const guideShowAllBtn = $("guideShowAllBtn");
+    const guideTableBody = $("guideTableBody");
     const backToStrategyBtn = $("backToStrategyBtn");
     const setupTitle = $("setupTitle");
     const martinLimitField = $("martinLimitField");
@@ -1652,38 +1662,62 @@
     ];
     let probSort = { key: "unlGoal", dir: "desc" };
 
-    // 초등학생도 이해할 수 있게 아주 쉽게 풀어쓴 배팅방법 설명 (표의 label과 정확히 일치해야 함)
+    // 초등학생도 이해할 수 있게, 처음부터 끝까지 전부 풀어쓴 배팅방법 설명 (다른 항목을 참조하지 않고 각각 완결됨)
+    // 표의 label과 정확히 일치해야 함
     const BETTING_GUIDES = {
-      "슈퍼마틴(4마틴)": "지면 다음 배팅금액이 1배 → 3배 → 7배 → 15배로 확 늘어나요. 이기면 그동안 잃은 돈을 한 번에 다 찾아오고 다시 1배로 돌아가요. 딱 4번까지만 도전할 수 있고, 4번 내리 지면 게임이 끝나요.",
-      "슈퍼마틴(5마틴)": "지면 다음 배팅금액이 1배 → 3배 → 7배 → 15배 → 31배로 확 늘어나요. 이기면 그동안 잃은 돈을 한 번에 다 찾아오고 다시 1배로 돌아가요. 딱 5번까지만 도전할 수 있고, 5번 내리 지면 게임이 끝나요.",
-      "일반마틴(4마틴)": "지면 다음 배팅금액을 딱 2배로만 올려요(1배 → 2배 → 4배 → 8배). 이기면 잃은 돈을 되찾고 조금 더 벌어요. 딱 4번까지만 도전할 수 있고, 4번 내리 지면 게임이 끝나요.",
-      "일반마틴(5마틴)": "지면 다음 배팅금액을 딱 2배로만 올려요(1배 → 2배 → 4배 → 8배 → 16배). 이기면 잃은 돈을 되찾고 조금 더 벌어요. 딱 5번까지만 도전할 수 있고, 5번 내리 지면 게임이 끝나요.",
-      "파롤리": "마틴이랑 정반대예요! 질 때는 항상 처음 금액만 걸고, 이길 때만 배팅금액을 2배로 올려요(1배 → 2배 → 4배). 3번 연속 이기거나 한 번이라도 지면 다시 처음 금액으로 돌아가요. 적게 잃고, 운이 좋을 때 크게 버는 방법이에요.",
-      "1-3-2-6": "이길 때마다 배팅금액을 1배 → 3배 → 2배 → 6배 순서로 바꿔요. 이 4단계를 전부 성공하거나, 도중에 한 번이라도 지면 다시 1단계(1배)로 돌아가요.",
-      "달랑베르": "지면 배팅금액을 딱 1만큼만 올리고, 이기면 딱 1만큼만 내려요. 아주 천천히 오르고 내려서 마틴보다 훨씬 완만하고 안전한 방법이에요.",
-      "피보나치": "1, 1, 2, 3, 5, 8처럼 앞 두 숫자를 더해서 만드는 '피보나치 숫자'대로 배팅해요. 지면 다음 숫자로 한 칸 가고, 이기면 두 칸 뒤로 물러나요.",
-      "라부셰르": "1,2,3 같은 숫자 목록을 적어두고, 맨 앞 숫자와 맨 뒤 숫자를 더한 만큼 배팅해요. 이기면 그 두 숫자를 목록에서 지우고, 지면 방금 배팅한 숫자를 목록 맨 뒤에 새로 추가해요. 목록의 숫자가 다 지워지면 한 사이클 성공!",
-      "슈퍼마틴(5마틴,올인)": "슈퍼마틴(5마틴)과 똑같이 가다가, 마지막 5번째 단계에서는 정해진 공식 금액 대신 지금 가진 돈을 몽땅 걸어요. 한 번에 크게 따거나, 한 번에 다 잃는 방식이에요.",
-      "슈퍼마틴(4마틴,올인)": "슈퍼마틴(4마틴)과 똑같이 가다가, 마지막 4번째 단계에서는 정해진 공식 금액 대신 지금 가진 돈을 몽땅 걸어요. 한 번에 크게 따거나, 한 번에 다 잃는 방식이에요."
+      "슈퍼마틴(4마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계로 가서 3배를 배팅하고, 또 지면 3단계에서 7배, 또 지면 4단계에서 15배를 배팅해요. 이렇게 질 때마다 배팅금액이 크게 뛰어올라요. 만약 1~4단계 중 언제든 한 번이라도 이기면, 그동안 잃었던 돈을 전부 되찾고 처음 그대로 1배로 돌아가서 다시 시작해요. 하지만 4단계(15배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요.",
+      "슈퍼마틴(5마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계 3배, 또 지면 3단계 7배, 또 지면 4단계 15배, 또 지면 5단계 31배를 배팅해요. 이렇게 질 때마다 배팅금액이 크게 뛰어올라요. 만약 1~5단계 중 언제든 한 번이라도 이기면, 그동안 잃었던 돈을 전부 되찾고 처음 그대로 1배로 돌아가서 다시 시작해요. 하지만 5단계(31배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요.",
+      "일반마틴(4마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계에서 2배, 또 지면 3단계에서 4배, 또 지면 4단계에서 8배를 배팅해요. 매번 딱 2배씩만 늘어나는 게 특징이에요. 1~4단계 중 언제든 한 번이라도 이기면 그동안 잃었던 돈을 되찾고 아주 조금 더 벌게 되며, 다시 1배로 돌아가서 시작해요. 하지만 4단계(8배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요.",
+      "일반마틴(5마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계 2배, 또 지면 3단계 4배, 또 지면 4단계 8배, 또 지면 5단계 16배를 배팅해요. 매번 딱 2배씩만 늘어나는 게 특징이에요. 1~5단계 중 언제든 한 번이라도 이기면 그동안 잃었던 돈을 되찾고 아주 조금 더 벌게 되며, 다시 1배로 돌아가서 시작해요. 하지만 5단계(16배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요.",
+      "파롤리": "1단계에서는 1배를 배팅해요. 지면 그대로 1단계에 남아서 다음 판에도 똑같이 1배만 배팅해요. 반대로 이기면 2단계로 올라가서 2배를 배팅하고, 거기서 또 이기면 3단계에서 4배를 배팅해요. 3단계(4배)에서까지 이기면 3연승을 완성한 거라 그동안의 수익을 챙기고 다시 1단계(1배)로 돌아가요. 1~3단계 중 어디서든 한 번이라도 지면 곧바로 1단계(1배)로 돌아가요. 그래서 질 때는 항상 최소 금액만 잃고, 운 좋게 계속 이길 때만 배팅금액을 키워서 크게 벌 수 있어요.",
+      "1-3-2-6": "1단계에서는 1배를 배팅해요. 이기면 2단계로 가서 3배를 배팅하고, 거기서 또 이기면 3단계에서 2배를 배팅하고, 거기서 또 이기면 4단계에서 6배를 배팅해요. 4단계(6배)에서까지 이기면 한 사이클을 전부 완주한 거라 다시 1단계(1배)로 돌아가요. 그런데 1~4단계 중 어느 단계에서든 한 번이라도 지면, 그 즉시 다시 1단계(1배)로 돌아가서 처음부터 다시 시작해요.",
+      "달랑베르": "처음에는 1유닛을 배팅해요. 지면 다음 배팅에서 딱 1유닛만 늘려요(예: 1유닛 → 2유닛 → 3유닛). 반대로 이기면 다음 배팅에서 딱 1유닛만 줄여요(예: 3유닛 → 2유닛). 배팅금액이 최소 1유닛보다 더 내려가지는 않아요. 이렇게 지면 아주 조금씩 늘고 이기면 아주 조금씩 줄어드는 걸 계속 반복해요. 마틴게일처럼 배팅금액이 확 뛰지 않고 천천히, 완만하게 움직이는 게 특징이에요.",
+      "피보나치": "1, 1, 2, 3, 5, 8, 13처럼 바로 앞의 두 숫자를 더해서 다음 숫자를 만드는 '피보나치 수열'이 있어요. 맨 처음에는 첫 번째 숫자(1)만큼 배팅해요. 지면 수열에서 한 칸 앞으로 가서 그 숫자만큼 배팅하고, 계속 지면 또 한 칸씩 앞으로 가면서 배팅금액이 점점 커져요(1 → 1 → 2 → 3 → 5...). 반대로 이기면 수열에서 두 칸 뒤로 물러나서 그 숫자만큼 배팅해요. 그래서 지면 배팅금액이 서서히 커지고, 이기면 훌쩍 줄어드는 방식이에요.",
+      "라부셰르": "먼저 1, 2, 3 같은 숫자 목록을 적어둬요. 매번 목록의 맨 앞 숫자와 맨 뒤 숫자를 더한 만큼 배팅해요(맨 처음엔 1+3=4). 이기면 방금 사용한 맨 앞 숫자와 맨 뒤 숫자를 목록에서 지워요. 반대로 지면 방금 배팅했던 숫자(예: 4)를 목록 맨 뒤에 새로 추가해요. 이렇게 계속하다가 목록에 숫자가 하나도 안 남으면 한 사이클을 완전히 성공한 거고, 곧바로 새 목록(1,2,3)을 다시 적어서 처음부터 시작해요.",
+      "슈퍼마틴(5마틴,올인)": "1단계에서는 1배를 배팅해요. 지면 2단계 3배, 또 지면 3단계 7배, 또 지면 4단계 15배를 배팅해요. 그런데 4단계에서도 지면, 5단계(마지막 단계)에서는 정해진 배수(31배)를 따르지 않고 지금 남아있는 돈을 전부 걸어요. 이 마지막 올인 배팅에서 이기면 크게 되찾고 1단계로 돌아가지만, 지면 가진 돈을 모두 잃고 게임이 끝나요. 물론 1~4단계 중 언제든 이기면 그동안 잃은 돈을 되찾고 바로 1단계(1배)로 돌아가요.",
+      "슈퍼마틴(4마틴,올인)": "1단계에서는 1배를 배팅해요. 지면 2단계 3배, 또 지면 3단계 7배를 배팅해요. 그런데 3단계에서도 지면, 4단계(마지막 단계)에서는 정해진 배수(15배)를 따르지 않고 지금 남아있는 돈을 전부 걸어요. 이 마지막 올인 배팅에서 이기면 크게 되찾고 1단계로 돌아가지만, 지면 가진 돈을 모두 잃고 게임이 끝나요. 물론 1~3단계 중 언제든 이기면 그동안 잃은 돈을 되찾고 바로 1단계(1배)로 돌아가요."
     };
 
-    function renderGuides() {
-      guideList.innerHTML = Object.entries(BETTING_GUIDES).map(([label, text]) => `
-        <div class="guide-card" data-label="${label}">
-          <div class="guide-card-title">${label}</div>
-          <div class="guide-card-body">${text}</div>
-        </div>
+    function renderGuideTable(filterLabel) {
+      const entries = filterLabel
+        ? Object.entries(BETTING_GUIDES).filter(([label]) => label === filterLabel)
+        : Object.entries(BETTING_GUIDES);
+
+      guideTableBody.innerHTML = entries.map(([label, text]) => `
+        <tr>
+          <td>${label}</td>
+          <td>${text}</td>
+        </tr>
       `).join("");
+
+      guideModalTitle.textContent = filterLabel ? `${filterLabel} 설명` : "배팅방법 설명서";
+      guideModalHint.textContent = filterLabel
+        ? "초등학생도 이해할 수 있게 쉽게 풀어썼어요."
+        : "초등학생도 이해할 수 있게 쉽게 풀어썼어요. 확률표에서 이름을 누르면 그 방법만 바로 볼 수도 있어요.";
+      guideShowAllBtn.classList.toggle("hidden", !filterLabel);
     }
+
+    function openGuideModal(filterLabel) {
+      renderGuideTable(filterLabel || null);
+      guideModalOverlay.classList.remove("hidden");
+    }
+    function closeGuideModal() {
+      guideModalOverlay.classList.add("hidden");
+    }
+    viewGuideBtn.addEventListener("click", () => openGuideModal(null));
+    guideShowAllBtn.addEventListener("click", () => renderGuideTable(null));
+    guideModalClose.addEventListener("click", closeGuideModal);
+    guideModalOverlay.addEventListener("click", (e) => {
+      if (e.target === guideModalOverlay) closeGuideModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !guideModalOverlay.classList.contains("hidden")) closeGuideModal();
+    });
 
     probTableBody.addEventListener("click", (e) => {
       const btn = e.target.closest(".label-link");
       if (!btn) return;
-      const card = guideList.querySelector(`.guide-card[data-label="${CSS.escape(btn.dataset.label)}"]`);
-      if (!card) return;
-      guideList.querySelectorAll(".guide-card.highlight").forEach(el => el.classList.remove("highlight"));
-      card.classList.add("highlight");
-      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      openGuideModal(btn.dataset.label);
     });
 
     function renderProbTable() {
@@ -1729,7 +1763,6 @@
 
     function openProbModal() {
       renderProbTable();
-      renderGuides();
       probModalOverlay.classList.remove("hidden");
     }
     function closeProbModal() {

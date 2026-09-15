@@ -815,7 +815,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-15", version: 2 };
+    const LAST_EDIT = { date: "2026-09-15", version: 3 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1555,6 +1555,7 @@
       { label: "라부셰르", firstBet: 8000, cutGoal: 78.26, cutBust: 21.74, cutUn: 0, unlGoal: 78.29, unlBust: 21.71, unlAvgHands: 8.8 },
       { label: "슈퍼마틴(5마틴,올인)", firstBet: 2000, cutGoal: 81.75, cutBust: 18.25, cutUn: 0, unlGoal: 81.70, unlBust: 18.30, unlAvgHands: 12.3 },
       { label: "슈퍼마틴(4마틴,올인)", firstBet: 4000, cutGoal: 80.56, cutBust: 19.44, cutUn: 0, unlGoal: 80.61, unlBust: 19.39, unlAvgHands: 6.1 },
+      { label: "슈퍼마틴(5마틴,올인,첫배팅1000)", firstBet: 1000, cutGoal: 72.86, cutBust: 27.14, cutUn: 0, unlGoal: 72.85, unlBust: 27.15, unlAvgHands: 19.2 },
       { label: "슈퍼마틴(5마틴,올인,첫배팅3000)", firstBet: 3000, cutGoal: 79.36, cutBust: 20.57, cutUn: 0.07, unlGoal: 79.38, unlBust: 20.62, unlAvgHands: 9.6 },
       { label: "슈퍼마틴(5마틴,올인,첫배팅4000)", firstBet: 4000, cutGoal: 74.97, cutBust: 25.03, cutUn: 0, unlGoal: 74.89, unlBust: 25.11, unlAvgHands: 6.1 }
     ];

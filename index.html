@@ -877,7 +877,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-15", version: 7 };
+    const LAST_EDIT = { date: "2026-09-16", version: 2 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -893,8 +893,8 @@
     const $ = (id) => document.getElementById(id);
 
     // Supabase 연동: anon key만 클라이언트에 사용 (service_role 키는 절대 클라이언트에 넣지 않음)
-    const SUPABASE_URL = "https://rztxkmivodancikydavm.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6dHhrbWl2b2RhbmNpa3lkYXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MDMxNjUsImV4cCI6MjEwNDM3OTE2NX0.TOvrFraI7geQQomJNw3PRFzo87oWQ_SnSAp4VGAlAzg";
+    const SUPABASE_URL = "https://onudikupmynqtirkmmlc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9udWRpa3VwbXlucXRpcmttbWxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODk0MDIsImV4cCI6MjEwNTA2NTQwMn0.HyT8vGYXwvoL0NK4Ip2VVYTZ4PtVhDWPL7_E6QnpA44";
     const sb = (window.supabase && window.supabase.createClient)
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
       : null;
@@ -1199,7 +1199,7 @@
       const tieCount = state.history.filter(h => h.result === "TIE").length;
       const super6Count = state.history.filter(h => h.result === "SUPER6").length;
       try {
-        const { error } = await sb.from("game_sessions").insert({
+        const { error } = await sb.from("bcmk_game_sessions").insert({
           strategy_id: state.strategyId,
           strategy_label: strategy.label,
           start_amount: state.startAmount,
@@ -1573,7 +1573,7 @@
         return;
       }
       statsStatusText.textContent = "불러오는 중...";
-      const { data, error } = await sb.from("game_sessions").select("*");
+      const { data, error } = await sb.from("bcmk_game_sessions").select("*");
       if (error) {
         statsStatusText.textContent = `불러오기 실패: ${error.message}`;
         return;

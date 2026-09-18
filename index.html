@@ -46,6 +46,13 @@
       justify-content:flex-end;
       margin-bottom: 8px;
     }
+    .footer{
+      display:flex;
+      justify-content:center;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
     .version{
       display:inline-flex;
       align-items:center;
@@ -872,21 +879,26 @@
         </div>
       </div>
     </section>
+
+    <footer class="footer">
+      <div class="version" id="versionBadgeBottom"></div>
+    </footer>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-16", version: 2 };
+    const LAST_EDIT = { date: "2026-09-18", version: 2 };
 
     function renderVersionBadge() {
       const today = new Date();
       const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const version = todayKey === LAST_EDIT.date ? LAST_EDIT.version : 1;
-      const badge = document.getElementById("versionBadge");
-      if (badge) {
-        badge.textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 - 버전${version}`;
-      }
+      const text = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 - 버전${version}`;
+      ["versionBadge", "versionBadgeBottom"].forEach(id => {
+        const badge = document.getElementById(id);
+        if (badge) badge.textContent = text;
+      });
     }
     renderVersionBadge();
 

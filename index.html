@@ -550,10 +550,10 @@
       overflow: hidden;
     }
     #probModalOverlay .modal-box{
-      max-width: 1360px;
+      max-width: 1560px;
     }
     #probTable{
-      min-width: 1180px;
+      min-width: 1380px;
     }
     #probTable thead th{
       white-space: normal;
@@ -716,12 +716,14 @@
                   <th data-key="label">배팅법</th>
                   <th data-key="start">총 시작금액</th>
                   <th data-key="firstBet">첫배팅금액</th>
+                  <th data-key="target20">목표수익(+20%)</th>
                   <th data-key="cutGoal">60판컷 목표달성(+20%)</th>
                   <th data-key="cutBust">60판컷 파산</th>
                   <th data-key="cutUn">60판컷 미달성</th>
                   <th data-key="unlGoal">무제한 목표달성(+20%)</th>
                   <th data-key="unlBust">무제한 파산</th>
                   <th data-key="unlAvgHands">무제한 평균판수</th>
+                  <th data-key="target10">목표수익(+10%)</th>
                   <th data-key="tenGoal">10판컷 목표달성(+10%)</th>
                   <th data-key="tenBust">10판컷 파산</th>
                   <th data-key="tenUn">10판컷 미달성</th>
@@ -900,7 +902,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-22", version: 2 };
+    const LAST_EDIT = { date: "2026-09-22", version: 3 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1749,9 +1751,15 @@
       openGuideModal(btn.dataset.label);
     });
 
+    function probSortValue(r, key) {
+      if (key === "target20") return r.start * 0.2;
+      if (key === "target10") return r.start * 0.1;
+      return r[key];
+    }
+
     function renderProbTable() {
       const sorted = [...PROBABILITY_DATA].sort((a, b) => {
-        const va = a[probSort.key], vb = b[probSort.key];
+        const va = probSortValue(a, probSort.key), vb = probSortValue(b, probSort.key);
         if (typeof va === "string") {
           return probSort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
         }
@@ -1763,12 +1771,14 @@
           <td><button type="button" class="label-link" data-label="${r.label}">${r.label}</button></td>
           <td>${formatMoney(r.start)}</td>
           <td>${formatMoney(r.firstBet)}</td>
+          <td>${formatMoney(r.start * 0.2)}</td>
           <td>${r.cutGoal.toFixed(2)}%</td>
           <td>${r.cutBust.toFixed(2)}%</td>
           <td>${r.cutUn.toFixed(2)}%</td>
           <td>${r.unlGoal.toFixed(2)}%</td>
           <td>${r.unlBust.toFixed(2)}%</td>
           <td>${r.unlAvgHands}판</td>
+          <td>${formatMoney(r.start * 0.1)}</td>
           <td>${r.tenGoal.toFixed(2)}%</td>
           <td>${r.tenBust.toFixed(2)}%</td>
           <td>${r.tenUn.toFixed(2)}%</td>

@@ -708,7 +708,7 @@
           <button id="probModalClose" class="modal-close" type="button" aria-label="닫기">✕</button>
         </div>
         <div class="modal-body">
-          <p class="modal-hint">첫 배팅금액 1,000·2,000·3,000·4,000원 각각에 대해 각 조건 100만~1,000만 회씩 시뮬레이션한 결과입니다. "60판컷"(딱 60판만 진행)과 "무제한"(목표달성·파산까지 진행)은 <b>목표금액 = 시작금액의 +20%</b>, "10판컷"·"20판컷"(각각 딱 10판·20판만 진행)은 <b>목표금액 = 시작금액의 +10%</b> 기준입니다. 총 시작금액은 열에 표시된 대로이며(대부분 100,000, "시작20만"·"시작5만" 행만 예외), 목표금액도 그 비율대로 따라갑니다. "올인" 표시된 슈퍼마틴은 마지막 마틴 단계에서 정해진 공식 금액 대신 남은 금액 전부를 배팅합니다. 열 제목을 클릭하면 정렬됩니다.</p>
+          <p class="modal-hint">첫 배팅금액 1,000·2,000·3,000·4,000원 각각에 대해 각 조건 100만~1,000만 회씩 시뮬레이션한 결과입니다. "60판컷"(딱 60판만 진행)은 <b>목표금액 = 시작금액의 +20%</b>, "5판컷"·"10판컷"·"20판컷"(각각 딱 5·10·20판만 진행)은 <b>목표금액 = 시작금액의 +10%</b> 기준입니다. 총 시작금액은 열에 표시된 대로이며(대부분 100,000, "시작20만"·"시작5만" 행만 예외), 목표금액도 그 비율대로 따라갑니다. "올인" 표시된 슈퍼마틴은 마지막 마틴 단계에서 정해진 공식 금액 대신 남은 금액 전부를 배팅합니다. 열 제목을 클릭하면 정렬됩니다.</p>
           <div class="table-scroll">
             <table class="stats-table" id="probTable">
               <thead>
@@ -720,10 +720,10 @@
                   <th data-key="cutGoal">60판컷 목표달성(+20%)</th>
                   <th data-key="cutBust">60판컷 파산</th>
                   <th data-key="cutUn">60판컷 미달성</th>
-                  <th data-key="unlGoal">무제한 목표달성(+20%)</th>
-                  <th data-key="unlBust">무제한 파산</th>
-                  <th data-key="unlAvgHands">무제한 평균판수</th>
                   <th data-key="target10">목표수익(+10%)</th>
+                  <th data-key="fiveGoal">5판컷 목표달성(+10%)</th>
+                  <th data-key="fiveBust">5판컷 파산</th>
+                  <th data-key="fiveUn">5판컷 미달성</th>
                   <th data-key="tenGoal">10판컷 목표달성(+10%)</th>
                   <th data-key="tenBust">10판컷 파산</th>
                   <th data-key="tenUn">10판컷 미달성</th>
@@ -905,7 +905,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-09-22", version: 4 };
+    const LAST_EDIT = { date: "2026-09-22", version: 5 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1644,53 +1644,53 @@
     // 시작금액 100,000 / 목표금액 120,000(+20%) 고정, 첫 배팅금액 1000/2000/3000/4000 각각으로
     // "60판 컷"과 "무제한"(목표달성·파산까지) 두 조건, 각 100만 회씩 재시뮬레이션한 전체 결과 (2026-09-21 같은 배치로 전부 재실행, 시작20만 행은 시작 200,000/목표 240,000).
     const PROBABILITY_DATA = [
-      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 1000, cutGoal: 45.79, cutBust: 54.21, cutUn: 0.00, unlGoal: 45.79, unlBust: 54.21, unlAvgHands: 22.3, tenGoal: 20.07, tenBust: 23.05, tenUn: 56.88, twentyGoal: 64.46, twentyBust: 35.29, twentyUn: 0.25 },
-      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 2000, cutGoal: 66.80, cutBust: 33.20, cutUn: 0.00, unlGoal: 66.81, unlBust: 33.19, unlAvgHands: 11.5, tenGoal: 79.97, tenBust: 19.04, tenUn: 0.99, twentyGoal: 78.02, twentyBust: 21.97, twentyUn: 0.00 },
-      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 3000, cutGoal: 74.92, cutBust: 25.08, cutUn: 0.00, unlGoal: 74.89, unlBust: 25.11, unlAvgHands: 8.2, tenGoal: 83.84, tenBust: 15.73, tenUn: 0.43, twentyGoal: 84.16, twentyBust: 15.84, twentyUn: 0.00 },
-      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 4000, cutGoal: 74.78, cutBust: 25.22, cutUn: 0.00, unlGoal: 74.70, unlBust: 25.30, unlAvgHands: 6.1, tenGoal: 80.92, tenBust: 18.97, tenUn: 0.12, twentyGoal: 80.78, twentyBust: 19.22, twentyUn: 0.00 },
-      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 1000, cutGoal: 69.26, cutBust: 30.74, cutUn: 0.00, unlGoal: 69.08, unlBust: 30.92, unlAvgHands: 22.5, tenGoal: 23.45, tenBust: 10.16, tenUn: 66.40, twentyGoal: 80.79, twentyBust: 18.47, twentyUn: 0.74 },
-      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 2000, cutGoal: 70.82, cutBust: 29.18, cutUn: 0.00, unlGoal: 70.76, unlBust: 29.24, unlAvgHands: 11.6, tenGoal: 80.03, tenBust: 18.67, tenUn: 1.31, twentyGoal: 78.02, twentyBust: 21.97, twentyUn: 0.01 },
-      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 3000, cutGoal: 74.99, cutBust: 25.01, cutUn: 0.00, unlGoal: 74.85, unlBust: 25.15, unlAvgHands: 8.2, tenGoal: 83.80, tenBust: 15.72, tenUn: 0.49, twentyGoal: 84.15, twentyBust: 15.85, twentyUn: 0.00 },
-      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 4000, cutGoal: 74.80, cutBust: 25.20, cutUn: 0.00, unlGoal: 74.70, unlBust: 25.30, unlAvgHands: 6.0, tenGoal: 80.89, tenBust: 18.98, tenUn: 0.12, twentyGoal: 80.76, twentyBust: 19.24, twentyUn: 0.00 },
-      { label: "일반마틴(4마틴)", start: 100000, firstBet: 1000, cutGoal: 26.37, cutBust: 73.61, cutUn: 0.01, unlGoal: 26.43, unlBust: 73.57, unlAvgHands: 37.5, tenGoal: 0.05, tenBust: 23.10, tenUn: 76.85, twentyGoal: 26.38, twentyBust: 45.26, twentyUn: 28.36 },
-      { label: "일반마틴(4마틴)", start: 100000, firstBet: 2000, cutGoal: 51.35, cutBust: 48.65, cutUn: 0.00, unlGoal: 51.32, unlBust: 48.68, unlAvgHands: 18.8, tenGoal: 50.71, tenBust: 22.57, tenUn: 26.72, twentyGoal: 67.02, twentyBust: 32.47, twentyUn: 0.51 },
-      { label: "일반마틴(4마틴)", start: 100000, firstBet: 3000, cutGoal: 62.68, cutBust: 37.32, cutUn: 0.00, unlGoal: 62.69, unlBust: 37.31, unlAvgHands: 13.1, tenGoal: 70.12, tenBust: 20.89, tenUn: 8.99, twentyGoal: 76.81, twentyBust: 23.12, twentyUn: 0.07 },
-      { label: "일반마틴(4마틴)", start: 100000, firstBet: 4000, cutGoal: 71.75, cutBust: 28.25, cutUn: 0.00, unlGoal: 71.68, unlBust: 28.32, unlAvgHands: 9.4, tenGoal: 80.81, tenBust: 17.31, tenUn: 1.88, twentyGoal: 81.87, twentyBust: 18.11, twentyUn: 0.02 },
-      { label: "일반마틴(5마틴)", start: 100000, firstBet: 1000, cutGoal: 51.52, cutBust: 48.05, cutUn: 0.42, unlGoal: 51.66, unlBust: 48.34, unlAvgHands: 40.1, tenGoal: 0.05, tenBust: 10.18, tenUn: 89.77, twentyGoal: 29.46, twentyBust: 23.54, twentyUn: 46.99 },
-      { label: "일반마틴(5마틴)", start: 100000, firstBet: 2000, cutGoal: 71.94, cutBust: 28.06, cutUn: 0.00, unlGoal: 71.88, unlBust: 28.12, unlAvgHands: 20.0, tenGoal: 52.55, tenBust: 10.10, tenUn: 37.34, twentyGoal: 80.96, twentyBust: 17.46, twentyUn: 1.58 },
-      { label: "일반마틴(5마틴)", start: 100000, firstBet: 3000, cutGoal: 79.44, cutBust: 20.56, cutUn: 0.00, unlGoal: 79.41, unlBust: 20.59, unlAvgHands: 14.0, tenGoal: 75.02, tenBust: 9.66, tenUn: 15.31, twentyGoal: 87.46, twentyBust: 12.18, twentyUn: 0.36 },
-      { label: "일반마틴(5마틴)", start: 100000, firstBet: 4000, cutGoal: 71.66, cutBust: 28.34, cutUn: 0.00, unlGoal: 71.78, unlBust: 28.22, unlAvgHands: 9.4, tenGoal: 80.74, tenBust: 16.84, tenUn: 2.42, twentyGoal: 81.87, twentyBust: 18.10, twentyUn: 0.03 },
-      { label: "파롤리", start: 100000, firstBet: 1000, cutGoal: 17.43, cutBust: 0.00, cutUn: 82.57, unlGoal: 73.16, unlBust: 16.06, unlAvgHands: 284.7, tenGoal: 9.79, tenBust: 0.00, tenUn: 90.21, twentyGoal: 19.14, twentyBust: 0.00, twentyUn: 80.86 },
-      { label: "파롤리", start: 100000, firstBet: 2000, cutGoal: 46.41, cutBust: 0.00, cutUn: 53.59, unlGoal: 79.34, unlBust: 20.62, unlAvgHands: 103.9, tenGoal: 36.47, tenBust: 0.00, tenUn: 63.53, twentyGoal: 45.77, twentyBust: 0.00, twentyUn: 54.23 },
-      { label: "파롤리", start: 100000, firstBet: 3000, cutGoal: 59.91, cutBust: 1.23, cutUn: 38.86, unlGoal: 79.04, unlBust: 20.96, unlAvgHands: 48.6, tenGoal: 42.18, tenBust: 0.00, tenUn: 57.82, twentyGoal: 55.18, twentyBust: 0.00, twentyUn: 44.82 },
-      { label: "파롤리", start: 100000, firstBet: 4000, cutGoal: 68.44, cutBust: 7.04, cutUn: 24.52, unlGoal: 79.22, unlBust: 20.78, unlAvgHands: 28.1, tenGoal: 54.13, tenBust: 0.00, tenUn: 45.87, twentyGoal: 64.49, twentyBust: 0.00, twentyUn: 35.51 },
-      { label: "1-3-2-6", start: 100000, firstBet: 1000, cutGoal: 25.06, cutBust: 0.00, cutUn: 74.94, unlGoal: 76.21, unlBust: 19.40, unlAvgHands: 233.1, tenGoal: 17.85, tenBust: 0.00, tenUn: 82.15, twentyGoal: 27.99, twentyBust: 0.00, twentyUn: 72.01 },
-      { label: "1-3-2-6", start: 100000, firstBet: 2000, cutGoal: 52.86, cutBust: 0.02, cutUn: 47.11, unlGoal: 79.04, unlBust: 20.96, unlAvgHands: 72.2, tenGoal: 37.81, tenBust: 0.00, tenUn: 62.19, twentyGoal: 48.38, twentyBust: 0.00, twentyUn: 51.62 },
-      { label: "1-3-2-6", start: 100000, firstBet: 3000, cutGoal: 61.88, cutBust: 4.40, cutUn: 33.73, unlGoal: 76.65, unlBust: 23.35, unlAvgHands: 37.9, tenGoal: 49.72, tenBust: 0.00, tenUn: 50.28, twentyGoal: 62.77, twentyBust: 0.00, twentyUn: 37.23 },
-      { label: "1-3-2-6", start: 100000, firstBet: 4000, cutGoal: 71.15, cutBust: 12.70, cutUn: 16.16, unlGoal: 77.52, unlBust: 22.48, unlAvgHands: 21.6, tenGoal: 56.55, tenBust: 0.00, tenUn: 43.45, twentyGoal: 68.33, twentyBust: 0.00, twentyUn: 31.67 },
-      { label: "달랑베르", start: 100000, firstBet: 1000, cutGoal: 60.78, cutBust: 9.84, cutUn: 29.38, unlGoal: 79.95, unlBust: 20.05, unlAvgHands: 52.2, tenGoal: 0.04, tenBust: 0.00, tenUn: 99.96, twentyGoal: 24.72, twentyBust: 0.24, twentyUn: 75.04 },
-      { label: "달랑베르", start: 100000, firstBet: 2000, cutGoal: 78.96, cutBust: 19.67, cutUn: 1.36, unlGoal: 79.80, unlBust: 20.20, unlAvgHands: 24.7, tenGoal: 43.82, tenBust: 0.12, tenUn: 56.06, twentyGoal: 70.00, twentyBust: 4.22, twentyUn: 25.78 },
-      { label: "달랑베르", start: 100000, firstBet: 3000, cutGoal: 78.51, cutBust: 21.47, cutUn: 0.02, unlGoal: 78.52, unlBust: 21.48, unlAvgHands: 16.4, tenGoal: 59.72, tenBust: 2.00, tenUn: 38.28, twentyGoal: 81.03, twentyBust: 9.16, twentyUn: 9.81 },
-      { label: "달랑베르", start: 100000, firstBet: 4000, cutGoal: 79.28, cutBust: 20.72, cutUn: 0.00, unlGoal: 79.30, unlBust: 20.70, unlAvgHands: 11.4, tenGoal: 72.58, tenBust: 5.24, tenUn: 22.18, twentyGoal: 84.30, twentyBust: 12.43, twentyUn: 3.28 },
-      { label: "피보나치", start: 100000, firstBet: 1000, cutGoal: 4.46, cutBust: 10.07, cutUn: 85.47, unlGoal: 78.25, unlBust: 21.75, unlAvgHands: 109.5, tenGoal: 0.05, tenBust: 0.12, tenUn: 99.82, twentyGoal: 1.74, twentyBust: 1.83, twentyUn: 96.42 },
-      { label: "피보나치", start: 100000, firstBet: 2000, cutGoal: 55.95, cutBust: 18.99, cutUn: 25.06, unlGoal: 77.92, unlBust: 22.08, unlAvgHands: 50.9, tenGoal: 12.54, tenBust: 1.38, tenUn: 86.08, twentyGoal: 29.96, twentyBust: 6.71, twentyUn: 63.34 },
-      { label: "피보나치", start: 100000, firstBet: 3000, cutGoal: 73.14, cutBust: 19.04, cutUn: 7.82, unlGoal: 79.72, unlBust: 20.28, unlAvgHands: 34.3, tenGoal: 25.72, tenBust: 1.40, tenUn: 72.88, twentyGoal: 57.05, twentyBust: 6.50, twentyUn: 36.45 },
-      { label: "피보나치", start: 100000, firstBet: 4000, cutGoal: 76.05, cutBust: 22.48, cutUn: 1.46, unlGoal: 77.10, unlBust: 22.90, unlAvgHands: 22.5, tenGoal: 43.06, tenBust: 3.79, tenUn: 53.15, twentyGoal: 68.92, twentyBust: 10.35, twentyUn: 20.74 },
-      { label: "라부셰르", start: 100000, firstBet: 1000, cutGoal: 77.93, cutBust: 21.81, cutUn: 0.26, unlGoal: 78.10, unlBust: 21.90, unlAvgHands: 21.6, tenGoal: 53.76, tenBust: 0.00, tenUn: 46.24, twentyGoal: 77.10, twentyBust: 8.64, twentyUn: 14.26 },
-      { label: "라부셰르", start: 100000, firstBet: 2000, cutGoal: 78.33, cutBust: 21.67, cutUn: 0.00, unlGoal: 78.36, unlBust: 21.64, unlAvgHands: 8.8, tenGoal: 78.95, tenBust: 6.42, tenUn: 14.63, twentyGoal: 86.55, twentyBust: 13.01, twentyUn: 0.44 },
-      { label: "라부셰르", start: 100000, firstBet: 3000, cutGoal: 74.45, cutBust: 25.55, cutUn: 0.00, unlGoal: 74.44, unlBust: 25.56, unlAvgHands: 6.8, tenGoal: 82.62, tenBust: 12.69, tenUn: 4.69, twentyGoal: 84.83, twentyBust: 15.13, twentyUn: 0.03 },
-      { label: "라부셰르", start: 100000, firstBet: 4000, cutGoal: 75.73, cutBust: 24.27, cutUn: 0.00, unlGoal: 75.72, unlBust: 24.28, unlAvgHands: 4.1, tenGoal: 81.80, tenBust: 17.09, tenUn: 1.12, twentyGoal: 82.20, twentyBust: 17.80, twentyUn: 0.00 },
-      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 1000, cutGoal: 72.88, cutBust: 27.12, cutUn: 0.00, unlGoal: 72.89, unlBust: 27.11, unlAvgHands: 19.2, tenGoal: 30.25, tenBust: 10.11, tenUn: 59.64, twentyGoal: 82.08, twentyBust: 17.64, twentyUn: 0.28 },
-      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 2000, cutGoal: 81.66, cutBust: 18.34, cutUn: 0.01, unlGoal: 81.67, unlBust: 18.33, unlAvgHands: 12.3, tenGoal: 82.75, tenBust: 9.34, tenUn: 7.92, twentyGoal: 87.54, twentyBust: 11.86, twentyUn: 0.60 },
-      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 3000, cutGoal: 79.34, cutBust: 20.59, cutUn: 0.07, unlGoal: 79.48, unlBust: 20.52, unlAvgHands: 9.6, tenGoal: 83.80, tenBust: 8.49, tenUn: 7.70, twentyGoal: 84.16, twentyBust: 12.27, twentyUn: 3.57 },
-      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 4000, cutGoal: 74.98, cutBust: 25.02, cutUn: 0.00, unlGoal: 74.96, unlBust: 25.04, unlAvgHands: 6.1, tenGoal: 80.85, tenBust: 18.41, tenUn: 0.74, twentyGoal: 80.74, twentyBust: 19.18, twentyUn: 0.09 },
-      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 1000, cutGoal: 58.60, cutBust: 41.40, cutUn: 0.00, unlGoal: 58.69, unlBust: 41.31, unlAvgHands: 14.4, tenGoal: 35.60, tenBust: 22.12, tenUn: 42.28, twentyGoal: 68.93, twentyBust: 31.06, twentyUn: 0.01 },
-      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 2000, cutGoal: 70.35, cutBust: 29.65, cutUn: 0.00, unlGoal: 70.26, unlBust: 29.74, unlAvgHands: 9.9, tenGoal: 81.02, tenBust: 18.50, tenUn: 0.49, twentyGoal: 78.92, twentyBust: 21.08, twentyUn: 0.00 },
-      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 3000, cutGoal: 76.26, cutBust: 23.74, cutUn: 0.00, unlGoal: 76.23, unlBust: 23.77, unlAvgHands: 7.7, tenGoal: 84.15, tenBust: 15.75, tenUn: 0.10, twentyGoal: 84.20, twentyBust: 15.80, twentyUn: 0.00 },
-      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 4000, cutGoal: 80.62, cutBust: 19.38, cutUn: 0.00, unlGoal: 80.53, unlBust: 19.47, unlAvgHands: 6.1, tenGoal: 87.10, tenBust: 12.65, tenUn: 0.26, twentyGoal: 87.16, twentyBust: 12.84, twentyUn: 0.00 },
-      { label: "슈퍼마틴(5마틴,올인,시작20만)", start: 200000, firstBet: 4000, cutGoal: 81.61, cutBust: 18.39, cutUn: 0.01, unlGoal: 81.73, unlBust: 18.27, unlAvgHands: 12.3, tenGoal: 82.77, tenBust: 9.30, tenUn: 7.93, twentyGoal: 87.54, twentyBust: 11.85, twentyUn: 0.61 },
-      { label: "슈퍼마틴(5마틴,올인,시작5만)", start: 50000, firstBet: 1000, cutGoal: 81.74, cutBust: 18.25, cutUn: 0.00, unlGoal: 81.77, unlBust: 18.23, unlAvgHands: 12.3, tenGoal: 82.75, tenBust: 9.35, tenUn: 7.90, twentyGoal: 87.55, twentyBust: 11.85, twentyUn: 0.60 },
-      { label: "슈퍼마틴(5마틴,올인,시작5만)", start: 50000, firstBet: 2000, cutGoal: 74.99, cutBust: 25.00, cutUn: 0.00, unlGoal: 75.04, unlBust: 24.96, unlAvgHands: 6.1, tenGoal: 80.85, tenBust: 18.42, tenUn: 0.73, twentyGoal: 80.77, twentyBust: 19.14, twentyUn: 0.09 }
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 1000, cutGoal: 45.79, cutBust: 54.21, cutUn: 0.00, fiveGoal: 0.00, fiveBust: 8.54, fiveUn: 91.46, tenGoal: 20.07, tenBust: 23.05, tenUn: 56.88, twentyGoal: 64.46, twentyBust: 35.29, twentyUn: 0.25 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 2000, cutGoal: 66.80, cutBust: 33.20, cutUn: 0.00, fiveGoal: 0.00, fiveBust: 8.54, fiveUn: 91.46, tenGoal: 79.97, tenBust: 19.04, tenUn: 0.99, twentyGoal: 78.02, twentyBust: 21.97, twentyUn: 0.00 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 3000, cutGoal: 74.92, cutBust: 25.08, cutUn: 0.00, fiveGoal: 64.58, fiveBust: 8.53, fiveUn: 26.89, tenGoal: 83.84, tenBust: 15.73, tenUn: 0.43, twentyGoal: 84.16, twentyBust: 15.84, twentyUn: 0.00 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 4000, cutGoal: 74.78, cutBust: 25.22, cutUn: 0.00, fiveGoal: 73.68, fiveBust: 14.80, fiveUn: 11.53, tenGoal: 80.92, tenBust: 18.97, tenUn: 0.12, twentyGoal: 80.78, twentyBust: 19.22, twentyUn: 0.00 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 1000, cutGoal: 69.26, cutBust: 30.74, cutUn: 0.00, fiveGoal: 0.00, fiveBust: 2.41, fiveUn: 97.59, tenGoal: 23.45, tenBust: 10.16, tenUn: 66.40, twentyGoal: 80.79, twentyBust: 18.47, twentyUn: 0.74 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 2000, cutGoal: 70.82, cutBust: 29.18, cutUn: 0.00, fiveGoal: 0.00, fiveBust: 5.08, fiveUn: 94.92, tenGoal: 80.03, tenBust: 18.67, tenUn: 1.31, twentyGoal: 78.02, twentyBust: 21.97, twentyUn: 0.01 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 3000, cutGoal: 74.99, cutBust: 25.01, cutUn: 0.00, fiveGoal: 64.61, fiveBust: 5.10, fiveUn: 30.29, tenGoal: 83.80, tenBust: 15.72, tenUn: 0.49, twentyGoal: 84.15, twentyBust: 15.85, twentyUn: 0.00 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 4000, cutGoal: 74.80, cutBust: 25.20, cutUn: 0.00, fiveGoal: 73.69, fiveBust: 12.45, fiveUn: 13.86, tenGoal: 80.89, tenBust: 18.98, tenUn: 0.12, twentyGoal: 80.76, twentyBust: 19.24, twentyUn: 0.00 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 1000, cutGoal: 26.37, cutBust: 73.61, cutUn: 0.01, fiveGoal: 0.00, fiveBust: 8.53, fiveUn: 91.47, tenGoal: 0.05, tenBust: 23.10, tenUn: 76.85, twentyGoal: 26.38, twentyBust: 45.26, twentyUn: 28.36 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 2000, cutGoal: 51.35, cutBust: 48.65, cutUn: 0.00, fiveGoal: 0.00, fiveBust: 8.53, fiveUn: 91.47, tenGoal: 50.71, tenBust: 22.57, tenUn: 26.72, twentyGoal: 67.02, twentyBust: 32.47, twentyUn: 0.51 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 3000, cutGoal: 62.68, cutBust: 37.32, cutUn: 0.00, fiveGoal: 15.51, fiveBust: 8.53, fiveUn: 75.96, tenGoal: 70.12, tenBust: 20.89, tenUn: 8.99, twentyGoal: 76.81, twentyBust: 23.12, twentyUn: 0.07 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 4000, cutGoal: 71.75, cutBust: 28.25, cutUn: 0.00, fiveGoal: 43.15, fiveBust: 8.52, fiveUn: 48.34, tenGoal: 80.81, tenBust: 17.31, tenUn: 1.88, twentyGoal: 81.87, twentyBust: 18.11, twentyUn: 0.02 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 1000, cutGoal: 51.52, cutBust: 48.05, cutUn: 0.42, fiveGoal: 0.00, fiveBust: 2.42, fiveUn: 97.58, tenGoal: 0.05, tenBust: 10.18, tenUn: 89.77, twentyGoal: 29.46, twentyBust: 23.54, twentyUn: 46.99 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 2000, cutGoal: 71.94, cutBust: 28.06, cutUn: 0.00, fiveGoal: 0.00, fiveBust: 2.41, fiveUn: 97.59, tenGoal: 52.55, tenBust: 10.10, tenUn: 37.34, twentyGoal: 80.96, twentyBust: 17.46, twentyUn: 1.58 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 3000, cutGoal: 79.44, cutBust: 20.56, cutUn: 0.00, fiveGoal: 15.52, fiveBust: 2.41, fiveUn: 82.07, tenGoal: 75.02, tenBust: 9.66, tenUn: 15.31, twentyGoal: 87.46, twentyBust: 12.18, twentyUn: 0.36 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 4000, cutGoal: 71.66, cutBust: 28.34, cutUn: 0.00, fiveGoal: 43.14, fiveBust: 5.09, fiveUn: 51.77, tenGoal: 80.74, tenBust: 16.84, tenUn: 2.42, twentyGoal: 81.87, twentyBust: 18.10, twentyUn: 0.03 },
+      { label: "파롤리", start: 100000, firstBet: 1000, cutGoal: 17.43, cutBust: 0.00, cutUn: 82.57, fiveGoal: 0.00, fiveBust: 0.00, fiveUn: 100.00, tenGoal: 9.79, tenBust: 0.00, tenUn: 90.21, twentyGoal: 19.14, twentyBust: 0.00, twentyUn: 80.86 },
+      { label: "파롤리", start: 100000, firstBet: 2000, cutGoal: 46.41, cutBust: 0.00, cutUn: 53.59, fiveGoal: 20.48, fiveBust: 0.00, fiveUn: 79.52, tenGoal: 36.47, tenBust: 0.00, tenUn: 63.53, twentyGoal: 45.77, twentyBust: 0.00, twentyUn: 54.23 },
+      { label: "파롤리", start: 100000, firstBet: 3000, cutGoal: 59.91, cutBust: 1.23, cutUn: 38.86, fiveGoal: 23.33, fiveBust: 0.00, fiveUn: 76.67, tenGoal: 42.18, tenBust: 0.00, tenUn: 57.82, twentyGoal: 55.18, twentyBust: 0.00, twentyUn: 44.82 },
+      { label: "파롤리", start: 100000, firstBet: 4000, cutGoal: 68.44, cutBust: 7.04, cutUn: 24.52, fiveGoal: 35.35, fiveBust: 0.00, fiveUn: 64.65, tenGoal: 54.13, tenBust: 0.00, tenUn: 45.87, twentyGoal: 64.49, twentyBust: 0.00, twentyUn: 35.51 },
+      { label: "1-3-2-6", start: 100000, firstBet: 1000, cutGoal: 25.06, cutBust: 0.00, cutUn: 74.94, fiveGoal: 8.20, fiveBust: 0.00, fiveUn: 91.80, tenGoal: 17.85, tenBust: 0.00, tenUn: 82.15, twentyGoal: 27.99, twentyBust: 0.00, twentyUn: 72.01 },
+      { label: "1-3-2-6", start: 100000, firstBet: 2000, cutGoal: 52.86, cutBust: 0.02, cutUn: 47.11, fiveGoal: 16.90, fiveBust: 0.00, fiveUn: 83.10, tenGoal: 37.81, tenBust: 0.00, tenUn: 62.19, twentyGoal: 48.38, twentyBust: 0.00, twentyUn: 51.62 },
+      { label: "1-3-2-6", start: 100000, firstBet: 3000, cutGoal: 61.88, cutBust: 4.40, cutUn: 33.73, fiveGoal: 35.41, fiveBust: 0.00, fiveUn: 64.59, tenGoal: 49.72, tenBust: 0.00, tenUn: 50.28, twentyGoal: 62.77, twentyBust: 0.00, twentyUn: 37.23 },
+      { label: "1-3-2-6", start: 100000, firstBet: 4000, cutGoal: 71.15, cutBust: 12.70, cutUn: 16.16, fiveGoal: 41.60, fiveBust: 0.00, fiveUn: 58.40, tenGoal: 56.55, tenBust: 0.00, tenUn: 43.45, twentyGoal: 68.33, twentyBust: 0.00, twentyUn: 31.67 },
+      { label: "달랑베르", start: 100000, firstBet: 1000, cutGoal: 60.78, cutBust: 9.84, cutUn: 29.38, fiveGoal: 0.00, fiveBust: 0.00, fiveUn: 100.00, tenGoal: 0.04, tenBust: 0.00, tenUn: 99.96, twentyGoal: 24.72, twentyBust: 0.24, twentyUn: 75.04 },
+      { label: "달랑베르", start: 100000, firstBet: 2000, cutGoal: 78.96, cutBust: 19.67, cutUn: 1.36, fiveGoal: 0.00, fiveBust: 0.00, fiveUn: 100.00, tenGoal: 43.82, tenBust: 0.12, tenUn: 56.06, twentyGoal: 70.00, twentyBust: 4.22, twentyUn: 25.78 },
+      { label: "달랑베르", start: 100000, firstBet: 3000, cutGoal: 78.51, cutBust: 21.47, cutUn: 0.02, fiveGoal: 15.51, fiveBust: 0.00, fiveUn: 84.49, tenGoal: 59.72, tenBust: 2.00, tenUn: 38.28, twentyGoal: 81.03, twentyBust: 9.16, twentyUn: 9.81 },
+      { label: "달랑베르", start: 100000, firstBet: 4000, cutGoal: 79.28, cutBust: 20.72, cutUn: 0.00, fiveGoal: 40.88, fiveBust: 0.00, fiveUn: 59.12, tenGoal: 72.58, tenBust: 5.24, tenUn: 22.18, twentyGoal: 84.30, twentyBust: 12.43, twentyUn: 3.28 },
+      { label: "피보나치", start: 100000, firstBet: 1000, cutGoal: 4.46, cutBust: 10.07, cutUn: 85.47, fiveGoal: 0.00, fiveBust: 0.00, fiveUn: 100.00, tenGoal: 0.05, tenBust: 0.12, tenUn: 99.82, twentyGoal: 1.74, twentyBust: 1.83, twentyUn: 96.42 },
+      { label: "피보나치", start: 100000, firstBet: 2000, cutGoal: 55.95, cutBust: 18.99, cutUn: 25.06, fiveGoal: 0.00, fiveBust: 0.00, fiveUn: 100.00, tenGoal: 12.54, tenBust: 1.38, tenUn: 86.08, twentyGoal: 29.96, twentyBust: 6.71, twentyUn: 63.34 },
+      { label: "피보나치", start: 100000, firstBet: 3000, cutGoal: 73.14, cutBust: 19.04, cutUn: 7.82, fiveGoal: 6.08, fiveBust: 0.00, fiveUn: 93.92, tenGoal: 25.72, tenBust: 1.40, tenUn: 72.88, twentyGoal: 57.05, twentyBust: 6.50, twentyUn: 36.45 },
+      { label: "피보나치", start: 100000, firstBet: 4000, cutGoal: 76.05, cutBust: 22.48, cutUn: 1.46, fiveGoal: 18.57, fiveBust: 0.00, fiveUn: 81.43, tenGoal: 43.06, tenBust: 3.79, tenUn: 53.15, twentyGoal: 68.92, twentyBust: 10.35, twentyUn: 20.74 },
+      { label: "라부셰르", start: 100000, firstBet: 1000, cutGoal: 77.93, cutBust: 21.81, cutUn: 0.26, fiveGoal: 14.91, fiveBust: 0.00, fiveUn: 85.09, tenGoal: 53.76, tenBust: 0.00, tenUn: 46.24, twentyGoal: 77.10, twentyBust: 8.64, twentyUn: 14.26 },
+      { label: "라부셰르", start: 100000, firstBet: 2000, cutGoal: 78.33, cutBust: 21.67, cutUn: 0.00, fiveGoal: 55.66, fiveBust: 0.00, fiveUn: 44.34, tenGoal: 78.95, tenBust: 6.42, tenUn: 14.63, twentyGoal: 86.55, twentyBust: 13.01, twentyUn: 0.44 },
+      { label: "라부셰르", start: 100000, firstBet: 3000, cutGoal: 74.45, cutBust: 25.55, cutUn: 0.00, fiveGoal: 66.89, fiveBust: 0.00, fiveUn: 33.11, tenGoal: 82.62, tenBust: 12.69, tenUn: 4.69, twentyGoal: 84.83, twentyBust: 15.13, twentyUn: 0.03 },
+      { label: "라부셰르", start: 100000, firstBet: 4000, cutGoal: 75.73, cutBust: 24.27, cutUn: 0.00, fiveGoal: 74.02, fiveBust: 5.08, fiveUn: 20.90, tenGoal: 81.80, tenBust: 17.09, tenUn: 1.12, twentyGoal: 82.20, twentyBust: 17.80, twentyUn: 0.00 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 1000, cutGoal: 72.88, cutBust: 27.12, cutUn: 0.00, fiveGoal: 2.43, fiveBust: 2.42, fiveUn: 95.15, tenGoal: 30.25, tenBust: 10.11, tenUn: 59.64, twentyGoal: 82.08, twentyBust: 17.64, twentyUn: 0.28 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 2000, cutGoal: 81.66, cutBust: 18.34, cutUn: 0.01, fiveGoal: 0.00, fiveBust: 2.41, fiveUn: 97.59, tenGoal: 82.75, tenBust: 9.34, tenUn: 7.92, twentyGoal: 87.54, twentyBust: 11.86, twentyUn: 0.60 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 3000, cutGoal: 79.34, cutBust: 20.59, cutUn: 0.07, fiveGoal: 64.57, fiveBust: 2.41, fiveUn: 33.01, tenGoal: 83.80, tenBust: 8.49, tenUn: 7.70, twentyGoal: 84.16, twentyBust: 12.27, twentyUn: 3.57 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 4000, cutGoal: 74.98, cutBust: 25.02, cutUn: 0.00, fiveGoal: 73.67, fiveBust: 12.45, fiveUn: 13.88, tenGoal: 80.85, tenBust: 18.41, tenUn: 0.74, twentyGoal: 80.74, twentyBust: 19.18, twentyUn: 0.09 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 1000, cutGoal: 58.60, cutBust: 41.40, cutUn: 0.00, fiveGoal: 8.52, fiveBust: 8.54, fiveUn: 82.95, tenGoal: 35.60, tenBust: 22.12, tenUn: 42.28, twentyGoal: 68.93, twentyBust: 31.06, twentyUn: 0.01 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 2000, cutGoal: 70.35, cutBust: 29.65, cutUn: 0.00, fiveGoal: 8.52, fiveBust: 8.51, fiveUn: 82.97, tenGoal: 81.02, tenBust: 18.50, tenUn: 0.49, twentyGoal: 78.92, twentyBust: 21.08, twentyUn: 0.00 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 3000, cutGoal: 76.26, cutBust: 23.74, cutUn: 0.00, fiveGoal: 64.56, fiveBust: 8.53, fiveUn: 26.91, tenGoal: 84.15, tenBust: 15.75, tenUn: 0.10, twentyGoal: 84.20, twentyBust: 15.80, twentyUn: 0.00 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 4000, cutGoal: 80.62, cutBust: 19.38, cutUn: 0.00, fiveGoal: 79.66, fiveBust: 8.55, fiveUn: 11.80, tenGoal: 87.10, tenBust: 12.65, tenUn: 0.26, twentyGoal: 87.16, twentyBust: 12.84, twentyUn: 0.00 },
+      { label: "슈퍼마틴(5마틴,올인,시작20만)", start: 200000, firstBet: 4000, cutGoal: 81.61, cutBust: 18.39, cutUn: 0.01, fiveGoal: 0.00, fiveBust: 2.42, fiveUn: 97.58, tenGoal: 82.77, tenBust: 9.30, tenUn: 7.93, twentyGoal: 87.54, twentyBust: 11.85, twentyUn: 0.61 },
+      { label: "슈퍼마틴(5마틴,올인,시작5만)", start: 50000, firstBet: 1000, cutGoal: 81.74, cutBust: 18.25, cutUn: 0.00, fiveGoal: 0.00, fiveBust: 2.42, fiveUn: 97.58, tenGoal: 82.75, tenBust: 9.35, tenUn: 7.90, twentyGoal: 87.55, twentyBust: 11.85, twentyUn: 0.60 },
+      { label: "슈퍼마틴(5마틴,올인,시작5만)", start: 50000, firstBet: 2000, cutGoal: 74.99, cutBust: 25.00, cutUn: 0.00, fiveGoal: 73.66, fiveBust: 12.45, fiveUn: 13.89, tenGoal: 80.85, tenBust: 18.42, tenUn: 0.73, twentyGoal: 80.77, twentyBust: 19.14, twentyUn: 0.09 }
     ];
     let probSort = { key: "unlGoal", dir: "desc" };
 
@@ -1778,10 +1778,10 @@
           <td>${r.cutGoal.toFixed(2)}%</td>
           <td>${r.cutBust.toFixed(2)}%</td>
           <td>${r.cutUn.toFixed(2)}%</td>
-          <td>${r.unlGoal.toFixed(2)}%</td>
-          <td>${r.unlBust.toFixed(2)}%</td>
-          <td>${r.unlAvgHands}판</td>
           <td>${formatMoney(r.start * 0.1)}</td>
+          <td>${r.fiveGoal.toFixed(2)}%</td>
+          <td>${r.fiveBust.toFixed(2)}%</td>
+          <td>${r.fiveUn.toFixed(2)}%</td>
           <td>${r.tenGoal.toFixed(2)}%</td>
           <td>${r.tenBust.toFixed(2)}%</td>
           <td>${r.tenUn.toFixed(2)}%</td>

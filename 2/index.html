@@ -190,6 +190,13 @@
     .rank-col .sub-title{ margin: 12px 0 6px; font-size: 13px; text-align: center; padding: 6px 4px; border-radius: 10px; }
     .rank-col .sub-title.goal{ background: rgba(64,209,127,.14); color: var(--win); }
     .rank-col .sub-title.bust{ background: rgba(255,123,123,.14); color: var(--loss); }
+    .sub-note{ display:block; margin-top: 2px; font-size: 10.5px; font-weight: 700; opacity: .85; }
+    .rank-empty{ padding: 14px 8px; font-size: 12px; color: var(--text-hint); text-align:center; border: 1px dashed rgba(255,255,255,.15); border-radius: 12px; }
+    .ri-stats{ display:grid; grid-template-columns: 1fr auto; gap: 1px 6px; margin-top: 5px; font-size: 11.5px; color: var(--text-hint); }
+    .ri-stats b{ font-weight: 800; text-align: right; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+    .ri-stats .on{ color: var(--white); font-weight: 900; }
+    .ri-stats b.on.goal{ color: var(--win); }
+    .ri-stats b.on.bust{ color: var(--loss); }
     .rank-list{ display:flex; flex-direction:column; gap: 6px; }
     .rank-item{
       display:block; width:100%; text-align:left; font: inherit; color: var(--white); cursor:pointer;
@@ -285,7 +292,7 @@
             <div class="rank-list" id="goalRankBody"></div>
           </div>
           <div class="rank-col">
-            <h3 class="sub-title bust">파산 낮은 TOP 10</h3>
+            <h3 class="sub-title bust">파산 낮은 TOP 10<span class="sub-note">달성 60% 이상만</span></h3>
             <div class="rank-list" id="bustRankBody"></div>
           </div>
         </div>
@@ -445,7 +452,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-07", version: 13 };
+    const LAST_EDIT = { date: "2026-10-07", version: 14 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -706,13 +713,16 @@ function createOscarEngine(method, unit) {
 
     const TOP_N = 10;
 
+    const MIN_GOAL_FOR_BUST_LIST = 60; // 파산 낮은 순위는 목표달성 60% 이상인 배팅법만
+
     function rankItem(x, i, mainKey) {
-      const subs = mainKey === "goal"
-        ? `파산 ${x.bust.toFixed(1)} · 미달 ${x.un.toFixed(1)}`
-        : `달성 ${x.goal.toFixed(1)} · 미달 ${x.un.toFixed(1)}`;
+      const row = (key, name) => {
+        const on = key === mainKey ? " on" : "";
+        return `<span class="${on.trim()}">${name}</span><b class="${key}${on}">${x[key].toFixed(2)}%</b>`;
+      };
       return `<button type="button" class="rank-item" data-label="${escapeHtml(x.method.label)}">
         <div class="ri-top"><span class="rank-no">${i + 1}</span><span class="ri-name">${escapeHtml(x.method.label)}</span></div>
-        <div class="ri-bottom"><b class="ri-main ${mainKey}">${x[mainKey].toFixed(2)}%</b><span class="ri-sub">${subs}</span></div>
+        <div class="ri-stats">${row("goal", "달성")}${row("bust", "파산")}${row("un", "미달")}</div>
       </button>`;
     }
 
@@ -720,11 +730,16 @@ function createOscarEngine(method, unit) {
       const { firstBet, start, cap } = getSetup();
       const ranked = rankMethods(start, firstBet, cap);
       const byGoal = ranked.slice(0, TOP_N);
-      const byBust = [...ranked].sort((a, b) => (a.bust - b.bust) || (b.goal - a.goal) || (a.order - b.order)).slice(0, TOP_N);
+      const byBust = ranked
+        .filter(x => x.goal >= MIN_GOAL_FOR_BUST_LIST)
+        .sort((a, b) => (a.bust - b.bust) || (b.goal - a.goal) || (a.order - b.order))
+        .slice(0, TOP_N);
       $("goalAmountText").textContent = formatMoney(start + firstBet * TARGET_MULT);
       $("goalProfitText").textContent = `+${formatMoney(firstBet * TARGET_MULT)}`;
       goalRankBody.innerHTML = byGoal.map((x, i) => rankItem(x, i, "goal")).join("");
-      bustRankBody.innerHTML = byBust.map((x, i) => rankItem(x, i, "bust")).join("");
+      bustRankBody.innerHTML = byBust.length
+        ? byBust.map((x, i) => rankItem(x, i, "bust")).join("")
+        : `<div class="rank-empty">달성 ${MIN_GOAL_FOR_BUST_LIST}% 이상인 배팅법이 없습니다.</div>`;
     }
 
     [firstBetSelect, startSelect, capSelect].forEach(el => el.addEventListener("change", renderSetupPreview));

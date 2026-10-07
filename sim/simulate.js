@@ -1,6 +1,9 @@
 // 자동 배팅법 선택 페이지(2/index.html)용 확률 데이터 생성기.
-//   node sim/simulate.js [runs=10000000] [out=sim/autobet-data.json]
-// 첫배팅금액 1,000~10,000(1,000단위) × 총 시작시드 50,000~400,000(50,000단위) × 배팅법 9종(마틴 6종 + 파롤리·1-3-2-6·달랑베르)을
+//   node sim/simulate.js [runs=10000000] [out=sim/autobet-data.json] [--only=배팅법1,배팅법2] [--inject]
+//     (인자 없음)   모든 배팅법을 새로 시뮬레이션
+//     --only=...    지정한 배팅법(label, 쉼표 구분)만 시뮬레이션하고 기존 out 파일에 병합 (나머지 행은 그대로 유지)
+//     --inject      시뮬레이션 없이 기존 out 파일 + sim/methods.js 내용을 2/index.html 에 다시 주입
+// 첫배팅금액 1,000~10,000(1,000단위) × 총 시작시드 50,000~400,000(50,000단위) × 배팅법(sim/methods.js)을
 // 각 조합마다 runs회씩 시뮬레이션하고, 10·20·30·60판컷 결과(목표달성/파산/미달성)를 한 번에 집계한다.
 // 한 번의 시뮬레이션은 최대 60판까지 이어 달리며 "몇 번째 판에 목표달성/파산했는지"만 기록하므로
 // 10·20·30·60판컷은 같은 시행에서 나온 일관된 값이다.
@@ -8,6 +11,7 @@ const { Worker, isMainThread, parentPort, workerData } = require("worker_threads
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
+const { BET_METHODS, createEngine } = require("./methods.js");
 
 const CAPS = [10, 20, 30, 60];
 const MAX_HANDS = 60;
@@ -23,49 +27,6 @@ const T_WIN = P_WIN;
 const T_SUPER6 = T_WIN + P_SUPER6;
 const T_TIE = T_SUPER6 + P_TIE; // 이후 구간은 패배
 
-// 배팅법 정의 (2/index.html 의 METHODS 와 규칙이 같아야 함).
-//  super   슈퍼마틴 1,3,7,15...  패배 시 +1단계, 마지막(limit) 단계 패배 시 파산, 승리 시 1단계
-//  classic 일반마틴 1,2,4,8...   위와 같은 단계 이동
-//  paroli  1,2,4 / 승리 시 +1단계(3단계 승리 후 1단계), 패배 시 1단계
-//  s1326   1,3,2,6 / 승리 시 +1단계(4단계 승리 후 1단계), 패배 시 1단계
-//  dalembert 단계 = 배수 / 승리 시 -1단계(최소 1), 패배 시 +1단계
-// allIn: 마지막 마틴 단계에서 정해진 금액 대신 남은 돈 전부 배팅
-const METHODS = [
-  { label: "슈퍼마틴(4마틴)", kind: "super", limit: 4, allIn: false },
-  { label: "슈퍼마틴(5마틴)", kind: "super", limit: 5, allIn: false },
-  { label: "슈퍼마틴(4마틴,올인)", kind: "super", limit: 4, allIn: true },
-  { label: "슈퍼마틴(5마틴,올인)", kind: "super", limit: 5, allIn: true },
-  { label: "일반마틴(4마틴)", kind: "classic", limit: 4, allIn: false },
-  { label: "일반마틴(5마틴)", kind: "classic", limit: 5, allIn: false },
-  { label: "파롤리", kind: "paroli", allIn: false },
-  { label: "1-3-2-6", kind: "s1326", allIn: false },
-  { label: "달랑베르", kind: "dalembert", allIn: false }
-];
-
-const MAX_STAGE = MAX_HANDS + 2;
-// 단계별 배수 / 승리 후 단계 / 패배 후 단계(0 = 파산)를 배열로 미리 계산
-function buildTables(method) {
-  const mult = new Array(MAX_STAGE + 1).fill(0);
-  const winNext = new Array(MAX_STAGE + 1).fill(1);
-  const lossNext = new Array(MAX_STAGE + 1).fill(1);
-  let lastStage = 0;
-  for (let s = 1; s <= MAX_STAGE; s++) {
-    if (method.kind === "super") {
-      mult[s] = (2 ** s) - 1; lossNext[s] = s >= method.limit ? 0 : s + 1;
-    } else if (method.kind === "classic") {
-      mult[s] = 2 ** (s - 1); lossNext[s] = s >= method.limit ? 0 : s + 1;
-    } else if (method.kind === "paroli") {
-      mult[s] = 2 ** (s - 1); winNext[s] = s >= 3 ? 1 : s + 1; lossNext[s] = 1;
-    } else if (method.kind === "s1326") {
-      mult[s] = [1, 3, 2, 6][s - 1] || 1; winNext[s] = s >= 4 ? 1 : s + 1; lossNext[s] = 1;
-    } else {
-      mult[s] = s; winNext[s] = Math.max(1, s - 1); lossNext[s] = s + 1;
-    }
-  }
-  if (method.allIn) lastStage = method.limit;
-  return { mult, winNext, lossNext, lastStage };
-}
-
 function mulberry32(a) {
   return function () {
     a |= 0; a = (a + 0x6D2B79F5) | 0;
@@ -76,32 +37,30 @@ function mulberry32(a) {
 }
 
 function simulateCombo(method, firstBet, start, runs, rnd) {
-  const { mult, winNext, lossNext, lastStage } = buildTables(method);
+  const eng = createEngine(method, firstBet);
   const goalMoney = start + firstBet * TARGET_MULT;
   const goalAt = new Float64Array(MAX_HANDS + 2); // goalAt[h]: h번째 판에 목표달성한 시행 수
   const bustAt = new Float64Array(MAX_HANDS + 2);
 
   for (let i = 0; i < runs; i++) {
     let money = start;
-    let stage = 1;
+    eng.reset();
     for (let hand = 1; hand <= MAX_HANDS; hand++) {
-      let bet = firstBet * mult[stage];
-      if (stage === lastStage) bet = money;
-      if (bet > money) bet = money; // 정해진 배팅금액이 남은 돈보다 크면 남은 돈 전부 배팅
-
+      const bet = eng.nextBet(money);
       const r = rnd();
       if (r < T_WIN) {
         money += bet;
-        stage = winNext[stage];
+        eng.afterWin(bet, bet);
       } else if (r < T_SUPER6) {
-        money += Math.round(bet * 0.5);
-        stage = winNext[stage];
+        const gain = Math.round(bet * 0.5);
+        money += gain;
+        eng.afterWin(bet, gain);
       } else if (r < T_TIE) {
         continue; // TIE: 금액·단계 유지, 1판으로 계산
       } else {
         money -= bet;
-        stage = lossNext[stage];
-        if (money <= 0 || stage === 0) { bustAt[hand]++; break; }
+        const bust = eng.afterLoss(bet);
+        if (money <= 0 || bust) { bustAt[hand]++; break; }
         continue;
       }
       if (money >= goalMoney) { goalAt[hand]++; break; }
@@ -117,12 +76,46 @@ function simulateCombo(method, firstBet, start, runs, rnd) {
   return out;
 }
 
+function injectIntoPage(payload) {
+  const htmlFile = path.join(__dirname, "..", "2", "index.html");
+  if (!fs.existsSync(htmlFile)) return;
+  let html = fs.readFileSync(htmlFile, "utf8");
+  const reData = /(\/\*AUTOBET_DATA_START\*\/\s*)const AUTOBET = [\s\S]*?;(\s*\/\*AUTOBET_DATA_END\*\/)/;
+  if (!reData.test(html)) throw new Error("2/index.html 에서 AUTOBET_DATA 마커를 찾지 못했습니다.");
+  html = html.replace(reData, (_, a, b) => `${a}const AUTOBET = ${JSON.stringify(payload)};${b}`);
+
+  const reMethods = /(\/\*METHODS_START\*\/)[\s\S]*?(\/\*METHODS_END\*\/)/;
+  if (!reMethods.test(html)) throw new Error("2/index.html 에서 METHODS 마커를 찾지 못했습니다.");
+  const methodsSrc = fs.readFileSync(path.join(__dirname, "methods.js"), "utf8")
+    .replace(/\r\n/g, "\n")
+    .replace(/\nif \(typeof module[^\n]*\n?$/, "\n");
+  html = html.replace(reMethods, (_, a, b) => `${a}\n${methodsSrc}${b}`);
+  fs.writeFileSync(htmlFile, html);
+  console.log("updated 2/index.html");
+}
+
 if (isMainThread) {
-  const runs = Number(process.argv[2]) || 10000000;
-  const outFile = process.argv[3] || path.join(__dirname, "autobet-data.json");
+  const args = process.argv.slice(2);
+  const flags = args.filter(a => a.startsWith("--"));
+  const pos = args.filter(a => !a.startsWith("--"));
+  const runs = Number(pos[0]) || 10000000;
+  const outFile = pos[1] || path.join(__dirname, "autobet-data.json");
+  const onlyFlag = flags.find(f => f.startsWith("--only="));
+  const only = onlyFlag ? onlyFlag.slice("--only=".length).split(",").map(s => s.trim()).filter(Boolean) : null;
+
+  if (flags.includes("--inject")) {
+    injectIntoPage(JSON.parse(fs.readFileSync(outFile, "utf8")));
+    process.exit(0);
+  }
+  if (only) {
+    const unknown = only.filter(l => !BET_METHODS.some(m => m.label === l));
+    if (unknown.length) throw new Error("알 수 없는 배팅법: " + unknown.join(", "));
+  }
+
+  const targetMethods = only ? BET_METHODS.filter(m => only.includes(m.label)) : BET_METHODS;
   const jobs = [];
-  for (const m of METHODS) for (const s of STARTS) for (const b of FIRST_BETS) {
-    jobs.push({ method: m, start: s, firstBet: b });
+  for (const m of targetMethods) for (const s of STARTS) for (const b of FIRST_BETS) {
+    jobs.push({ label: m.label, start: s, firstBet: b });
   }
   const results = new Array(jobs.length);
   const nWorkers = Math.min(os.cpus().length, jobs.length);
@@ -148,12 +141,13 @@ if (isMainThread) {
       }
     });
   }
+
   function finish() {
     if (finish.called) return;
     finish.called = true;
-    const rows = jobs.map((j, i) => {
+    let rows = jobs.map((j, i) => {
       const r = results[i];
-      const row = { label: j.method.label, start: j.start, firstBet: j.firstBet };
+      const row = { label: j.label, start: j.start, firstBet: j.firstBet };
       for (const cap of CAPS) {
         row[`g${cap}`] = +r[cap].goal.toFixed(2);
         row[`b${cap}`] = +r[cap].bust.toFixed(2);
@@ -161,28 +155,27 @@ if (isMainThread) {
       }
       return row;
     });
+    if (only && fs.existsSync(outFile)) {
+      const old = JSON.parse(fs.readFileSync(outFile, "utf8"));
+      if (old.runs !== runs) console.warn(`경고: 기존 데이터는 ${old.runs}회, 새 데이터는 ${runs}회 기준입니다.`);
+      rows = old.rows.filter(r => !only.includes(r.label)).concat(rows);
+    }
+    const order = new Map(BET_METHODS.map((m, i) => [m.label, i]));
+    rows.sort((x, y) => (order.get(x.label) - order.get(y.label)) || (x.start - y.start) || (x.firstBet - y.firstBet));
+
     const payload = { runs, caps: CAPS, rows };
     fs.writeFileSync(outFile, JSON.stringify(payload));
     console.log(`saved ${rows.length} rows -> ${outFile} in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
-
-    // 2/index.html 의 데이터 블록을 새 결과로 교체
-    const htmlFile = path.join(__dirname, "..", "2", "index.html");
-    if (fs.existsSync(htmlFile)) {
-      const html = fs.readFileSync(htmlFile, "utf8");
-      const re = /(\/\*AUTOBET_DATA_START\*\/\s*)const AUTOBET = [\s\S]*?;(\s*\/\*AUTOBET_DATA_END\*\/)/;
-      if (!re.test(html)) throw new Error("2/index.html 에서 AUTOBET_DATA 마커를 찾지 못했습니다.");
-      fs.writeFileSync(htmlFile, html.replace(re, (_, a, b) => `${a}const AUTOBET = ${JSON.stringify(payload)};${b}`));
-      console.log("updated 2/index.html");
-    }
+    injectIntoPage(payload);
   }
+
   for (let i = 0; i < nWorkers; i++) launch();
   // 워커는 시작 시 {ready}를 보내고, 메인은 결과 없는 첫 메시지를 받으면 첫 작업을 배정한다.
 } else {
-  let seedCounter = 0;
   parentPort.on("message", ({ idx, job }) => {
-    const seed = (idx * 2654435761 + 12345) >>> 0;
-    const rnd = mulberry32(seed ^ (++seedCounter * 40503));
-    const result = simulateCombo(job.method, job.firstBet, job.start, workerData.runs, rnd);
+    const method = BET_METHODS.find(m => m.label === job.label);
+    const rnd = mulberry32(((idx * 2654435761 + 12345) >>> 0) ^ (Date.now() & 0xffff) ^ (process.pid << 4));
+    const result = simulateCombo(method, job.firstBet, job.start, workerData.runs, rnd);
     parentPort.postMessage({ idx, result });
   });
   parentPort.postMessage({ ready: true });

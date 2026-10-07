@@ -84,12 +84,16 @@ function injectIntoPage(payload) {
   if (!reData.test(html)) throw new Error("2/index.html 에서 AUTOBET_DATA 마커를 찾지 못했습니다.");
   html = html.replace(reData, (_, a, b) => `${a}const AUTOBET = ${JSON.stringify(payload)};${b}`);
 
-  const reMethods = /(\/\*METHODS_START\*\/)[\s\S]*?(\/\*METHODS_END\*\/)/;
-  if (!reMethods.test(html)) throw new Error("2/index.html 에서 METHODS 마커를 찾지 못했습니다.");
+  const startMark = "/*METHODS_START*/";
+  const endMark = "/*METHODS_END*/";
+  const si = html.indexOf(startMark);
+  const ei = html.lastIndexOf(endMark);
+  if (si < 0 || ei < si) throw new Error("2/index.html 에서 METHODS 마커를 찾지 못했습니다.");
   const methodsSrc = fs.readFileSync(path.join(__dirname, "methods.js"), "utf8")
     .replace(/\r\n/g, "\n")
     .replace(/\nif \(typeof module[^\n]*\n?$/, "\n");
-  html = html.replace(reMethods, (_, a, b) => `${a}\n${methodsSrc}${b}`);
+  if (methodsSrc.includes(startMark) || methodsSrc.includes(endMark)) throw new Error("methods.js 에 주입 마커 문자열이 들어 있습니다.");
+  html = html.slice(0, si + startMark.length) + "\n" + methodsSrc + html.slice(ei);
   fs.writeFileSync(htmlFile, html);
   console.log("updated 2/index.html");
 }

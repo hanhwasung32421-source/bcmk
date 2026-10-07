@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>바카라 자동 배팅법 선택</title>
+  <style>
+    :root{
+      --bg1:#1d2b53;
+      --bg2:#0d132b;
+      --input-bg:#223661;
+      --input-stroke:#5879c6;
+      --player:#4f9dff;
+      --banker:#ff5c5c;
+      --win:#40d17f;
+      --loss:#ff7b7b;
+      --accent1:#ffd000;
+      --accent2:#ff7b00;
+      --accent3:#6f89ff;
+      --text-sub:#dde5ff;
+      --text-hint:#a9b8e8;
+      --white:#fff;
+      --shadow:0 14px 34px rgba(0, 0, 0, .25);
+    }
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Noto Sans KR", "Segoe UI", Roboto, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      color: var(--white);
+      background:
+        radial-gradient(circle at top, rgba(120,142,255,.16), transparent 28%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap{ max-width: 560px; margin: 0 auto; padding: 18px 16px 28px; }
+    .wrap.wide{ max-width: 1100px; }
+    .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; gap:10px; }
+    .home-link{ color: var(--accent3); font-size: 13px; font-weight: 800; text-decoration: none; }
+    .home-link:hover{ color: var(--accent1); }
+    .footer{ display:flex; justify-content:center; margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.08); }
+    .version{
+      display:inline-flex; align-items:center; height:28px; padding:0 12px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08);
+      color:#eaf1ff; font-size:12px; font-weight:800; letter-spacing:.2px;
+    }
+    h1{ margin: 6px 0 8px; font-size: 28px; letter-spacing: -.3px; }
+    .desc{ margin: 0 0 16px; color: var(--text-sub); font-size: 14px; line-height: 1.5; }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .hidden{ display:none !important; }
+    .section-title{ margin: 0 0 12px; font-size: 15px; font-weight: 900; color: #eef3ff; }
+    .setup-header{ display:flex; align-items:center; gap: 10px; margin-bottom: 12px; }
+    .setup-header .section-title{ margin:0; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field{ display:flex; flex-direction:column; gap: 6px; }
+    .field.full{ grid-column: 1 / -1; }
+    .label{ color: var(--text-sub); font-size: 13px; font-weight: 700; }
+    .select{
+      width: 100%; height: 52px; border-radius: 16px; border: 2px solid var(--input-stroke);
+      background: var(--input-bg); color: var(--white); padding: 0 14px; font-size: 18px; outline: none;
+    }
+    .select option{ color:#000; }
+    .btn-row{ display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+    .btn{ height: 52px; border: 0; border-radius: 16px; color: var(--white); font-weight: 900; font-size: 17px; cursor: pointer; }
+    .btn.primary{ background: linear-gradient(90deg, var(--accent1), var(--accent2)); }
+    .btn.win{ background: linear-gradient(90deg, #1ea85d, #40d17f); }
+    .btn.loss{ background: linear-gradient(90deg, #d74848, #ff7b7b); }
+    .btn.tie{ background: linear-gradient(90deg, #d4a017, #ffd85e); }
+    .btn.super6{ background: linear-gradient(90deg, #00b8a9, #4fd8c9); grid-column: 2; }
+    .btn.secondary{ background: linear-gradient(90deg, #4a5b86, #6b7da8); }
+    .btn.gameover{ background: linear-gradient(90deg, #7b4dff, #4e7cff); grid-column: 1 / -1; }
+    .btn.back{ height: 40px; width: auto; flex-shrink: 0; padding: 0 14px; font-size: 13px; background: linear-gradient(90deg, #4a5b86, #6b7da8); }
+    .btn:disabled{ cursor:not-allowed; opacity:.45; filter: grayscale(.25); }
+    .game-stack{ display:flex; flex-direction:column; gap: 14px; }
+    .game-stat{ border-radius: 18px; background: rgba(20,33,61,.9); border: 1px solid rgba(255,255,255,.08); padding: 14px; }
+    .game-stat-row{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items:center; }
+    .game-stat-split{ min-width: 0; }
+    .game-stat-title{ font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 700; }
+    .game-stat-value{ font-size: 28px; font-weight: 900; letter-spacing: -.3px; }
+    .game-actions{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .game-reset{ margin-top: 4px; }
+    .shuffle-box{
+      position: relative; height: 188px; border-radius: 22px; border: 2px solid rgba(255,255,255,.12);
+      background: radial-gradient(circle at 50% -10%, rgba(255,255,255,.12), transparent 30%), linear-gradient(180deg, #18305c, #0f1935);
+      overflow:hidden;
+    }
+    .shuffle-box.active .deck-card.left{ animation: shuffleLeft .5s ease-in-out infinite alternate; }
+    .shuffle-box.active .deck-card.right{ animation: shuffleRight .5s ease-in-out infinite alternate; }
+    .table-glow{
+      position:absolute; inset:auto 24px 18px; height:60px; border-radius: 999px;
+      background: radial-gradient(circle, rgba(37, 214, 118, .35), rgba(37, 214, 118, .02) 72%); filter: blur(10px);
+    }
+    .deck-card{
+      position:absolute; top: 42px; width: 92px; height: 126px; border-radius: 16px;
+      background: linear-gradient(180deg, #fff, #e8eefc); box-shadow: 0 12px 24px rgba(0,0,0,.22);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .deck-card::before{
+      content:""; width: 66px; height: 92px; border-radius: 12px;
+      background: repeating-linear-gradient(45deg, #214c9d 0 8px, #193b79 8px 16px); border: 3px solid #f7fbff;
+    }
+    .deck-card.left{ left: calc(50% - 88px); transform: rotate(-10deg); }
+    .deck-card.right{ left: calc(50% - 4px); transform: rotate(10deg); }
+    .result-side{
+      position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap: 10px; opacity:0; pointer-events:none; transition: opacity .18s ease;
+    }
+    .result-side.show{ opacity:1; }
+    .side-badge{
+      display:inline-flex; align-items:center; justify-content:center; min-width: 178px; height: 62px; padding: 0 20px;
+      border-radius: 18px; border: 2px solid rgba(255,255,255,.18); font-size: 28px; font-weight: 900; box-shadow: var(--shadow);
+    }
+    .side-badge.player{ background: rgba(79,157,255,.18); color: var(--player); }
+    .side-badge.banker{ background: rgba(255,92,92,.18); color: var(--banker); }
+    .side-meta{ color: var(--text-sub); font-size: 14px; font-weight: 700; text-align:center; padding: 0 12px; }
+    .hint{ margin-top: 10px; font-size: 13px; color: var(--text-sub); opacity: .95; line-height: 1.45; }
+    .summary{ margin: 10px 0 0; font-size: 14px; color: var(--text-sub); font-weight: 700; line-height: 1.55; }
+    .history{ display:flex; flex-direction:column; gap: 10px; margin-top: 12px; }
+    .history.empty{
+      min-height: 84px; align-items:center; justify-content:center; color: var(--text-sub);
+      border-radius: 18px; border: 1px dashed rgba(255,255,255,.15); background: rgba(255,255,255,.03);
+    }
+    .history-item{ border-radius: 18px; background: rgba(20,33,61,.92); border: 1px solid rgba(255,255,255,.07); padding: 12px; }
+    .history-top{ display:flex; justify-content:space-between; gap: 10px; align-items:center; margin-bottom: 8px; }
+    .history-round{ font-size: 14px; font-weight: 900; }
+    .history-status{ font-size: 13px; font-weight: 900; padding: 5px 10px; border-radius: 999px; }
+    .history-status.win{ color: var(--win); background: rgba(64,209,127,.12); }
+    .history-status.loss{ color: var(--loss); background: rgba(255,123,123,.12); }
+    .history-status.tie{ color: var(--accent1); background: rgba(255,208,0,.14); }
+    .history-status.super6{ color: #4fd8c9; background: rgba(0,184,169,.14); }
+    .history-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--text-sub); }
+    .history-grid strong{ color: var(--white); font-weight: 900; }
+    .history-grid .player{ color: var(--player); }
+    .history-grid .banker{ color: var(--banker); }
+    .end-box{ margin-top: 12px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+    .end-title{ font-size: 16px; font-weight: 900; margin-bottom: 10px; }
+    .end-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .end-item{ border-radius: 16px; background: rgba(20,33,61,.88); padding: 12px; border: 1px solid rgba(255,255,255,.06); }
+    .end-label{ color: var(--text-sub); font-size: 12px; margin-bottom: 6px; }
+    .end-value{ font-size: 21px; font-weight: 900; }
+    .table-scroll{ overflow-x: auto; border-radius: 14px; border: 1px solid rgba(255,255,255,.08); margin-top: 10px; }
+    .stats-table{ width: 100%; border-collapse: collapse; font-size: 13px; }
+    .stats-table th, .stats-table td{ padding: 10px 10px; text-align: right; white-space: nowrap; }
+    .stats-table th:first-child, .stats-table td:first-child{ text-align: left; }
+    .stats-table thead th{
+      background: rgba(255,255,255,.06); color: var(--text-sub); font-weight: 800; user-select: none;
+      position: sticky; top: 0;
+    }
+    .stats-table.sortable thead th{ cursor: pointer; }
+    .stats-table thead th.sorted-asc::after{ content: " \25B2"; }
+    .stats-table thead th.sorted-desc::after{ content: " \25BC"; }
+    .stats-table tbody tr:nth-child(even){ background: rgba(255,255,255,.03); }
+    .stats-table tbody td{ border-top: 1px solid rgba(255,255,255,.06); }
+    .stats-table tbody tr.best{ background: rgba(255,208,0,.10); }
+    .stats-table tbody tr.best td:first-child{ color: var(--accent1); font-weight: 900; }
+    .badge-best{
+      display:inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 900;
+      color: #1d1500; background: var(--accent1);
+    }
+    .goal{ color: var(--win); font-weight: 800; }
+    .bust{ color: var(--loss); }
+    .matrix td, .matrix th{ text-align: center !important; line-height: 1.35; }
+    .matrix td.cell{ cursor: pointer; }
+    .matrix td.cell:hover{ background: rgba(111,137,255,.18); }
+    .matrix .m-name{ font-weight: 900; color: var(--accent1); }
+    .matrix .m-rate{ color: var(--win); font-size: 12px; }
+    .pick{
+      border-radius: 18px; padding: 12px 14px; margin-top: 12px;
+      background: rgba(255,208,0,.10); border: 1px solid rgba(255,208,0,.35);
+    }
+    .pick-title{ font-size: 12px; color: var(--text-sub); font-weight: 700; margin-bottom: 4px; }
+    .pick-name{ font-size: 22px; font-weight: 900; color: var(--accent1); }
+    .pick-meta{ font-size: 13px; color: var(--text-sub); line-height: 1.55; margin-top: 4px; }
+    .tabs{ display:flex; gap: 8px; margin-bottom: 10px; }
+    .tab{
+      flex: 1; height: 40px; border-radius: 12px; border: 2px solid transparent; font-weight: 900; font-size: 14px;
+      color: var(--text-sub); background: rgba(255,255,255,.07); cursor: pointer;
+    }
+    .tab.active{ border-color: var(--accent3); background: rgba(111,137,255,.2); color: var(--white); }
+    .filters{ display:flex; flex-wrap:wrap; align-items:flex-end; gap: 10px; margin-bottom: 4px; }
+    .filter-field{ display:flex; flex-direction:column; gap: 4px; }
+    .filter-field span{ font-size: 12px; color: var(--text-sub); font-weight: 700; }
+    .filter-select{
+      height: 38px; border-radius: 10px; border: 2px solid var(--input-stroke); background: var(--input-bg);
+      color: var(--white); padding: 0 10px; font-size: 13px; outline: none;
+    }
+    .filter-select option{ color:#000; }
+    @media (max-width: 430px){
+      .stats-table{ font-size: 12px; }
+      .stats-table th, .stats-table td{ padding: 8px 7px; }
+      .grid, .end-grid{ grid-template-columns: 1fr; }
+      .btn-row, .game-actions{ grid-template-columns: 1fr; }
+      .btn.super6{ grid-column: auto; }
+      .side-badge{ min-width: 100%; }
+      .history-grid{ grid-template-columns: 1fr; }
+      .deck-card.left{ left: calc(50% - 82px); }
+      .deck-card.right{ left: calc(50% - 10px); }
+    }
+    @keyframes shuffleLeft{ 0%{ transform: translateX(0) rotate(-10deg); } 100%{ transform: translateX(30px) rotate(10deg); } }
+    @keyframes shuffleRight{ 0%{ transform: translateX(0) rotate(10deg); } 100%{ transform: translateX(-30px) rotate(-10deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <div class="topbar">
+      <a class="home-link" href="../">← 바카라 마틴 메이커</a>
+      <div class="version" id="versionBadge"></div>
+    </div>
+
+    <h1>자동 배팅법 선택</h1>
+    <p class="desc">첫 배팅금액·시작시드·판수를 정하면, 100만 회 시뮬레이션 통계에서 <b>목표달성 확률이 가장 높은 배팅법</b>을 자동으로 골라 바로 게임을 시작합니다. 목표수익은 항상 첫 배팅금액의 4배입니다.</p>
+
+    <!-- 1p: 세팅 -->
+    <div id="setupPage" class="page">
+      <section class="card">
+        <h2 class="section-title">1p 세팅</h2>
+        <div class="grid">
+          <label class="field">
+            <span class="label">첫 배팅금액</span>
+            <select id="firstBetSelect" class="select"></select>
+          </label>
+          <label class="field">
+            <span class="label">총 시작시드</span>
+            <select id="startSelect" class="select"></select>
+          </label>
+          <label class="field full">
+            <span class="label">판수 (이 판수 안에 목표를 달성해야 함)</span>
+            <select id="capSelect" class="select"></select>
+          </label>
+        </div>
+
+        <div class="pick">
+          <div class="pick-title">자동 선택된 배팅법</div>
+          <div class="pick-name" id="pickName">-</div>
+          <div class="pick-meta" id="pickMeta"></div>
+        </div>
+
+        <div class="table-scroll">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>배팅법</th>
+                <th>목표달성</th>
+                <th>파산</th>
+                <th>미달성</th>
+              </tr>
+            </thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+        <p class="hint" id="rankHint"></p>
+
+        <div class="btn-row">
+          <button id="startBtn" class="btn primary" type="button">이 배팅법으로 게임 시작</button>
+          <button id="viewStatsBtn" class="btn secondary" type="button">전체 통계 보기</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- 통계 -->
+    <div id="statsPage" class="page hidden">
+      <section class="card">
+        <div class="setup-header">
+          <button id="statsBackBtn" class="btn back" type="button">← 세팅</button>
+          <h2 class="section-title">전체 통계</h2>
+        </div>
+        <div class="filters">
+          <label class="filter-field">
+            <span>판수</span>
+            <select id="statsCap" class="filter-select"></select>
+          </label>
+        </div>
+        <div class="tabs">
+          <button id="tabMatrix" class="tab active" type="button">최적 배팅법 한눈에</button>
+          <button id="tabTable" class="tab" type="button">전체 표 (360행)</button>
+        </div>
+
+        <div id="matrixView">
+          <p class="hint" style="margin-top:0">첫 배팅금액(행) × 총 시작시드(열) 60개 조합마다 목표달성 확률이 가장 높은 배팅법입니다. 칸을 누르면 그 조합으로 세팅됩니다.</p>
+          <div class="table-scroll">
+            <table class="stats-table matrix" id="matrixTable">
+              <thead id="matrixHead"></thead>
+              <tbody id="matrixBody"></tbody>
+            </table>
+          </div>
+          <p class="hint" id="matrixLegend"></p>
+        </div>
+
+        <div id="tableView" class="hidden">
+          <div class="filters">
+            <label class="filter-field">
+              <span>배팅법</span>
+              <select id="fMethod" class="filter-select"><option value="">전체</option></select>
+            </label>
+            <label class="filter-field">
+              <span>시작시드</span>
+              <select id="fStart" class="filter-select"><option value="">전체</option></select>
+            </label>
+            <label class="filter-field">
+              <span>첫배팅금액</span>
+              <select id="fFirstBet" class="filter-select"><option value="">전체</option></select>
+            </label>
+            <button id="fReset" class="btn back" type="button">필터 초기화</button>
+          </div>
+          <p class="hint" id="tableStatus" style="margin-top:6px"></p>
+          <div class="table-scroll">
+            <table class="stats-table sortable" id="fullTable">
+              <thead>
+                <tr>
+                  <th data-key="label">배팅법</th>
+                  <th data-key="start">총 시작시드</th>
+                  <th data-key="firstBet">첫배팅금액</th>
+                  <th data-key="target">목표수익</th>
+                  <th data-key="goal">목표달성</th>
+                  <th data-key="bust">파산</th>
+                  <th data-key="un">미달성</th>
+                </tr>
+              </thead>
+              <tbody id="fullBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <p class="hint">조건: 각 조합을 <span id="runsText"></span>회씩 시뮬레이션. 판정 확률은 TIE 9.5% · 패배 45.25% · 승리 40.25% · SUPER6 5%(승리 처리, 수익은 배팅금액의 50%)를 가정하며, TIE도 1판으로 셉니다. 목표수익(첫배팅금액×4)에 도달하면 <b>목표달성</b>, 마지막 마틴 단계에서 패배하거나 남은 돈 전부를 건 배팅에서 패배하면 <b>파산</b>, 판수 안에 둘 다 아니면 <b>미달성</b>입니다. 정해진 배팅금액이 남은 돈보다 크면 남은 돈 전부를 배팅합니다. "올인"은 마지막 마틴 단계에서 남은 돈 전부를 배팅합니다.</p>
+      </section>
+    </div>
+
+    <!-- 2p: 게임 -->
+    <div id="gamePage" class="page hidden">
+      <section class="card">
+        <h2 class="section-title">2p 게임 · <span id="gameMethodLabel"></span></h2>
+        <div class="game-stack">
+          <div class="game-stat">
+            <div class="game-stat-row">
+              <div class="game-stat-split">
+                <div class="game-stat-title">현재판</div>
+                <div class="game-stat-value" id="roundInfo">-</div>
+              </div>
+              <div class="game-stat-split">
+                <div class="game-stat-title">배팅금액</div>
+                <div class="game-stat-value" id="betInfo">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="shuffleBox" class="shuffle-box">
+            <div class="table-glow"></div>
+            <div class="deck-card left"></div>
+            <div class="deck-card right"></div>
+            <div id="resultSide" class="result-side">
+              <div id="sideBadge" class="side-badge">대기중</div>
+              <div class="side-meta" id="sideMeta"></div>
+            </div>
+          </div>
+
+          <div class="game-actions">
+            <button id="winBtn" class="btn win" type="button" disabled>승리</button>
+            <button id="tieBtn" class="btn tie" type="button" disabled>TIE</button>
+            <button id="lossBtn" class="btn loss" type="button" disabled>패배</button>
+            <button id="super6Btn" class="btn super6" type="button" disabled>SUPER6</button>
+            <button id="gameOverBtn" class="btn gameover hidden" type="button">게임종료</button>
+          </div>
+
+          <div class="game-reset">
+            <button id="resetBtn" class="btn secondary" type="button">초기화</button>
+          </div>
+
+          <div class="game-stat">
+            <div class="game-stat-row">
+              <div class="game-stat-split">
+                <div class="game-stat-title">총금액</div>
+                <div class="game-stat-value" id="moneyInfo">-</div>
+              </div>
+              <div class="game-stat-split">
+                <div class="game-stat-title">목표금액</div>
+                <div class="game-stat-value" id="goalInfo">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
+
+          <div id="endBox" class="end-box hidden">
+            <div class="end-title" id="endTitle">진행 종료</div>
+            <div class="end-grid">
+              <div class="end-item"><div class="end-label">판 횟수</div><div class="end-value" id="endRounds">0판</div></div>
+              <div class="end-item"><div class="end-label">시작시드</div><div class="end-value" id="endStart">0</div></div>
+              <div class="end-item"><div class="end-label">총 수익</div><div class="end-value" id="endProfit">0</div></div>
+              <div class="end-item"><div class="end-label">총 금액</div><div class="end-value" id="endTotal">0</div></div>
+            </div>
+          </div>
+
+          <div id="history" class="history empty">아직 진행 기록이 없습니다.</div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <div class="version" id="versionBadgeBottom"></div>
+    </footer>
+  </div>
+
+  <script>
+    // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
+    const LAST_EDIT = { date: "2026-10-06", version: 2 };
+
+    function renderVersionBadge() {
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      const version = todayKey === LAST_EDIT.date ? LAST_EDIT.version : 1;
+      const text = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 - 버전${version}`;
+      ["versionBadge", "versionBadgeBottom"].forEach(id => {
+        const badge = document.getElementById(id);
+        if (badge) badge.textContent = text;
+      });
+    }
+    renderVersionBadge();
+
+    const $ = (id) => document.getElementById(id);
+
+    // 시뮬레이션 결과 (sim/simulate.js 가 생성·주입 — 직접 수정하지 말 것)
+    /*AUTOBET_DATA_START*/
+    const AUTOBET = {"runs":1000000,"caps":[10,20,30,60],"rows":[{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":1000,"g10":80.05,"b10":16.68,"u10":3.28,"g20":82.49,"b20":17.45,"u20":0.07,"g30":82.54,"b30":17.46,"u30":0,"g60":82.54,"b60":17.46,"u60":0},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":2000,"g10":79.47,"b10":17.04,"u10":3.49,"g20":81.99,"b20":17.9,"u20":0.11,"g30":82.07,"b30":17.93,"u30":0.01,"g60":82.07,"b60":17.93,"u60":0},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":3000,"g10":65.27,"b10":17.74,"u10":16.99,"g20":74.06,"b20":22.53,"u20":3.42,"g30":75.53,"b30":23.6,"u30":0.87,"g60":76.03,"b60":23.96,"u60":0.02},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":4000,"g10":65.26,"b10":20.89,"u10":13.84,"g20":68.35,"b20":27.38,"u20":4.26,"g30":70.28,"b30":28.91,"u30":0.81,"g60":70.7,"b60":29.29,"u60":0.01},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":5000,"g10":64.26,"b10":28.7,"u10":7.04,"g20":65.47,"b20":32.7,"u20":1.83,"g30":66.33,"b30":33.42,"u30":0.25,"g60":66.45,"b60":33.55,"u60":0},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":6000,"g10":58.88,"b10":34.63,"u10":6.48,"g20":61.77,"b20":37.7,"u20":0.53,"g30":61.95,"b30":37.96,"u30":0.08,"g60":62,"b60":38,"u60":0},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":7000,"g10":53.14,"b10":37.82,"u10":9.03,"g20":58.4,"b20":41.25,"u20":0.35,"g30":58.58,"b30":41.4,"u30":0.02,"g60":58.59,"b60":41.41,"u60":0},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":8000,"g10":48.88,"b10":39.11,"u10":12.01,"g20":55.29,"b20":44.04,"u20":0.68,"g30":55.63,"b30":44.33,"u30":0.04,"g60":55.66,"b60":44.34,"u60":0},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":9000,"g10":45.19,"b10":41.06,"u10":13.76,"g20":52.15,"b20":47,"u20":0.86,"g30":52.57,"b30":47.38,"u30":0.05,"g60":52.6,"b60":47.4,"u60":0},{"label":"슈퍼마틴(4마틴)","start":50000,"firstBet":10000,"g10":44.03,"b10":43.42,"u10":12.56,"g20":50.19,"b20":49.04,"u20":0.77,"g30":50.57,"b30":49.38,"u30":0.04,"g60":50.6,"b60":49.4,"u60":0},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":1000,"g10":80.06,"b10":16.71,"u10":3.23,"g20":82.47,"b20":17.46,"u20":0.06,"g30":82.52,"b30":17.48,"u30":0,"g60":82.52,"b60":17.48,"u60":0},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":2000,"g10":80.05,"b10":16.72,"u10":3.23,"g20":82.43,"b20":17.5,"u20":0.07,"g30":82.48,"b30":17.52,"u30":0,"g60":82.48,"b60":17.52,"u60":0},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":3000,"g10":79.98,"b10":16.75,"u10":3.27,"g20":82.4,"b20":17.54,"u20":0.06,"g30":82.45,"b30":17.55,"u30":0,"g60":82.45,"b60":17.55,"u60":0},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":4000,"g10":79.56,"b10":16.98,"u10":3.46,"g20":82.05,"b20":17.83,"u20":0.11,"g30":82.13,"b30":17.86,"u30":0.01,"g60":82.14,"b60":17.86,"u60":0},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":5000,"g10":71.17,"b10":17.39,"u10":11.44,"g20":78.72,"b20":20.05,"u20":1.23,"g30":79.39,"b30":20.37,"u30":0.24,"g60":79.53,"b60":20.46,"u60":0},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":6000,"g10":65.33,"b10":17.72,"u10":16.95,"g20":74.09,"b20":22.51,"u20":3.41,"g30":75.58,"b30":23.54,"u30":0.88,"g60":76.08,"b60":23.9,"u60":0.02},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":7000,"g10":65.28,"b10":19.17,"u10":15.56,"g20":70.75,"b20":24.78,"u20":4.46,"g30":72.6,"b30":26.33,"u30":1.07,"g60":73.18,"b60":26.8,"u60":0.01},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":8000,"g10":65.31,"b10":20.88,"u10":13.81,"g20":68.39,"b20":27.35,"u20":4.27,"g30":70.35,"b30":28.86,"u30":0.8,"g60":70.76,"b60":29.23,"u60":0.01},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":9000,"g10":65.31,"b10":24.54,"u10":10.15,"g20":66.9,"b20":30.06,"u20":3.04,"g30":68.27,"b30":31.22,"u30":0.51,"g60":68.51,"b60":31.48,"u60":0},{"label":"슈퍼마틴(4마틴)","start":100000,"firstBet":10000,"g10":64.17,"b10":28.79,"u10":7.03,"g20":65.37,"b20":32.79,"u20":1.84,"g30":66.24,"b30":33.51,"u30":0.25,"g60":66.36,"b60":33.64,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":1000,"g10":79.94,"b10":16.75,"u10":3.31,"g20":82.37,"b20":17.56,"u20":0.07,"g30":82.42,"b30":17.57,"u30":0,"g60":82.43,"b60":17.57,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":2000,"g10":80.07,"b10":16.65,"u10":3.28,"g20":82.49,"b20":17.44,"u20":0.07,"g30":82.54,"b30":17.46,"u30":0,"g60":82.54,"b60":17.46,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":3000,"g10":80.08,"b10":16.65,"u10":3.27,"g20":82.5,"b20":17.43,"u20":0.07,"g30":82.55,"b30":17.45,"u30":0,"g60":82.55,"b60":17.45,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":4000,"g10":79.97,"b10":16.72,"u10":3.31,"g20":82.42,"b20":17.51,"u20":0.07,"g30":82.47,"b30":17.53,"u30":0,"g60":82.47,"b60":17.53,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":5000,"g10":80.02,"b10":16.67,"u10":3.31,"g20":82.46,"b20":17.47,"u20":0.07,"g30":82.51,"b30":17.49,"u30":0,"g60":82.51,"b60":17.49,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":6000,"g10":79.51,"b10":17.03,"u10":3.47,"g20":81.99,"b20":17.89,"u20":0.12,"g30":82.07,"b30":17.92,"u30":0.01,"g60":82.08,"b60":17.92,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":7000,"g10":73.53,"b10":17.53,"u10":8.94,"g20":79.74,"b20":19.62,"u20":0.64,"g30":80.12,"b30":19.79,"u30":0.1,"g60":80.18,"b60":19.82,"u60":0},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":8000,"g10":66.9,"b10":17.49,"u10":15.62,"g20":76.62,"b20":21.23,"u20":2.15,"g30":77.72,"b30":21.82,"u30":0.46,"g60":78,"b60":22,"u60":0.01},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":9000,"g10":65.32,"b10":17.75,"u10":16.93,"g20":74.05,"b20":22.57,"u20":3.38,"g30":75.51,"b30":23.63,"u30":0.86,"g60":76.01,"b60":23.97,"u60":0.01},{"label":"슈퍼마틴(4마틴)","start":150000,"firstBet":10000,"g10":65.32,"b10":18.83,"u10":15.85,"g20":72.19,"b20":23.97,"u20":3.83,"g30":73.77,"b30":25.29,"u30":0.95,"g60":74.3,"b60":25.69,"u60":0.01},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":1000,"g10":80.01,"b10":16.72,"u10":3.27,"g20":82.42,"b20":17.51,"u20":0.07,"g30":82.48,"b30":17.52,"u30":0,"g60":82.48,"b60":17.52,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":2000,"g10":80.07,"b10":16.69,"u10":3.24,"g20":82.46,"b20":17.48,"u20":0.06,"g30":82.51,"b30":17.49,"u30":0,"g60":82.51,"b60":17.49,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":3000,"g10":80.05,"b10":16.68,"u10":3.27,"g20":82.46,"b20":17.47,"u20":0.07,"g30":82.52,"b30":17.48,"u30":0,"g60":82.52,"b60":17.48,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":4000,"g10":80.05,"b10":16.66,"u10":3.28,"g20":82.5,"b20":17.44,"u20":0.07,"g30":82.55,"b30":17.45,"u30":0,"g60":82.55,"b60":17.45,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":5000,"g10":80.05,"b10":16.67,"u10":3.28,"g20":82.48,"b20":17.46,"u20":0.07,"g30":82.53,"b30":17.47,"u30":0,"g60":82.53,"b60":17.47,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":6000,"g10":80.04,"b10":16.67,"u10":3.29,"g20":82.47,"b20":17.46,"u20":0.06,"g30":82.52,"b30":17.48,"u30":0,"g60":82.52,"b60":17.48,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":7000,"g10":80.04,"b10":16.68,"u10":3.28,"g20":82.47,"b20":17.46,"u20":0.07,"g30":82.52,"b30":17.48,"u30":0,"g60":82.52,"b60":17.48,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":8000,"g10":79.49,"b10":17.09,"u10":3.43,"g20":81.94,"b20":17.93,"u20":0.12,"g30":82.03,"b30":17.96,"u30":0.01,"g60":82.03,"b60":17.97,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":9000,"g10":76.13,"b10":17.4,"u10":6.48,"g20":80.57,"b20":19,"u20":0.43,"g30":80.83,"b30":19.11,"u30":0.06,"g60":80.87,"b60":19.13,"u60":0},{"label":"슈퍼마틴(4마틴)","start":200000,"firstBet":10000,"g10":71.18,"b10":17.44,"u10":11.39,"g20":78.7,"b20":20.08,"u20":1.22,"g30":79.36,"b30":20.4,"u30":0.24,"g60":79.51,"b60":20.49,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":1000,"g10":80.09,"b10":16.64,"u10":3.27,"g20":82.5,"b20":17.43,"u20":0.07,"g30":82.55,"b30":17.45,"u30":0,"g60":82.55,"b60":17.45,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":2000,"g10":79.97,"b10":16.77,"u10":3.26,"g20":82.37,"b20":17.56,"u20":0.07,"g30":82.42,"b30":17.57,"u30":0,"g60":82.43,"b60":17.57,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":3000,"g10":80.02,"b10":16.71,"u10":3.27,"g20":82.44,"b20":17.49,"u20":0.07,"g30":82.49,"b30":17.51,"u30":0,"g60":82.49,"b60":17.51,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":4000,"g10":79.99,"b10":16.77,"u10":3.24,"g20":82.37,"b20":17.56,"u20":0.07,"g30":82.42,"b30":17.58,"u30":0,"g60":82.42,"b60":17.58,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":5000,"g10":80.01,"b10":16.75,"u10":3.24,"g20":82.39,"b20":17.54,"u20":0.07,"g30":82.45,"b30":17.55,"u30":0,"g60":82.45,"b60":17.55,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":6000,"g10":79.99,"b10":16.75,"u10":3.26,"g20":82.4,"b20":17.53,"u20":0.06,"g30":82.45,"b30":17.55,"u30":0,"g60":82.45,"b60":17.55,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":7000,"g10":80.02,"b10":16.69,"u10":3.29,"g20":82.46,"b20":17.47,"u20":0.07,"g30":82.51,"b30":17.49,"u30":0,"g60":82.51,"b60":17.49,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":8000,"g10":80.06,"b10":16.69,"u10":3.24,"g20":82.46,"b20":17.48,"u20":0.07,"g30":82.51,"b30":17.49,"u30":0,"g60":82.51,"b60":17.49,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":9000,"g10":80.08,"b10":16.66,"u10":3.26,"g20":82.48,"b20":17.44,"u20":0.07,"g30":82.54,"b30":17.46,"u30":0,"g60":82.54,"b60":17.46,"u60":0},{"label":"슈퍼마틴(4마틴)","start":250000,"firstBet":10000,"g10":79.54,"b10":17.03,"u10":3.44,"g20":82,"b20":17.88,"u20":0.12,"g30":82.08,"b30":17.91,"u30":0.01,"g60":82.09,"b60":17.91,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":1000,"g10":80.06,"b10":16.66,"u10":3.28,"g20":82.49,"b20":17.44,"u20":0.07,"g30":82.54,"b30":17.46,"u30":0,"g60":82.54,"b60":17.46,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":2000,"g10":79.98,"b10":16.77,"u10":3.26,"g20":82.39,"b20":17.55,"u20":0.06,"g30":82.44,"b30":17.56,"u30":0,"g60":82.44,"b60":17.56,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":3000,"g10":80.07,"b10":16.67,"u10":3.26,"g20":82.47,"b20":17.46,"u20":0.07,"g30":82.52,"b30":17.48,"u30":0,"g60":82.52,"b60":17.48,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":4000,"g10":80.06,"b10":16.65,"u10":3.29,"g20":82.5,"b20":17.43,"u20":0.07,"g30":82.55,"b30":17.45,"u30":0,"g60":82.55,"b60":17.45,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":5000,"g10":80.04,"b10":16.72,"u10":3.24,"g20":82.43,"b20":17.5,"u20":0.06,"g30":82.48,"b30":17.52,"u30":0,"g60":82.48,"b60":17.52,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":6000,"g10":80.12,"b10":16.63,"u10":3.25,"g20":82.52,"b20":17.42,"u20":0.07,"g30":82.57,"b30":17.43,"u30":0,"g60":82.57,"b60":17.43,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":7000,"g10":80.03,"b10":16.7,"u10":3.28,"g20":82.44,"b20":17.49,"u20":0.07,"g30":82.5,"b30":17.5,"u30":0,"g60":82.5,"b60":17.5,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":8000,"g10":80.09,"b10":16.65,"u10":3.26,"g20":82.51,"b20":17.43,"u20":0.07,"g30":82.56,"b30":17.44,"u30":0,"g60":82.56,"b60":17.44,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":9000,"g10":80.12,"b10":16.62,"u10":3.26,"g20":82.54,"b20":17.39,"u20":0.07,"g30":82.59,"b30":17.41,"u30":0,"g60":82.59,"b60":17.41,"u60":0},{"label":"슈퍼마틴(4마틴)","start":300000,"firstBet":10000,"g10":80.07,"b10":16.65,"u10":3.28,"g20":82.48,"b20":17.45,"u20":0.07,"g30":82.53,"b30":17.47,"u30":0,"g60":82.53,"b60":17.47,"u60":0},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":1000,"g10":82.05,"b10":8.1,"u10":9.85,"g20":89.14,"b20":9.43,"u20":1.43,"g30":89.94,"b30":9.63,"u30":0.43,"g60":90.24,"b60":9.73,"u60":0.03},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":2000,"g10":79.45,"b10":13.72,"u10":6.83,"g20":81.99,"b20":16.64,"u20":1.37,"g30":82.06,"b30":17.21,"u30":0.72,"g60":82.36,"b60":17.6,"u60":0.04},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":3000,"g10":65.29,"b10":17.73,"u10":16.98,"g20":74.08,"b20":22.53,"u20":3.39,"g30":75.55,"b30":23.58,"u30":0.87,"g60":76.05,"b60":23.93,"u60":0.01},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":4000,"g10":65.37,"b10":20.87,"u10":13.75,"g20":68.45,"b20":27.32,"u20":4.23,"g30":70.38,"b30":28.82,"u30":0.81,"g60":70.8,"b60":29.2,"u60":0.01},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":5000,"g10":64.17,"b10":28.76,"u10":7.07,"g20":65.38,"b20":32.79,"u20":1.84,"g30":66.24,"b30":33.51,"u30":0.25,"g60":66.36,"b60":33.64,"u60":0},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":6000,"g10":58.9,"b10":34.52,"u10":6.58,"g20":61.8,"b20":37.64,"u20":0.55,"g30":61.99,"b30":37.92,"u30":0.08,"g60":62.04,"b60":37.96,"u60":0},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":7000,"g10":53.23,"b10":37.69,"u10":9.08,"g20":58.49,"b20":41.15,"u20":0.37,"g30":58.68,"b30":41.3,"u30":0.02,"g60":58.69,"b60":41.31,"u60":0},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":8000,"g10":48.89,"b10":39.1,"u10":12.01,"g20":55.29,"b20":44.04,"u20":0.67,"g30":55.63,"b30":44.33,"u30":0.04,"g60":55.65,"b60":44.35,"u60":0},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":9000,"g10":45.21,"b10":40.92,"u10":13.87,"g20":52.27,"b20":46.87,"u20":0.86,"g30":52.7,"b30":47.25,"u30":0.06,"g60":52.72,"b60":47.28,"u60":0},{"label":"슈퍼마틴(5마틴)","start":50000,"firstBet":10000,"g10":44.18,"b10":43.33,"u10":12.49,"g20":50.31,"b20":48.91,"u20":0.78,"g30":50.7,"b30":49.25,"u30":0.04,"g60":50.72,"b60":49.28,"u60":0},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":1000,"g10":87.18,"b10":8.08,"u10":4.74,"g20":90.26,"b20":8.86,"u20":0.87,"g30":90.95,"b30":8.96,"u30":0.09,"g60":91.02,"b60":8.98,"u60":0},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":2000,"g10":81.99,"b10":8.12,"u10":9.89,"g20":89.07,"b20":9.47,"u20":1.46,"g30":89.88,"b30":9.68,"u30":0.44,"g60":90.18,"b60":9.78,"u60":0.04},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":3000,"g10":80.06,"b10":8.32,"u10":11.62,"g20":82.44,"b20":11.28,"u20":6.28,"g30":83.19,"b30":12.69,"u30":4.13,"g60":85.74,"b60":13.94,"u60":0.32},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":4000,"g10":79.48,"b10":13.76,"u10":6.76,"g20":81.97,"b20":16.62,"u20":1.41,"g30":82.06,"b30":17.21,"u30":0.73,"g60":82.37,"b60":17.59,"u60":0.04},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":5000,"g10":71.14,"b10":17.47,"u10":11.39,"g20":78.68,"b20":20.09,"u20":1.23,"g30":79.35,"b30":20.42,"u30":0.23,"g60":79.49,"b60":20.5,"u60":0},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":6000,"g10":65.26,"b10":17.71,"u10":17.03,"g20":74.04,"b20":22.55,"u20":3.41,"g30":75.54,"b30":23.6,"u30":0.86,"g60":76.02,"b60":23.96,"u60":0.02},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":7000,"g10":65.31,"b10":19.13,"u10":15.55,"g20":70.79,"b20":24.72,"u20":4.49,"g30":72.65,"b30":26.28,"u30":1.08,"g60":73.23,"b60":26.76,"u60":0.02},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":8000,"g10":65.29,"b10":20.88,"u10":13.83,"g20":68.36,"b20":27.37,"u20":4.27,"g30":70.31,"b30":28.88,"u30":0.81,"g60":70.73,"b60":29.26,"u60":0.01},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":9000,"g10":65.32,"b10":24.58,"u10":10.09,"g20":66.89,"b20":30.08,"u20":3.03,"g30":68.27,"b30":31.23,"u30":0.5,"g60":68.51,"b60":31.48,"u60":0},{"label":"슈퍼마틴(5마틴)","start":100000,"firstBet":10000,"g10":64.21,"b10":28.78,"u10":7,"g20":65.42,"b20":32.76,"u20":1.82,"g30":66.27,"b30":33.49,"u30":0.24,"g60":66.39,"b60":33.61,"u60":0},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":1000,"g10":87.13,"b10":8.07,"u10":4.79,"g20":90.2,"b20":8.89,"u20":0.91,"g30":90.91,"b30":9,"u30":0.1,"g60":90.99,"b60":9.01,"u60":0},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":2000,"g10":87.22,"b10":8.04,"u10":4.74,"g20":90.28,"b20":8.84,"u20":0.88,"g30":90.96,"b30":8.95,"u30":0.09,"g60":91.04,"b60":8.96,"u60":0},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":3000,"g10":82.02,"b10":8.09,"u10":9.89,"g20":89.11,"b20":9.43,"u20":1.46,"g30":89.93,"b30":9.63,"u30":0.44,"g60":90.23,"b60":9.74,"u60":0.03},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":4000,"g10":80.05,"b10":8.27,"u10":11.68,"g20":82.48,"b20":10.44,"u20":7.09,"g30":85.61,"b30":11.68,"u30":2.71,"g60":87.09,"b60":12.6,"u60":0.31},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":5000,"g10":80.03,"b10":8.86,"u10":11.11,"g20":82.43,"b20":12.22,"u20":5.36,"g30":82.52,"b30":13.89,"u30":3.59,"g60":84.57,"b60":15.2,"u60":0.23},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":6000,"g10":79.56,"b10":13.7,"u10":6.75,"g20":82.08,"b20":16.55,"u20":1.38,"g30":82.16,"b30":17.13,"u30":0.71,"g60":82.45,"b60":17.51,"u60":0.04},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":7000,"g10":73.75,"b10":17.4,"u10":8.85,"g20":79.89,"b20":19.48,"u20":0.63,"g30":80.27,"b30":19.63,"u30":0.1,"g60":80.33,"b60":19.67,"u60":0},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":8000,"g10":66.81,"b10":17.47,"u10":15.72,"g20":76.59,"b20":21.21,"u20":2.2,"g30":77.71,"b30":21.83,"u30":0.46,"g60":77.99,"b60":22,"u60":0.01},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":9000,"g10":65.22,"b10":17.71,"u10":17.07,"g20":74.05,"b20":22.53,"u20":3.42,"g30":75.54,"b30":23.59,"u30":0.87,"g60":76.03,"b60":23.96,"u60":0.01},{"label":"슈퍼마틴(5마틴)","start":150000,"firstBet":10000,"g10":65.29,"b10":18.88,"u10":15.83,"g20":72.16,"b20":23.99,"u20":3.85,"g30":73.74,"b30":25.31,"u30":0.95,"g60":74.25,"b60":25.73,"u60":0.02},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":1000,"g10":87.23,"b10":8.06,"u10":4.72,"g20":90.27,"b20":8.86,"u20":0.88,"g30":90.95,"b30":8.96,"u30":0.09,"g60":91.02,"b60":8.98,"u60":0},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":2000,"g10":87.15,"b10":8.11,"u10":4.74,"g20":90.2,"b20":8.91,"u20":0.89,"g30":90.89,"b30":9.02,"u30":0.09,"g60":90.96,"b60":9.04,"u60":0},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":3000,"g10":87.24,"b10":8.03,"u10":4.72,"g20":90.29,"b20":8.82,"u20":0.89,"g30":90.98,"b30":8.93,"u30":0.09,"g60":91.05,"b60":8.95,"u60":0},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":4000,"g10":82,"b10":8.12,"u10":9.88,"g20":89.09,"b20":9.46,"u20":1.46,"g30":89.9,"b30":9.66,"u30":0.45,"g60":90.21,"b60":9.76,"u60":0.03},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":5000,"g10":79.99,"b10":8.11,"u10":11.9,"g20":82.87,"b20":10.1,"u20":7.04,"g30":86.53,"b30":11.22,"u30":2.24,"g60":87.75,"b60":11.97,"u60":0.28},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":6000,"g10":80.05,"b10":8.32,"u10":11.63,"g20":82.45,"b20":11.3,"u20":6.25,"g30":83.2,"b30":12.71,"u30":4.09,"g60":85.71,"b60":13.98,"u60":0.31},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":7000,"g10":80.04,"b10":9.01,"u10":10.95,"g20":82.47,"b20":12.93,"u20":4.6,"g30":82.52,"b30":14.54,"u30":2.94,"g60":84.04,"b60":15.78,"u60":0.18},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":8000,"g10":79.53,"b10":13.71,"u10":6.76,"g20":82.01,"b20":16.6,"u20":1.39,"g30":82.09,"b30":17.18,"u30":0.73,"g60":82.39,"b60":17.57,"u60":0.04},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":9000,"g10":76.12,"b10":17.38,"u10":6.5,"g20":80.6,"b20":18.96,"u20":0.44,"g30":80.87,"b30":19.07,"u30":0.06,"g60":80.91,"b60":19.09,"u60":0},{"label":"슈퍼마틴(5마틴)","start":200000,"firstBet":10000,"g10":71.19,"b10":17.46,"u10":11.34,"g20":78.69,"b20":20.07,"u20":1.24,"g30":79.36,"b30":20.39,"u30":0.25,"g60":79.51,"b60":20.48,"u60":0},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":1000,"g10":87.22,"b10":8.03,"u10":4.75,"g20":90.28,"b20":8.83,"u20":0.89,"g30":90.98,"b30":8.93,"u30":0.09,"g60":91.06,"b60":8.94,"u60":0},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":2000,"g10":87.15,"b10":8.09,"u10":4.76,"g20":90.22,"b20":8.89,"u20":0.89,"g30":90.92,"b30":8.99,"u30":0.09,"g60":90.99,"b60":9.01,"u60":0},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":3000,"g10":87.22,"b10":8.06,"u10":4.72,"g20":90.27,"b20":8.84,"u20":0.88,"g30":90.96,"b30":8.95,"u30":0.09,"g60":91.04,"b60":8.96,"u60":0},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":4000,"g10":87.19,"b10":8.08,"u10":4.74,"g20":90.23,"b20":8.88,"u20":0.89,"g30":90.93,"b30":8.98,"u30":0.1,"g60":91,"b60":9,"u60":0},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":5000,"g10":82,"b10":8.1,"u10":9.9,"g20":89.07,"b20":9.45,"u20":1.48,"g30":89.89,"b30":9.65,"u30":0.45,"g60":90.21,"b60":9.76,"u60":0.03},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":6000,"g10":80.04,"b10":8.12,"u10":11.84,"g20":83.65,"b20":9.99,"u20":6.37,"g30":86.96,"b30":10.93,"u30":2.11,"g60":88.18,"b60":11.57,"u60":0.25},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":7000,"g10":80.01,"b10":8.34,"u10":11.66,"g20":82.42,"b20":10.88,"u20":6.7,"g30":84.47,"b30":12.17,"u30":3.36,"g60":86.47,"b60":13.22,"u60":0.31},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":8000,"g10":80.13,"b10":8.51,"u10":11.35,"g20":82.56,"b20":11.68,"u20":5.76,"g30":82.77,"b30":13.29,"u30":3.94,"g60":85.12,"b60":14.61,"u60":0.27},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":9000,"g10":80.07,"b10":9.44,"u10":10.49,"g20":82.49,"b20":13.52,"u20":3.98,"g30":82.55,"b30":14.98,"u30":2.47,"g60":83.76,"b60":16.09,"u60":0.16},{"label":"슈퍼마틴(5마틴)","start":250000,"firstBet":10000,"g10":79.51,"b10":13.72,"u10":6.77,"g20":81.98,"b20":16.63,"u20":1.39,"g30":82.07,"b30":17.21,"u30":0.72,"g60":82.37,"b60":17.59,"u60":0.04},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":1000,"g10":87.26,"b10":8.02,"u10":4.71,"g20":90.29,"b20":8.82,"u20":0.89,"g30":90.99,"b30":8.92,"u30":0.09,"g60":91.06,"b60":8.94,"u60":0},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":2000,"g10":87.22,"b10":8.05,"u10":4.73,"g20":90.26,"b20":8.85,"u20":0.88,"g30":90.95,"b30":8.96,"u30":0.09,"g60":91.03,"b60":8.97,"u60":0},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":3000,"g10":87.19,"b10":8.07,"u10":4.74,"g20":90.25,"b20":8.86,"u20":0.89,"g30":90.95,"b30":8.97,"u30":0.09,"g60":91.02,"b60":8.98,"u60":0},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":4000,"g10":87.21,"b10":8.05,"u10":4.74,"g20":90.28,"b20":8.83,"u20":0.89,"g30":90.97,"b30":8.93,"u30":0.09,"g60":91.05,"b60":8.95,"u60":0},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":5000,"g10":87.19,"b10":8.04,"u10":4.77,"g20":90.25,"b20":8.84,"u20":0.91,"g30":90.93,"b30":8.96,"u30":0.12,"g60":91.02,"b60":8.98,"u60":0},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":6000,"g10":82.02,"b10":8.15,"u10":9.83,"g20":89.07,"b20":9.48,"u20":1.44,"g30":89.88,"b30":9.68,"u30":0.45,"g60":90.19,"b60":9.78,"u60":0.03},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":7000,"g10":79.99,"b10":8.12,"u10":11.89,"g20":84.41,"b20":9.98,"u20":5.62,"g30":87.25,"b30":10.78,"u30":1.97,"g60":88.46,"b60":11.33,"u60":0.21},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":8000,"g10":80.03,"b10":8.26,"u10":11.71,"g20":82.44,"b20":10.44,"u20":7.12,"g30":85.59,"b30":11.68,"u30":2.72,"g60":87.1,"b60":12.6,"u60":0.3},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":9000,"g10":79.99,"b10":8.34,"u10":11.68,"g20":82.4,"b20":11.33,"u20":6.26,"g30":83.16,"b30":12.76,"u30":4.08,"g60":85.66,"b60":14.02,"u60":0.32},{"label":"슈퍼마틴(5마틴)","start":300000,"firstBet":10000,"g10":80.05,"b10":8.84,"u10":11.11,"g20":82.43,"b20":12.2,"u20":5.37,"g30":82.53,"b30":13.87,"u30":3.6,"g60":84.6,"b60":15.17,"u60":0.23},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":1000,"g10":81.87,"b10":16.64,"u10":1.49,"g20":82.95,"b20":17.05,"u20":0,"g30":82.95,"b30":17.05,"u30":0,"g60":82.95,"b60":17.05,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":2000,"g10":79.54,"b10":17,"u10":3.46,"g20":82.06,"b20":17.83,"u20":0.11,"g30":82.14,"b30":17.86,"u30":0.01,"g60":82.14,"b60":17.86,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":3000,"g10":65.33,"b10":17.74,"u10":16.93,"g20":74.06,"b20":22.55,"u20":3.39,"g30":75.51,"b30":23.62,"u30":0.87,"g60":76,"b60":23.98,"u60":0.02},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":4000,"g10":65.38,"b10":20.87,"u10":13.76,"g20":68.45,"b20":27.29,"u20":4.26,"g30":70.37,"b30":28.81,"u30":0.82,"g60":70.81,"b60":29.19,"u60":0.01},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":5000,"g10":64.3,"b10":28.74,"u10":6.96,"g20":65.53,"b20":32.67,"u20":1.81,"g30":66.36,"b30":33.39,"u30":0.25,"g60":66.49,"b60":33.51,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":6000,"g10":58.83,"b10":34.64,"u10":6.52,"g20":61.73,"b20":37.75,"u20":0.53,"g30":61.91,"b30":38.01,"u30":0.08,"g60":61.95,"b60":38.05,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":7000,"g10":53.26,"b10":37.73,"u10":9,"g20":58.47,"b20":41.17,"u20":0.36,"g30":58.65,"b30":41.33,"u30":0.02,"g60":58.66,"b60":41.34,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":8000,"g10":48.82,"b10":39.15,"u10":12.03,"g20":55.26,"b20":44.06,"u20":0.68,"g30":55.61,"b30":44.34,"u30":0.04,"g60":55.63,"b60":44.37,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":9000,"g10":45.26,"b10":40.94,"u10":13.8,"g20":52.25,"b20":46.92,"u20":0.83,"g30":52.66,"b30":47.28,"u30":0.05,"g60":52.69,"b60":47.31,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":50000,"firstBet":10000,"g10":44.09,"b10":43.36,"u10":12.54,"g20":50.24,"b20":49,"u20":0.76,"g30":50.62,"b30":49.34,"u30":0.05,"g60":50.65,"b60":49.35,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":1000,"g10":81.91,"b10":16.58,"u10":1.51,"g20":83.01,"b20":16.99,"u20":0,"g30":83.01,"b30":16.99,"u30":0,"g60":83.01,"b60":16.99,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":2000,"g10":81.91,"b10":16.59,"u10":1.5,"g20":82.99,"b20":17.01,"u20":0,"g30":82.99,"b30":17.01,"u30":0,"g60":82.99,"b60":17.01,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":3000,"g10":81.3,"b10":16.68,"u10":2.03,"g20":82.8,"b20":17.2,"u20":0,"g30":82.8,"b30":17.2,"u30":0,"g60":82.8,"b60":17.2,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":4000,"g10":79.54,"b10":16.99,"u10":3.47,"g20":82.06,"b20":17.82,"u20":0.11,"g30":82.14,"b30":17.85,"u30":0.01,"g60":82.15,"b60":17.85,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":5000,"g10":71.17,"b10":17.48,"u10":11.35,"g20":78.69,"b20":20.1,"u20":1.21,"g30":79.34,"b30":20.42,"u30":0.24,"g60":79.49,"b60":20.51,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":6000,"g10":65.31,"b10":17.71,"u10":16.98,"g20":74.1,"b20":22.53,"u20":3.37,"g30":75.57,"b30":23.57,"u30":0.85,"g60":76.06,"b60":23.93,"u60":0.01},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":7000,"g10":65.31,"b10":19.14,"u10":15.56,"g20":70.82,"b20":24.71,"u20":4.47,"g30":72.65,"b30":26.27,"u30":1.08,"g60":73.24,"b60":26.75,"u60":0.02},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":8000,"g10":65.34,"b10":20.87,"u10":13.79,"g20":68.42,"b20":27.31,"u20":4.27,"g30":70.35,"b30":28.83,"u30":0.82,"g60":70.78,"b60":29.22,"u60":0.01},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":9000,"g10":65.33,"b10":24.6,"u10":10.07,"g20":66.88,"b20":30.07,"u20":3.05,"g30":68.25,"b30":31.24,"u30":0.52,"g60":68.5,"b60":31.5,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":100000,"firstBet":10000,"g10":64.27,"b10":28.69,"u10":7.04,"g20":65.49,"b20":32.68,"u20":1.83,"g30":66.34,"b30":33.42,"u30":0.25,"g60":66.46,"b60":33.54,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":1000,"g10":81.89,"b10":16.61,"u10":1.5,"g20":82.98,"b20":17.02,"u20":0,"g30":82.98,"b30":17.02,"u30":0,"g60":82.98,"b60":17.02,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":2000,"g10":81.88,"b10":16.64,"u10":1.48,"g20":82.95,"b20":17.05,"u20":0,"g30":82.95,"b30":17.05,"u30":0,"g60":82.95,"b60":17.05,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":3000,"g10":81.96,"b10":16.55,"u10":1.49,"g20":83.04,"b20":16.96,"u20":0,"g30":83.04,"b30":16.96,"u30":0,"g60":83.04,"b60":16.96,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":4000,"g10":81.78,"b10":16.65,"u10":1.56,"g20":82.92,"b20":17.08,"u20":0,"g30":82.92,"b30":17.08,"u30":0,"g60":82.92,"b60":17.08,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":5000,"g10":80.62,"b10":16.75,"u10":2.62,"g20":82.62,"b20":17.37,"u20":0.01,"g30":82.63,"b30":17.37,"u30":0,"g60":82.63,"b60":17.37,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":6000,"g10":79.53,"b10":17.03,"u10":3.44,"g20":82.02,"b20":17.86,"u20":0.11,"g30":82.1,"b30":17.89,"u30":0.01,"g60":82.11,"b60":17.89,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":7000,"g10":73.63,"b10":17.41,"u10":8.96,"g20":79.84,"b20":19.52,"u20":0.64,"g30":80.22,"b30":19.68,"u30":0.1,"g60":80.28,"b60":19.71,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":8000,"g10":66.78,"b10":17.48,"u10":15.74,"g20":76.61,"b20":21.19,"u20":2.2,"g30":77.74,"b30":21.79,"u30":0.47,"g60":78.02,"b60":21.97,"u60":0.01},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":9000,"g10":65.29,"b10":17.74,"u10":16.97,"g20":74.05,"b20":22.56,"u20":3.39,"g30":75.51,"b30":23.62,"u30":0.87,"g60":76,"b60":23.99,"u60":0.01},{"label":"슈퍼마틴(4마틴,올인)","start":150000,"firstBet":10000,"g10":65.31,"b10":18.86,"u10":15.82,"g20":72.13,"b20":23.98,"u20":3.89,"g30":73.72,"b30":25.31,"u30":0.97,"g60":74.25,"b60":25.73,"u60":0.01},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":1000,"g10":81.93,"b10":16.58,"u10":1.49,"g20":83,"b20":17,"u20":0,"g30":83,"b30":17,"u30":0,"g60":83,"b60":17,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":2000,"g10":81.91,"b10":16.6,"u10":1.49,"g20":83.01,"b20":16.99,"u20":0,"g30":83.01,"b30":16.99,"u30":0,"g60":83.01,"b60":16.99,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":3000,"g10":81.92,"b10":16.59,"u10":1.49,"g20":83.01,"b20":16.99,"u20":0,"g30":83.01,"b30":16.99,"u30":0,"g60":83.01,"b60":16.99,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":4000,"g10":81.89,"b10":16.6,"u10":1.51,"g20":82.99,"b20":17.01,"u20":0,"g30":82.99,"b30":17.01,"u30":0,"g60":82.99,"b60":17.01,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":5000,"g10":81.85,"b10":16.62,"u10":1.52,"g20":82.96,"b20":17.04,"u20":0,"g30":82.96,"b30":17.04,"u30":0,"g60":82.96,"b60":17.04,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":6000,"g10":81.33,"b10":16.65,"u10":2.02,"g20":82.82,"b20":17.18,"u20":0,"g30":82.82,"b30":17.18,"u30":0,"g60":82.82,"b60":17.18,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":7000,"g10":80.38,"b10":16.66,"u10":2.97,"g20":82.64,"b20":17.34,"u20":0.02,"g30":82.66,"b30":17.34,"u30":0,"g60":82.66,"b60":17.34,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":8000,"g10":79.56,"b10":16.98,"u10":3.47,"g20":82.08,"b20":17.81,"u20":0.11,"g30":82.16,"b30":17.83,"u30":0.01,"g60":82.17,"b60":17.83,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":9000,"g10":76.05,"b10":17.45,"u10":6.5,"g20":80.54,"b20":19.04,"u20":0.43,"g30":80.8,"b30":19.14,"u30":0.06,"g60":80.84,"b60":19.16,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":200000,"firstBet":10000,"g10":71.14,"b10":17.45,"u10":11.41,"g20":78.69,"b20":20.1,"u20":1.22,"g30":79.34,"b30":20.42,"u30":0.24,"g60":79.49,"b60":20.51,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":1000,"g10":81.9,"b10":16.62,"u10":1.48,"g20":82.97,"b20":17.03,"u20":0,"g30":82.97,"b30":17.03,"u30":0,"g60":82.97,"b60":17.03,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":2000,"g10":81.93,"b10":16.56,"u10":1.51,"g20":83.02,"b20":16.98,"u20":0,"g30":83.02,"b30":16.98,"u30":0,"g60":83.02,"b60":16.98,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":3000,"g10":81.89,"b10":16.59,"u10":1.52,"g20":82.98,"b20":17.02,"u20":0,"g30":82.98,"b30":17.02,"u30":0,"g60":82.98,"b60":17.02,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":4000,"g10":81.91,"b10":16.58,"u10":1.51,"g20":83.01,"b20":16.99,"u20":0,"g30":83.01,"b30":16.99,"u30":0,"g60":83.01,"b60":16.99,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":5000,"g10":81.81,"b10":16.67,"u10":1.52,"g20":82.91,"b20":17.09,"u20":0,"g30":82.91,"b30":17.09,"u30":0,"g60":82.91,"b60":17.09,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":6000,"g10":81.91,"b10":16.58,"u10":1.51,"g20":82.99,"b20":17.01,"u20":0,"g30":82.99,"b30":17.01,"u30":0,"g60":82.99,"b60":17.01,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":7000,"g10":81.56,"b10":16.71,"u10":1.73,"g20":82.81,"b20":17.19,"u20":0,"g30":82.81,"b30":17.19,"u30":0,"g60":82.81,"b60":17.19,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":8000,"g10":80.91,"b10":16.71,"u10":2.38,"g20":82.71,"b20":17.29,"u20":0,"g30":82.71,"b30":17.29,"u30":0,"g60":82.71,"b60":17.29,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":9000,"g10":80.22,"b10":16.64,"u10":3.14,"g20":82.63,"b20":17.34,"u20":0.03,"g30":82.65,"b30":17.35,"u30":0,"g60":82.65,"b60":17.35,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":250000,"firstBet":10000,"g10":79.53,"b10":17.02,"u10":3.45,"g20":82.04,"b20":17.85,"u20":0.11,"g30":82.12,"b30":17.88,"u30":0.01,"g60":82.12,"b60":17.88,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":1000,"g10":81.9,"b10":16.61,"u10":1.49,"g20":82.98,"b20":17.02,"u20":0,"g30":82.98,"b30":17.02,"u30":0,"g60":82.98,"b60":17.02,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":2000,"g10":81.88,"b10":16.6,"u10":1.52,"g20":82.99,"b20":17.01,"u20":0,"g30":82.99,"b30":17.01,"u30":0,"g60":82.99,"b60":17.01,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":3000,"g10":81.89,"b10":16.59,"u10":1.51,"g20":82.99,"b20":17.01,"u20":0,"g30":82.99,"b30":17.01,"u30":0,"g60":82.99,"b60":17.01,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":4000,"g10":81.97,"b10":16.54,"u10":1.49,"g20":83.04,"b20":16.96,"u20":0,"g30":83.04,"b30":16.96,"u30":0,"g60":83.04,"b60":16.96,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":5000,"g10":81.91,"b10":16.59,"u10":1.49,"g20":82.99,"b20":17.01,"u20":0,"g30":82.99,"b30":17.01,"u30":0,"g60":82.99,"b60":17.01,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":6000,"g10":81.86,"b10":16.65,"u10":1.5,"g20":82.94,"b20":17.06,"u20":0,"g30":82.94,"b30":17.06,"u30":0,"g60":82.94,"b60":17.06,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":7000,"g10":81.93,"b10":16.57,"u10":1.5,"g20":83.01,"b20":16.99,"u20":0,"g30":83.01,"b30":16.99,"u30":0,"g60":83.01,"b60":16.99,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":8000,"g10":81.75,"b10":16.66,"u10":1.6,"g20":82.91,"b20":17.09,"u20":0,"g30":82.91,"b30":17.09,"u30":0,"g60":82.91,"b60":17.09,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":9000,"g10":81.29,"b10":16.69,"u10":2.02,"g20":82.79,"b20":17.21,"u20":0,"g30":82.79,"b30":17.21,"u30":0,"g60":82.79,"b60":17.21,"u60":0},{"label":"슈퍼마틴(4마틴,올인)","start":300000,"firstBet":10000,"g10":80.6,"b10":16.76,"u10":2.64,"g20":82.59,"b20":17.4,"u20":0.01,"g30":82.6,"b30":17.4,"u30":0,"g60":82.6,"b60":17.4,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":1000,"g10":81.97,"b10":8.1,"u10":9.93,"g20":89.06,"b20":9.49,"u20":1.45,"g30":89.86,"b30":9.69,"u30":0.45,"g60":90.18,"b60":9.79,"u60":0.03},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":2000,"g10":79.59,"b10":13.66,"u10":6.75,"g20":82.07,"b20":16.55,"u20":1.39,"g30":82.15,"b30":17.12,"u30":0.72,"g60":82.45,"b60":17.51,"u60":0.04},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":3000,"g10":65.35,"b10":17.72,"u10":16.93,"g20":74.08,"b20":22.53,"u20":3.39,"g30":75.55,"b30":23.59,"u30":0.86,"g60":76.04,"b60":23.95,"u60":0.01},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":4000,"g10":65.29,"b10":20.86,"u10":13.85,"g20":68.37,"b20":27.37,"u20":4.26,"g30":70.32,"b30":28.87,"u30":0.81,"g60":70.74,"b60":29.25,"u60":0.01},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":5000,"g10":64.18,"b10":28.76,"u10":7.06,"g20":65.39,"b20":32.77,"u20":1.84,"g30":66.25,"b30":33.49,"u30":0.26,"g60":66.37,"b60":33.63,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":6000,"g10":58.88,"b10":34.54,"u10":6.58,"g20":61.79,"b20":37.67,"u20":0.55,"g30":61.97,"b30":37.95,"u30":0.08,"g60":62.02,"b60":37.98,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":7000,"g10":53.21,"b10":37.72,"u10":9.08,"g20":58.44,"b20":41.18,"u20":0.37,"g30":58.63,"b30":41.34,"u30":0.02,"g60":58.65,"b60":41.35,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":8000,"g10":48.89,"b10":39.12,"u10":11.99,"g20":55.27,"b20":44.06,"u20":0.68,"g30":55.62,"b30":44.34,"u30":0.04,"g60":55.64,"b60":44.36,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":9000,"g10":45.15,"b10":41.06,"u10":13.79,"g20":52.16,"b20":46.99,"u20":0.85,"g30":52.6,"b30":47.35,"u30":0.05,"g60":52.62,"b60":47.38,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":50000,"firstBet":10000,"g10":44.04,"b10":43.45,"u10":12.52,"g20":50.22,"b20":49.02,"u20":0.76,"g30":50.59,"b30":49.36,"u30":0.05,"g60":50.62,"b60":49.38,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":1000,"g10":88.13,"b10":8.04,"u10":3.83,"g20":91.2,"b20":8.72,"u20":0.07,"g30":91.26,"b30":8.73,"u30":0,"g60":91.27,"b60":8.73,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":2000,"g10":81.93,"b10":8.13,"u10":9.94,"g20":89.05,"b20":9.5,"u20":1.45,"g30":89.85,"b30":9.7,"u30":0.45,"g60":90.16,"b60":9.8,"u60":0.03},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":3000,"g10":80.02,"b10":8.27,"u10":11.71,"g20":82.43,"b20":11.25,"u20":6.32,"g30":83.18,"b30":12.66,"u30":4.16,"g60":85.74,"b60":13.95,"u60":0.31},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":4000,"g10":79.55,"b10":13.72,"u10":6.74,"g20":82.02,"b20":16.61,"u20":1.37,"g30":82.1,"b30":17.18,"u30":0.71,"g60":82.4,"b60":17.56,"u60":0.04},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":5000,"g10":71.19,"b10":17.47,"u10":11.34,"g20":78.65,"b20":20.12,"u20":1.23,"g30":79.33,"b30":20.43,"u30":0.23,"g60":79.48,"b60":20.52,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":6000,"g10":65.27,"b10":17.78,"u10":16.95,"g20":74.05,"b20":22.59,"u20":3.36,"g30":75.52,"b30":23.62,"u30":0.86,"g60":76.01,"b60":23.98,"u60":0.01},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":7000,"g10":65.3,"b10":19.12,"u10":15.58,"g20":70.77,"b20":24.72,"u20":4.51,"g30":72.62,"b30":26.3,"u30":1.07,"g60":73.2,"b60":26.78,"u60":0.01},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":8000,"g10":65.25,"b10":20.91,"u10":13.84,"g20":68.36,"b20":27.39,"u20":4.24,"g30":70.3,"b30":28.9,"u30":0.8,"g60":70.71,"b60":29.29,"u60":0.01},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":9000,"g10":65.22,"b10":24.69,"u10":10.09,"g20":66.77,"b20":30.2,"u20":3.02,"g30":68.13,"b30":31.36,"u30":0.51,"g60":68.38,"b60":31.62,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":100000,"firstBet":10000,"g10":64.26,"b10":28.71,"u10":7.03,"g20":65.46,"b20":32.71,"u20":1.83,"g30":66.31,"b30":33.44,"u30":0.25,"g60":66.42,"b60":33.58,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":1000,"g10":88.13,"b10":8.03,"u10":3.83,"g20":91.21,"b20":8.71,"u20":0.08,"g30":91.28,"b30":8.72,"u30":0,"g60":91.28,"b60":8.72,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":2000,"g10":87.3,"b10":8.08,"u10":4.62,"g20":91.07,"b20":8.82,"u20":0.11,"g30":91.16,"b30":8.84,"u30":0,"g60":91.16,"b60":8.84,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":3000,"g10":81.98,"b10":8.13,"u10":9.89,"g20":89.06,"b20":9.47,"u20":1.47,"g30":89.88,"b30":9.68,"u30":0.44,"g60":90.18,"b60":9.79,"u60":0.03},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":4000,"g10":80.07,"b10":8.25,"u10":11.68,"g20":82.5,"b20":10.43,"u20":7.07,"g30":85.61,"b30":11.67,"u30":2.72,"g60":87.1,"b60":12.58,"u60":0.31},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":5000,"g10":80.02,"b10":8.9,"u10":11.08,"g20":82.43,"b20":12.27,"u20":5.3,"g30":82.53,"b30":13.94,"u30":3.53,"g60":84.55,"b60":15.23,"u60":0.22},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":6000,"g10":79.52,"b10":13.75,"u10":6.73,"g20":81.97,"b20":16.66,"u20":1.37,"g30":82.05,"b30":17.23,"u30":0.72,"g60":82.35,"b60":17.61,"u60":0.04},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":7000,"g10":73.75,"b10":17.39,"u10":8.86,"g20":79.88,"b20":19.49,"u20":0.63,"g30":80.25,"b30":19.65,"u30":0.1,"g60":80.31,"b60":19.69,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":8000,"g10":66.93,"b10":17.46,"u10":15.61,"g20":76.7,"b20":21.12,"u20":2.18,"g30":77.83,"b30":21.71,"u30":0.46,"g60":78.1,"b60":21.89,"u60":0.01},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":9000,"g10":65.31,"b10":17.76,"u10":16.93,"g20":74.08,"b20":22.54,"u20":3.38,"g30":75.55,"b30":23.59,"u30":0.86,"g60":76.03,"b60":23.96,"u60":0.01},{"label":"슈퍼마틴(5마틴,올인)","start":150000,"firstBet":10000,"g10":65.29,"b10":18.88,"u10":15.83,"g20":72.18,"b20":23.99,"u20":3.83,"g30":73.75,"b30":25.29,"u30":0.96,"g60":74.27,"b60":25.72,"u60":0.02},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":1000,"g10":88.13,"b10":8.06,"u10":3.82,"g20":91.19,"b20":8.73,"u20":0.08,"g30":91.26,"b30":8.74,"u30":0,"g60":91.26,"b60":8.74,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":2000,"g10":88.11,"b10":8.07,"u10":3.82,"g20":91.18,"b20":8.74,"u20":0.08,"g30":91.24,"b30":8.75,"u30":0,"g60":91.25,"b60":8.75,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":3000,"g10":87.14,"b10":8.11,"u10":4.75,"g20":90.85,"b20":8.89,"u20":0.25,"g30":91.05,"b30":8.93,"u30":0.02,"g60":91.07,"b60":8.93,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":4000,"g10":82,"b10":8.14,"u10":9.86,"g20":89.1,"b20":9.46,"u20":1.43,"g30":89.9,"b30":9.65,"u30":0.45,"g60":90.21,"b60":9.76,"u60":0.03},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":5000,"g10":80,"b10":8.11,"u10":11.88,"g20":82.89,"b20":10.08,"u20":7.03,"g30":86.52,"b30":11.2,"u30":2.29,"g60":87.76,"b60":11.95,"u60":0.29},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":6000,"g10":80.04,"b10":8.3,"u10":11.66,"g20":82.45,"b20":11.27,"u20":6.28,"g30":83.2,"b30":12.7,"u30":4.09,"g60":85.72,"b60":13.96,"u60":0.32},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":7000,"g10":80.14,"b10":8.96,"u10":10.91,"g20":82.55,"b20":12.88,"u20":4.57,"g30":82.6,"b30":14.48,"u30":2.92,"g60":84.12,"b60":15.69,"u60":0.19},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":8000,"g10":79.52,"b10":13.69,"u10":6.78,"g20":82,"b20":16.6,"u20":1.4,"g30":82.08,"b30":17.18,"u30":0.73,"g60":82.38,"b60":17.58,"u60":0.04},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":9000,"g10":76.15,"b10":17.38,"u10":6.46,"g20":80.59,"b20":18.98,"u20":0.43,"g30":80.85,"b30":19.09,"u30":0.06,"g60":80.89,"b60":19.11,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":200000,"firstBet":10000,"g10":71.15,"b10":17.45,"u10":11.4,"g20":78.67,"b20":20.12,"u20":1.21,"g30":79.33,"b30":20.43,"u30":0.23,"g60":79.48,"b60":20.52,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":1000,"g10":88.09,"b10":8.07,"u10":3.84,"g20":91.18,"b20":8.75,"u20":0.07,"g30":91.24,"b30":8.76,"u30":0,"g60":91.24,"b60":8.76,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":2000,"g10":88.12,"b10":8.06,"u10":3.82,"g20":91.19,"b20":8.73,"u20":0.08,"g30":91.25,"b30":8.74,"u30":0,"g60":91.26,"b60":8.74,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":3000,"g10":88.01,"b10":8.07,"u10":3.92,"g20":91.17,"b20":8.75,"u20":0.08,"g30":91.24,"b30":8.76,"u30":0,"g60":91.24,"b60":8.76,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":4000,"g10":87.15,"b10":8.08,"u10":4.77,"g20":90.64,"b20":8.89,"u20":0.47,"g30":91.01,"b30":8.95,"u30":0.04,"g60":91.04,"b60":8.96,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":5000,"g10":82.1,"b10":8.05,"u10":9.85,"g20":89.13,"b20":9.39,"u20":1.48,"g30":89.97,"b30":9.59,"u30":0.44,"g60":90.27,"b60":9.69,"u60":0.03},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":6000,"g10":80.01,"b10":8.12,"u10":11.87,"g20":83.58,"b20":9.99,"u20":6.42,"g30":86.95,"b30":10.95,"u30":2.1,"g60":88.17,"b60":11.58,"u60":0.24},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":7000,"g10":80.02,"b10":8.3,"u10":11.67,"g20":82.42,"b20":10.87,"u20":6.7,"g30":84.47,"b30":12.14,"u30":3.38,"g60":86.48,"b60":13.2,"u60":0.32},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":8000,"g10":80.04,"b10":8.57,"u10":11.39,"g20":82.45,"b20":11.73,"u20":5.82,"g30":82.65,"b30":13.36,"u30":3.98,"g60":85.02,"b60":14.69,"u60":0.29},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":9000,"g10":80.01,"b10":9.42,"u10":10.57,"g20":82.43,"b20":13.53,"u20":4.04,"g30":82.48,"b30":15.01,"u30":2.51,"g60":83.72,"b60":16.13,"u60":0.15},{"label":"슈퍼마틴(5마틴,올인)","start":250000,"firstBet":10000,"g10":79.56,"b10":13.72,"u10":6.72,"g20":82.02,"b20":16.6,"u20":1.38,"g30":82.1,"b30":17.18,"u30":0.72,"g60":82.41,"b60":17.56,"u60":0.04},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":1000,"g10":88.08,"b10":8.09,"u10":3.82,"g20":91.16,"b20":8.76,"u20":0.07,"g30":91.22,"b30":8.78,"u30":0,"g60":91.22,"b60":8.78,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":2000,"g10":88.13,"b10":8.02,"u10":3.85,"g20":91.24,"b20":8.69,"u20":0.08,"g30":91.3,"b30":8.7,"u30":0,"g60":91.3,"b60":8.7,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":3000,"g10":88.13,"b10":8.04,"u10":3.83,"g20":91.22,"b20":8.7,"u20":0.08,"g30":91.28,"b30":8.72,"u30":0,"g60":91.28,"b60":8.72,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":4000,"g10":87.34,"b10":8.05,"u10":4.61,"g20":91.09,"b20":8.8,"u20":0.11,"g30":91.18,"b30":8.82,"u30":0,"g60":91.18,"b60":8.82,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":5000,"g10":87.17,"b10":8.09,"u10":4.75,"g20":90.47,"b20":8.88,"u20":0.65,"g30":90.97,"b30":8.97,"u30":0.06,"g60":91.02,"b60":8.98,"u60":0},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":6000,"g10":82.06,"b10":8.04,"u10":9.89,"g20":89.15,"b20":9.4,"u20":1.45,"g30":89.96,"b30":9.6,"u30":0.44,"g60":90.26,"b60":9.71,"u60":0.03},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":7000,"g10":80.04,"b10":8.12,"u10":11.84,"g20":84.45,"b20":9.95,"u20":5.6,"g30":87.25,"b30":10.78,"u30":1.97,"g60":88.46,"b60":11.33,"u60":0.2},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":8000,"g10":80,"b10":8.27,"u10":11.73,"g20":82.44,"b20":10.43,"u20":7.13,"g30":85.58,"b30":11.71,"u30":2.71,"g60":87.06,"b60":12.63,"u60":0.31},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":9000,"g10":80.03,"b10":8.28,"u10":11.69,"g20":82.46,"b20":11.27,"u20":6.27,"g30":83.21,"b30":12.68,"u30":4.11,"g60":85.75,"b60":13.95,"u60":0.3},{"label":"슈퍼마틴(5마틴,올인)","start":300000,"firstBet":10000,"g10":80.03,"b10":8.88,"u10":11.1,"g20":82.44,"b20":12.23,"u20":5.33,"g30":82.54,"b30":13.89,"u30":3.57,"g60":84.57,"b60":15.2,"u60":0.23},{"label":"일반마틴(4마틴)","start":50000,"firstBet":1000,"g10":57.9,"b10":20.64,"u10":21.46,"g20":73.45,"b20":25.53,"u20":1.02,"g30":74.19,"b30":25.76,"u30":0.06,"g60":74.23,"b60":25.77,"u60":0},{"label":"일반마틴(4마틴)","start":50000,"firstBet":2000,"g10":57.92,"b10":20.59,"u10":21.49,"g20":73.5,"b20":25.48,"u20":1.02,"g30":74.23,"b30":25.71,"u30":0.06,"g60":74.27,"b60":25.73,"u60":0},{"label":"일반마틴(4마틴)","start":50000,"firstBet":3000,"g10":57.86,"b10":20.63,"u10":21.51,"g20":73.46,"b20":25.51,"u20":1.04,"g30":74.19,"b30":25.74,"u30":0.07,"g60":74.24,"b60":25.76,"u60":0},{"label":"일반마틴(4마틴)","start":50000,"firstBet":4000,"g10":52.3,"b10":20.66,"u10":27.04,"g20":69.88,"b20":27.03,"u20":3.08,"g30":71.69,"b30":27.8,"u30":0.51,"g60":72.02,"b60":27.97,"u60":0.01},{"label":"일반마틴(4마틴)","start":50000,"firstBet":5000,"g10":48.8,"b10":21.53,"u10":29.67,"g20":63.58,"b20":29.84,"u20":6.58,"g30":66.69,"b30":31.74,"u30":1.57,"g60":67.62,"b60":32.36,"u60":0.03},{"label":"일반마틴(4마틴)","start":50000,"firstBet":6000,"g10":48.62,"b10":23.42,"u10":27.95,"g20":58.88,"b20":33.24,"u20":7.88,"g30":62.37,"b30":35.81,"u30":1.83,"g60":63.38,"b60":36.59,"u60":0.02},{"label":"일반마틴(4마틴)","start":50000,"firstBet":7000,"g10":48.63,"b10":27.71,"u10":23.67,"g20":56.88,"b20":37.26,"u20":5.86,"g30":59.38,"b30":39.35,"u30":1.27,"g60":60.05,"b60":39.94,"u60":0.01},{"label":"일반마틴(4마틴)","start":50000,"firstBet":8000,"g10":45.58,"b10":32.35,"u10":22.07,"g20":54.33,"b20":41.29,"u20":4.38,"g30":56.21,"b30":42.94,"u30":0.85,"g60":56.66,"b60":43.34,"u60":0.01},{"label":"일반마틴(4마틴)","start":50000,"firstBet":9000,"g10":41.92,"b10":34.88,"u10":23.2,"g20":51.84,"b20":44.64,"u20":3.53,"g30":53.24,"b30":46.12,"u30":0.65,"g60":53.56,"b60":46.43,"u60":0},{"label":"일반마틴(4마틴)","start":50000,"firstBet":10000,"g10":41.14,"b10":39.35,"u10":19.51,"g20":50.53,"b20":47.28,"u20":2.19,"g30":51.47,"b30":48.23,"u30":0.29,"g60":51.63,"b60":48.37,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":1000,"g10":57.97,"b10":20.56,"u10":21.48,"g20":73.55,"b20":25.43,"u20":1.02,"g30":74.27,"b30":25.67,"u30":0.06,"g60":74.32,"b60":25.68,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":2000,"g10":57.97,"b10":20.58,"u10":21.45,"g20":73.56,"b20":25.43,"u20":1.01,"g30":74.29,"b30":25.65,"u30":0.06,"g60":74.33,"b60":25.67,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":3000,"g10":58.02,"b10":20.55,"u10":21.43,"g20":73.57,"b20":25.41,"u20":1.02,"g30":74.3,"b30":25.64,"u30":0.06,"g60":74.35,"b60":25.65,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":4000,"g10":57.92,"b10":20.61,"u10":21.47,"g20":73.5,"b20":25.47,"u20":1.03,"g30":74.23,"b30":25.71,"u30":0.06,"g60":74.28,"b60":25.72,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":5000,"g10":57.95,"b10":20.59,"u10":21.46,"g20":73.53,"b20":25.44,"u20":1.03,"g30":74.26,"b30":25.67,"u30":0.06,"g60":74.31,"b60":25.69,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":6000,"g10":57.94,"b10":20.54,"u10":21.52,"g20":73.54,"b20":25.41,"u20":1.05,"g30":74.28,"b30":25.65,"u30":0.07,"g60":74.33,"b60":25.67,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":7000,"g10":56.51,"b10":20.61,"u10":22.87,"g20":72.9,"b20":25.75,"u20":1.35,"g30":73.77,"b30":26.08,"u30":0.15,"g60":73.87,"b60":26.12,"u60":0},{"label":"일반마틴(4마틴)","start":100000,"firstBet":8000,"g10":52.32,"b10":20.62,"u10":27.05,"g20":69.88,"b20":27.02,"u20":3.1,"g30":71.68,"b30":27.79,"u30":0.53,"g60":72.02,"b60":27.97,"u60":0.01},{"label":"일반마틴(4마틴)","start":100000,"firstBet":9000,"g10":49.88,"b10":20.67,"u10":29.45,"g20":66.43,"b20":28.29,"u20":5.28,"g30":69.05,"b30":29.74,"u30":1.21,"g60":69.8,"b60":30.18,"u60":0.02},{"label":"일반마틴(4마틴)","start":100000,"firstBet":10000,"g10":48.89,"b10":21.53,"u10":29.59,"g20":63.62,"b20":29.79,"u20":6.6,"g30":66.72,"b30":31.7,"u30":1.57,"g60":67.65,"b60":32.32,"u60":0.03},{"label":"일반마틴(4마틴)","start":150000,"firstBet":1000,"g10":57.97,"b10":20.57,"u10":21.47,"g20":73.53,"b20":25.44,"u20":1.04,"g30":74.28,"b30":25.67,"u30":0.06,"g60":74.32,"b60":25.68,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":2000,"g10":57.96,"b10":20.6,"u10":21.44,"g20":73.54,"b20":25.44,"u20":1.02,"g30":74.28,"b30":25.66,"u30":0.06,"g60":74.32,"b60":25.68,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":3000,"g10":57.99,"b10":20.57,"u10":21.45,"g20":73.54,"b20":25.42,"u20":1.04,"g30":74.28,"b30":25.65,"u30":0.06,"g60":74.33,"b60":25.67,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":4000,"g10":57.88,"b10":20.61,"u10":21.52,"g20":73.51,"b20":25.48,"u20":1.01,"g30":74.23,"b30":25.71,"u30":0.06,"g60":74.28,"b60":25.72,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":5000,"g10":58,"b10":20.55,"u10":21.45,"g20":73.54,"b20":25.42,"u20":1.04,"g30":74.29,"b30":25.65,"u30":0.06,"g60":74.34,"b60":25.66,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":6000,"g10":57.91,"b10":20.58,"u10":21.51,"g20":73.53,"b20":25.46,"u20":1.01,"g30":74.26,"b30":25.68,"u30":0.06,"g60":74.3,"b60":25.7,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":7000,"g10":57.95,"b10":20.57,"u10":21.49,"g20":73.53,"b20":25.44,"u20":1.04,"g30":74.26,"b30":25.67,"u30":0.06,"g60":74.31,"b60":25.69,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":8000,"g10":57.96,"b10":20.59,"u10":21.45,"g20":73.53,"b20":25.45,"u20":1.02,"g30":74.26,"b30":25.69,"u30":0.06,"g60":74.3,"b60":25.7,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":9000,"g10":57.96,"b10":20.61,"u10":21.43,"g20":73.5,"b20":25.45,"u20":1.04,"g30":74.23,"b30":25.69,"u30":0.07,"g60":74.29,"b60":25.71,"u60":0},{"label":"일반마틴(4마틴)","start":150000,"firstBet":10000,"g10":57.87,"b10":20.65,"u10":21.47,"g20":73.39,"b20":25.54,"u20":1.07,"g30":74.13,"b30":25.79,"u30":0.08,"g60":74.19,"b60":25.81,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":1000,"g10":57.85,"b10":20.7,"u10":21.44,"g20":73.4,"b20":25.58,"u20":1.02,"g30":74.13,"b30":25.81,"u30":0.06,"g60":74.17,"b60":25.83,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":2000,"g10":57.95,"b10":20.55,"u10":21.5,"g20":73.56,"b20":25.43,"u20":1.01,"g30":74.29,"b30":25.65,"u30":0.06,"g60":74.33,"b60":25.67,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":3000,"g10":57.87,"b10":20.68,"u10":21.45,"g20":73.45,"b20":25.53,"u20":1.02,"g30":74.18,"b30":25.76,"u30":0.06,"g60":74.22,"b60":25.78,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":4000,"g10":58.02,"b10":20.57,"u10":21.41,"g20":73.56,"b20":25.43,"u20":1.01,"g30":74.29,"b30":25.65,"u30":0.06,"g60":74.33,"b60":25.67,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":5000,"g10":57.94,"b10":20.62,"u10":21.43,"g20":73.5,"b20":25.48,"u20":1.02,"g30":74.23,"b30":25.71,"u30":0.06,"g60":74.28,"b60":25.72,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":6000,"g10":57.88,"b10":20.61,"u10":21.51,"g20":73.48,"b20":25.5,"u20":1.03,"g30":74.22,"b30":25.72,"u30":0.06,"g60":74.26,"b60":25.74,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":7000,"g10":57.95,"b10":20.59,"u10":21.46,"g20":73.5,"b20":25.47,"u20":1.03,"g30":74.25,"b30":25.69,"u30":0.06,"g60":74.29,"b60":25.71,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":8000,"g10":57.94,"b10":20.57,"u10":21.5,"g20":73.54,"b20":25.43,"u20":1.02,"g30":74.28,"b30":25.66,"u30":0.06,"g60":74.32,"b60":25.68,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":9000,"g10":57.94,"b10":20.55,"u10":21.51,"g20":73.56,"b20":25.42,"u20":1.02,"g30":74.29,"b30":25.65,"u30":0.06,"g60":74.34,"b60":25.66,"u60":0},{"label":"일반마틴(4마틴)","start":200000,"firstBet":10000,"g10":58.01,"b10":20.58,"u10":21.41,"g20":73.53,"b20":25.44,"u20":1.03,"g30":74.27,"b30":25.66,"u30":0.07,"g60":74.32,"b60":25.68,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":1000,"g10":58.02,"b10":20.56,"u10":21.41,"g20":73.58,"b20":25.42,"u20":1,"g30":74.3,"b30":25.64,"u30":0.06,"g60":74.35,"b60":25.65,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":2000,"g10":57.95,"b10":20.53,"u10":21.51,"g20":73.58,"b20":25.38,"u20":1.04,"g30":74.32,"b30":25.61,"u30":0.06,"g60":74.37,"b60":25.63,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":3000,"g10":57.89,"b10":20.64,"u10":21.47,"g20":73.48,"b20":25.51,"u20":1.01,"g30":74.2,"b30":25.74,"u30":0.06,"g60":74.24,"b60":25.76,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":4000,"g10":57.87,"b10":20.61,"u10":21.52,"g20":73.48,"b20":25.48,"u20":1.04,"g30":74.22,"b30":25.72,"u30":0.06,"g60":74.26,"b60":25.74,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":5000,"g10":57.94,"b10":20.59,"u10":21.48,"g20":73.53,"b20":25.46,"u20":1.01,"g30":74.26,"b30":25.69,"u30":0.06,"g60":74.3,"b60":25.7,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":6000,"g10":57.96,"b10":20.56,"u10":21.48,"g20":73.6,"b20":25.39,"u20":1.01,"g30":74.33,"b30":25.62,"u30":0.06,"g60":74.37,"b60":25.63,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":7000,"g10":57.96,"b10":20.61,"u10":21.43,"g20":73.5,"b20":25.5,"u20":1.01,"g30":74.22,"b30":25.72,"u30":0.06,"g60":74.26,"b60":25.74,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":8000,"g10":57.89,"b10":20.65,"u10":21.46,"g20":73.47,"b20":25.51,"u20":1.02,"g30":74.2,"b30":25.74,"u30":0.06,"g60":74.24,"b60":25.76,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":9000,"g10":58.02,"b10":20.54,"u10":21.45,"g20":73.57,"b20":25.42,"u20":1.01,"g30":74.29,"b30":25.64,"u30":0.06,"g60":74.34,"b60":25.66,"u60":0},{"label":"일반마틴(4마틴)","start":250000,"firstBet":10000,"g10":57.91,"b10":20.61,"u10":21.48,"g20":73.48,"b20":25.49,"u20":1.03,"g30":74.21,"b30":25.72,"u30":0.06,"g60":74.26,"b60":25.74,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":1000,"g10":57.9,"b10":20.59,"u10":21.5,"g20":73.47,"b20":25.5,"u20":1.03,"g30":74.2,"b30":25.74,"u30":0.06,"g60":74.25,"b60":25.75,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":2000,"g10":57.98,"b10":20.57,"u10":21.45,"g20":73.56,"b20":25.42,"u20":1.02,"g30":74.28,"b30":25.65,"u30":0.06,"g60":74.33,"b60":25.67,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":3000,"g10":57.95,"b10":20.58,"u10":21.47,"g20":73.53,"b20":25.45,"u20":1.02,"g30":74.26,"b30":25.68,"u30":0.06,"g60":74.31,"b60":25.69,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":4000,"g10":58.05,"b10":20.57,"u10":21.38,"g20":73.6,"b20":25.38,"u20":1.02,"g30":74.34,"b30":25.6,"u30":0.06,"g60":74.38,"b60":25.62,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":5000,"g10":57.97,"b10":20.6,"u10":21.43,"g20":73.53,"b20":25.43,"u20":1.03,"g30":74.27,"b30":25.67,"u30":0.06,"g60":74.32,"b60":25.68,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":6000,"g10":57.88,"b10":20.58,"u10":21.54,"g20":73.55,"b20":25.44,"u20":1,"g30":74.27,"b30":25.68,"u30":0.06,"g60":74.31,"b60":25.69,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":7000,"g10":57.93,"b10":20.65,"u10":21.43,"g20":73.47,"b20":25.51,"u20":1.01,"g30":74.21,"b30":25.73,"u30":0.06,"g60":74.25,"b60":25.75,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":8000,"g10":57.9,"b10":20.57,"u10":21.53,"g20":73.53,"b20":25.47,"u20":1,"g30":74.24,"b30":25.7,"u30":0.06,"g60":74.29,"b60":25.71,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":9000,"g10":57.94,"b10":20.59,"u10":21.47,"g20":73.49,"b20":25.48,"u20":1.02,"g30":74.24,"b30":25.71,"u30":0.06,"g60":74.28,"b60":25.72,"u60":0},{"label":"일반마틴(4마틴)","start":300000,"firstBet":10000,"g10":57.97,"b10":20.59,"u10":21.45,"g20":73.49,"b20":25.48,"u20":1.03,"g30":74.23,"b30":25.71,"u30":0.06,"g60":74.28,"b60":25.72,"u60":0},{"label":"일반마틴(5마틴)","start":50000,"firstBet":1000,"g10":60.85,"b10":9.22,"u10":29.93,"g20":83.71,"b20":13.46,"u20":2.83,"g30":85.41,"b30":13.85,"u30":0.74,"g60":86.02,"b60":13.98,"u60":0.01},{"label":"일반마틴(5마틴)","start":50000,"firstBet":2000,"g10":57.9,"b10":9.28,"u10":32.83,"g20":76.81,"b20":14.13,"u20":9.06,"g30":81.34,"b30":15.45,"u30":3.21,"g60":83.4,"b60":16.29,"u60":0.32},{"label":"일반마틴(5마틴)","start":50000,"firstBet":3000,"g10":57.92,"b10":10.31,"u10":31.77,"g20":73.45,"b20":17.8,"u20":8.75,"g30":74.39,"b30":20.4,"u30":5.2,"g60":77.11,"b60":22.46,"u60":0.43},{"label":"일반마틴(5마틴)","start":50000,"firstBet":4000,"g10":52.38,"b10":18.98,"u10":28.64,"g20":69.92,"b20":26.15,"u20":3.92,"g30":71.73,"b30":27.33,"u30":0.94,"g60":72.22,"b60":27.75,"u60":0.03},{"label":"일반마틴(5마틴)","start":50000,"firstBet":5000,"g10":48.94,"b10":21.37,"u10":29.69,"g20":63.71,"b20":29.66,"u20":6.63,"g30":66.84,"b30":31.59,"u30":1.57,"g60":67.78,"b60":32.2,"u60":0.03},{"label":"일반마틴(5마틴)","start":50000,"firstBet":6000,"g10":48.53,"b10":23.47,"u10":28,"g20":58.8,"b20":33.32,"u20":7.88,"g30":62.3,"b30":35.88,"u30":1.83,"g60":63.3,"b60":36.67,"u60":0.03},{"label":"일반마틴(5마틴)","start":50000,"firstBet":7000,"g10":48.62,"b10":27.67,"u10":23.71,"g20":56.93,"b20":37.21,"u20":5.86,"g30":59.4,"b30":39.32,"u30":1.27,"g60":60.07,"b60":39.92,"u60":0.02},{"label":"일반마틴(5마틴)","start":50000,"firstBet":8000,"g10":45.66,"b10":32.23,"u10":22.1,"g20":54.47,"b20":41.13,"u20":4.4,"g30":56.37,"b30":42.76,"u30":0.86,"g60":56.83,"b60":43.17,"u60":0.01},{"label":"일반마틴(5마틴)","start":50000,"firstBet":9000,"g10":41.95,"b10":34.78,"u10":23.26,"g20":51.91,"b20":44.54,"u20":3.54,"g30":53.33,"b30":46.05,"u30":0.63,"g60":53.64,"b60":46.35,"u60":0},{"label":"일반마틴(5마틴)","start":50000,"firstBet":10000,"g10":41.09,"b10":39.31,"u10":19.59,"g20":50.52,"b20":47.27,"u20":2.21,"g30":51.46,"b30":48.24,"u30":0.3,"g60":51.61,"b60":48.39,"u60":0},{"label":"일반마틴(5마틴)","start":100000,"firstBet":1000,"g10":60.8,"b10":9.26,"u10":29.93,"g20":83.67,"b20":13.47,"u20":2.87,"g30":85.38,"b30":13.87,"u30":0.75,"g60":86,"b60":13.99,"u60":0.01},{"label":"일반마틴(5마틴)","start":100000,"firstBet":2000,"g10":60.79,"b10":9.23,"u10":29.98,"g20":83.7,"b20":13.46,"u20":2.84,"g30":85.42,"b30":13.84,"u30":0.74,"g60":86.03,"b60":13.96,"u60":0.01},{"label":"일반마틴(5마틴)","start":100000,"firstBet":3000,"g10":60.87,"b10":9.2,"u10":29.93,"g20":83.73,"b20":13.4,"u20":2.87,"g30":85.45,"b30":13.78,"u30":0.77,"g60":86.07,"b60":13.92,"u60":0.02},{"label":"일반마틴(5마틴)","start":100000,"firstBet":4000,"g10":57.91,"b10":9.26,"u10":32.82,"g20":76.77,"b20":14.18,"u20":9.05,"g30":81.31,"b30":15.49,"u30":3.2,"g60":83.37,"b60":16.32,"u60":0.31},{"label":"일반마틴(5마틴)","start":100000,"firstBet":5000,"g10":57.96,"b10":9.41,"u10":32.63,"g20":73.59,"b20":15.32,"u20":11.09,"g30":76.37,"b30":17.46,"u30":6.16,"g60":79.99,"b60":19.39,"u60":0.62},{"label":"일반마틴(5마틴)","start":100000,"firstBet":6000,"g10":57.93,"b10":10.29,"u10":31.78,"g20":73.46,"b20":17.76,"u20":8.78,"g30":74.4,"b30":20.37,"u30":5.23,"g60":77.11,"b60":22.44,"u60":0.45},{"label":"일반마틴(5마틴)","start":100000,"firstBet":7000,"g10":56.45,"b10":14.69,"u10":28.86,"g20":72.82,"b20":22.24,"u20":4.94,"g30":73.74,"b30":24,"u30":2.27,"g60":74.77,"b60":25.09,"u60":0.15},{"label":"일반마틴(5마틴)","start":100000,"firstBet":8000,"g10":52.35,"b10":18.97,"u10":28.68,"g20":69.95,"b20":26.12,"u20":3.93,"g30":71.77,"b30":27.3,"u30":0.93,"g60":72.25,"b60":27.72,"u60":0.03},{"label":"일반마틴(5마틴)","start":100000,"firstBet":9000,"g10":49.98,"b10":20.71,"u10":29.3,"g20":66.47,"b20":28.25,"u20":5.28,"g30":69.09,"b30":29.7,"u30":1.21,"g60":69.83,"b60":30.15,"u60":0.02},{"label":"일반마틴(5마틴)","start":100000,"firstBet":10000,"g10":48.91,"b10":21.59,"u10":29.5,"g20":63.59,"b20":29.85,"u20":6.56,"g30":66.68,"b30":31.76,"u30":1.56,"g60":67.6,"b60":32.38,"u60":0.02},{"label":"일반마틴(5마틴)","start":150000,"firstBet":1000,"g10":60.84,"b10":9.24,"u10":29.92,"g20":83.68,"b20":13.46,"u20":2.85,"g30":85.4,"b30":13.85,"u30":0.74,"g60":86.01,"b60":13.98,"u60":0.01},{"label":"일반마틴(5마틴)","start":150000,"firstBet":2000,"g10":60.92,"b10":9.23,"u10":29.86,"g20":83.78,"b20":13.37,"u20":2.85,"g30":85.48,"b30":13.76,"u30":0.76,"g60":86.1,"b60":13.89,"u60":0.01},{"label":"일반마틴(5마틴)","start":150000,"firstBet":3000,"g10":60.88,"b10":9.26,"u10":29.86,"g20":83.71,"b20":13.42,"u20":2.86,"g30":85.42,"b30":13.82,"u30":0.76,"g60":86.04,"b60":13.95,"u60":0.01},{"label":"일반마틴(5마틴)","start":150000,"firstBet":4000,"g10":60.94,"b10":9.19,"u10":29.87,"g20":83.74,"b20":13.42,"u20":2.84,"g30":85.44,"b30":13.81,"u30":0.75,"g60":86.05,"b60":13.94,"u60":0.01},{"label":"일반마틴(5마틴)","start":150000,"firstBet":5000,"g10":60.37,"b10":9.28,"u10":30.36,"g20":83.42,"b20":13.54,"u20":3.04,"g30":85.16,"b30":13.97,"u30":0.87,"g60":85.82,"b60":14.14,"u60":0.04},{"label":"일반마틴(5마틴)","start":150000,"firstBet":6000,"g10":57.88,"b10":9.26,"u10":32.86,"g20":76.82,"b20":14.14,"u20":9.04,"g30":81.33,"b30":15.45,"u30":3.22,"g60":83.4,"b60":16.28,"u60":0.31},{"label":"일반마틴(5마틴)","start":150000,"firstBet":7000,"g10":57.84,"b10":9.42,"u10":32.74,"g20":73.59,"b20":14.75,"u20":11.65,"g30":77.25,"b30":16.78,"u30":5.97,"g60":80.79,"b60":18.57,"u60":0.64},{"label":"일반마틴(5마틴)","start":150000,"firstBet":8000,"g10":57.98,"b10":9.51,"u10":32.52,"g20":73.51,"b20":16.05,"u20":10.44,"g30":75.13,"b30":18.39,"u30":6.48,"g60":78.82,"b60":20.57,"u60":0.61},{"label":"일반마틴(5마틴)","start":150000,"firstBet":9000,"g10":58.03,"b10":10.27,"u10":31.7,"g20":73.5,"b20":17.76,"u20":8.74,"g30":74.45,"b30":20.33,"u30":5.22,"g60":77.19,"b60":22.38,"u60":0.43},{"label":"일반마틴(5마틴)","start":150000,"firstBet":10000,"g10":57.91,"b10":13.54,"u10":28.54,"g20":73.42,"b20":20.88,"u20":5.7,"g30":74.22,"b30":22.82,"u30":2.96,"g60":75.66,"b60":24.15,"u60":0.18},{"label":"일반마틴(5마틴)","start":200000,"firstBet":1000,"g10":60.91,"b10":9.27,"u10":29.82,"g20":83.71,"b20":13.45,"u20":2.84,"g30":85.41,"b30":13.85,"u30":0.74,"g60":86.02,"b60":13.97,"u60":0.01},{"label":"일반마틴(5마틴)","start":200000,"firstBet":2000,"g10":60.83,"b10":9.26,"u10":29.91,"g20":83.67,"b20":13.51,"u20":2.83,"g30":85.37,"b30":13.9,"u30":0.73,"g60":85.97,"b60":14.02,"u60":0.01},{"label":"일반마틴(5마틴)","start":200000,"firstBet":3000,"g10":60.8,"b10":9.27,"u10":29.92,"g20":83.68,"b20":13.45,"u20":2.87,"g30":85.4,"b30":13.85,"u30":0.75,"g60":86.01,"b60":13.98,"u60":0.01},{"label":"일반마틴(5마틴)","start":200000,"firstBet":4000,"g10":60.88,"b10":9.21,"u10":29.91,"g20":83.71,"b20":13.44,"u20":2.85,"g30":85.42,"b30":13.83,"u30":0.75,"g60":86.04,"b60":13.95,"u60":0.01},{"label":"일반마틴(5마틴)","start":200000,"firstBet":5000,"g10":60.88,"b10":9.24,"u10":29.88,"g20":83.66,"b20":13.47,"u20":2.86,"g30":85.37,"b30":13.87,"u30":0.76,"g60":85.98,"b60":14.01,"u60":0.01},{"label":"일반마틴(5마틴)","start":200000,"firstBet":6000,"g10":60.88,"b10":9.28,"u10":29.85,"g20":83.72,"b20":13.46,"u20":2.82,"g30":85.38,"b30":13.85,"u30":0.77,"g60":85.99,"b60":13.99,"u60":0.02},{"label":"일반마틴(5마틴)","start":200000,"firstBet":7000,"g10":58.98,"b10":9.26,"u10":31.76,"g20":81.95,"b20":13.79,"u20":4.26,"g30":84.38,"b30":14.38,"u30":1.24,"g60":85.28,"b60":14.64,"u60":0.08},{"label":"일반마틴(5마틴)","start":200000,"firstBet":8000,"g10":57.88,"b10":9.26,"u10":32.86,"g20":76.81,"b20":14.18,"u20":9.02,"g30":81.32,"b30":15.5,"u30":3.18,"g60":83.38,"b60":16.3,"u60":0.32},{"label":"일반마틴(5마틴)","start":200000,"firstBet":9000,"g10":57.98,"b10":9.33,"u10":32.69,"g20":73.95,"b20":14.5,"u20":11.54,"g30":78.37,"b30":16.41,"u30":5.22,"g60":81.46,"b60":17.96,"u60":0.59},{"label":"일반마틴(5마틴)","start":200000,"firstBet":10000,"g10":57.89,"b10":9.43,"u10":32.67,"g20":73.51,"b20":15.39,"u20":11.1,"g30":76.29,"b30":17.55,"u30":6.16,"g60":79.89,"b60":19.5,"u60":0.61},{"label":"일반마틴(5마틴)","start":250000,"firstBet":1000,"g10":60.85,"b10":9.24,"u10":29.91,"g20":83.73,"b20":13.4,"u20":2.86,"g30":85.45,"b30":13.8,"u30":0.75,"g60":86.06,"b60":13.93,"u60":0.01},{"label":"일반마틴(5마틴)","start":250000,"firstBet":2000,"g10":60.95,"b10":9.23,"u10":29.82,"g20":83.7,"b20":13.44,"u20":2.85,"g30":85.42,"b30":13.84,"u30":0.75,"g60":86.02,"b60":13.97,"u60":0.01},{"label":"일반마틴(5마틴)","start":250000,"firstBet":3000,"g10":60.91,"b10":9.26,"u10":29.83,"g20":83.66,"b20":13.49,"u20":2.86,"g30":85.38,"b30":13.88,"u30":0.75,"g60":85.99,"b60":14,"u60":0.01},{"label":"일반마틴(5마틴)","start":250000,"firstBet":4000,"g10":60.93,"b10":9.18,"u10":29.89,"g20":83.76,"b20":13.36,"u20":2.88,"g30":85.49,"b30":13.75,"u30":0.76,"g60":86.11,"b60":13.88,"u60":0.01},{"label":"일반마틴(5마틴)","start":250000,"firstBet":5000,"g10":60.89,"b10":9.23,"u10":29.88,"g20":83.71,"b20":13.44,"u20":2.85,"g30":85.42,"b30":13.85,"u30":0.73,"g60":86.02,"b60":13.97,"u60":0.01},{"label":"일반마틴(5마틴)","start":250000,"firstBet":6000,"g10":60.88,"b10":9.23,"u10":29.88,"g20":83.71,"b20":13.43,"u20":2.86,"g30":85.43,"b30":13.82,"u30":0.75,"g60":86.04,"b60":13.95,"u60":0.01},{"label":"일반마틴(5마틴)","start":250000,"firstBet":7000,"g10":60.87,"b10":9.21,"u10":29.93,"g20":83.77,"b20":13.41,"u20":2.82,"g30":85.45,"b30":13.79,"u30":0.75,"g60":86.06,"b60":13.93,"u60":0.01},{"label":"일반마틴(5마틴)","start":250000,"firstBet":8000,"g10":60.87,"b10":9.21,"u10":29.92,"g20":83.71,"b20":13.4,"u20":2.89,"g30":85.39,"b30":13.79,"u30":0.82,"g60":86.02,"b60":13.95,"u60":0.03},{"label":"일반마틴(5마틴)","start":250000,"firstBet":9000,"g10":58.26,"b10":9.21,"u10":32.53,"g20":80.66,"b20":13.89,"u20":5.45,"g30":83.73,"b30":14.66,"u30":1.6,"g60":84.89,"b60":15,"u60":0.1},{"label":"일반마틴(5마틴)","start":250000,"firstBet":10000,"g10":57.95,"b10":9.28,"u10":32.77,"g20":76.87,"b20":14.17,"u20":8.96,"g30":81.37,"b30":15.46,"u30":3.17,"g60":83.42,"b60":16.27,"u60":0.31},{"label":"일반마틴(5마틴)","start":300000,"firstBet":1000,"g10":60.85,"b10":9.23,"u10":29.92,"g20":83.72,"b20":13.43,"u20":2.85,"g30":85.42,"b30":13.83,"u30":0.75,"g60":86.04,"b60":13.95,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":2000,"g10":60.87,"b10":9.26,"u10":29.86,"g20":83.64,"b20":13.49,"u20":2.86,"g30":85.34,"b30":13.9,"u30":0.76,"g60":85.96,"b60":14.03,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":3000,"g10":60.93,"b10":9.21,"u10":29.86,"g20":83.78,"b20":13.37,"u20":2.85,"g30":85.48,"b30":13.77,"u30":0.75,"g60":86.1,"b60":13.89,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":4000,"g10":60.86,"b10":9.28,"u10":29.86,"g20":83.69,"b20":13.48,"u20":2.83,"g30":85.39,"b30":13.87,"u30":0.74,"g60":85.99,"b60":14,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":5000,"g10":60.88,"b10":9.25,"u10":29.87,"g20":83.73,"b20":13.45,"u20":2.82,"g30":85.4,"b30":13.85,"u30":0.75,"g60":86.01,"b60":13.97,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":6000,"g10":60.9,"b10":9.22,"u10":29.88,"g20":83.7,"b20":13.46,"u20":2.85,"g30":85.41,"b30":13.85,"u30":0.74,"g60":86.01,"b60":13.98,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":7000,"g10":60.87,"b10":9.27,"u10":29.86,"g20":83.69,"b20":13.46,"u20":2.85,"g30":85.41,"b30":13.86,"u30":0.73,"g60":86.01,"b60":13.98,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":8000,"g10":60.82,"b10":9.2,"u10":29.98,"g20":83.66,"b20":13.46,"u20":2.87,"g30":85.37,"b30":13.86,"u30":0.77,"g60":86,"b60":13.99,"u60":0.01},{"label":"일반마틴(5마틴)","start":300000,"firstBet":9000,"g10":60.81,"b10":9.23,"u10":29.96,"g20":83.69,"b20":13.45,"u20":2.87,"g30":85.39,"b30":13.85,"u30":0.76,"g60":85.99,"b60":13.99,"u60":0.02},{"label":"일반마틴(5마틴)","start":300000,"firstBet":10000,"g10":60.36,"b10":9.21,"u10":30.42,"g20":83.45,"b20":13.46,"u20":3.1,"g30":85.21,"b30":13.89,"u30":0.9,"g60":85.89,"b60":14.07,"u60":0.04}]};
+    /*AUTOBET_DATA_END*/
+
+    const FIRST_BETS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
+    const STARTS = [50000, 100000, 150000, 200000, 250000, 300000];
+    const TARGET_MULT = 4; // 목표수익 = 첫배팅금액 × 4
+
+    // 시뮬레이션과 동일한 배팅법 정의 (label은 데이터의 label과 정확히 일치해야 함)
+    const METHODS = [
+      { label: "슈퍼마틴(4마틴)", short: "슈4", kind: "super", limit: 4, allIn: false },
+      { label: "슈퍼마틴(5마틴)", short: "슈5", kind: "super", limit: 5, allIn: false },
+      { label: "슈퍼마틴(4마틴,올인)", short: "슈4올", kind: "super", limit: 4, allIn: true },
+      { label: "슈퍼마틴(5마틴,올인)", short: "슈5올", kind: "super", limit: 5, allIn: true },
+      { label: "일반마틴(4마틴)", short: "일4", kind: "classic", limit: 4, allIn: false },
+      { label: "일반마틴(5마틴)", short: "일5", kind: "classic", limit: 5, allIn: false }
+    ];
+    const METHOD_BY_LABEL = Object.fromEntries(METHODS.map(m => [m.label, m]));
+
+    function stageMultiplier(method, stage) {
+      return method.kind === "super" ? (2 ** stage) - 1 : 2 ** (stage - 1);
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat("ko-KR").format(value);
+    }
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    }
+    function pct(v) { return `${v.toFixed(2)}%`; }
+
+    const ROW_INDEX = new Map(AUTOBET.rows.map(r => [`${r.label}|${r.start}|${r.firstBet}`, r]));
+
+    function getRates(row, cap) {
+      return { goal: row[`g${cap}`], bust: row[`b${cap}`], un: row[`u${cap}`] };
+    }
+
+    // 목표달성 확률 최고 → 같으면 파산 확률이 낮은 쪽 → 그래도 같으면 METHODS 순서
+    function rankMethods(start, firstBet, cap) {
+      return METHODS
+        .map((m, order) => ({ method: m, order, row: ROW_INDEX.get(`${m.label}|${start}|${firstBet}`) }))
+        .filter(x => x.row)
+        .map(x => ({ ...x, ...getRates(x.row, cap) }))
+        .sort((a, b) => (b.goal - a.goal) || (a.bust - b.bust) || (a.order - b.order));
+    }
+
+    // ---------- 1p 세팅 ----------
+    const firstBetSelect = $("firstBetSelect");
+    const startSelect = $("startSelect");
+    const capSelect = $("capSelect");
+    const pickName = $("pickName");
+    const pickMeta = $("pickMeta");
+    const rankBody = $("rankBody");
+    const rankHint = $("rankHint");
+
+    function fillSelect(el, values, fmt, selected) {
+      el.innerHTML = values.map(v => `<option value="${v}"${v === selected ? " selected" : ""}>${fmt(v)}</option>`).join("");
+    }
+    fillSelect(firstBetSelect, FIRST_BETS, v => formatMoney(v), 1000);
+    fillSelect(startSelect, STARTS, v => formatMoney(v), 100000);
+    fillSelect(capSelect, AUTOBET.caps, v => `${v}판`, 10);
+
+    function describeSteps(method, firstBet) {
+      const parts = [];
+      for (let s = 1; s <= method.limit; s++) {
+        if (method.allIn && s === method.limit) parts.push("남은 돈 전부");
+        else parts.push(formatMoney(firstBet * stageMultiplier(method, s)));
+      }
+      return parts.join(" → ");
+    }
+
+    function getSetup() {
+      return {
+        firstBet: Number(firstBetSelect.value),
+        start: Number(startSelect.value),
+        cap: Number(capSelect.value)
+      };
+    }
+
+    function renderSetupPreview() {
+      const { firstBet, start, cap } = getSetup();
+      const ranked = rankMethods(start, firstBet, cap);
+      if (ranked.length === 0) {
+        pickName.textContent = "데이터 없음";
+        pickMeta.textContent = "";
+        rankBody.innerHTML = "";
+        rankHint.textContent = "";
+        return;
+      }
+      const best = ranked[0];
+      pickName.textContent = best.method.label;
+      pickMeta.innerHTML =
+        `목표달성 <b>${pct(best.goal)}</b> · 파산 ${pct(best.bust)} · 미달성 ${pct(best.un)}<br>` +
+        `목표수익 +${formatMoney(firstBet * TARGET_MULT)} (총금액 ${formatMoney(start + firstBet * TARGET_MULT)} 도달 시 성공)<br>` +
+        `배팅 순서: ${escapeHtml(describeSteps(best.method, firstBet))}`;
+
+      rankBody.innerHTML = ranked.map((x, i) => `
+        <tr class="${i === 0 ? "best" : ""}">
+          <td>${escapeHtml(x.method.label)}${i === 0 ? '<span class="badge-best">추천</span>' : ""}</td>
+          <td class="goal">${pct(x.goal)}</td>
+          <td class="bust">${pct(x.bust)}</td>
+          <td>${pct(x.un)}</td>
+        </tr>`).join("");
+
+      const runnerUp = ranked[1];
+      rankHint.textContent = runnerUp && best.goal - runnerUp.goal < 0.15
+        ? `1위와 2위(${runnerUp.method.label})의 차이가 ${(best.goal - runnerUp.goal).toFixed(2)}%p로 시뮬레이션 오차(약 ±0.1%p) 안이라 사실상 같은 수준입니다.`
+        : "";
+    }
+
+    [firstBetSelect, startSelect, capSelect].forEach(el => el.addEventListener("change", renderSetupPreview));
+
+    // ---------- 페이지 전환 ----------
+    const setupPage = $("setupPage");
+    const statsPage = $("statsPage");
+    const gamePage = $("gamePage");
+    const wrap = $("wrap");
+
+    function showPage(page) {
+      setupPage.classList.toggle("hidden", page !== "setup");
+      statsPage.classList.toggle("hidden", page !== "stats");
+      gamePage.classList.toggle("hidden", page !== "game");
+      wrap.classList.toggle("wide", page === "stats");
+      window.scrollTo(0, 0);
+    }
+
+    // ---------- 통계 ----------
+    const statsCapSelect = $("statsCap");
+    const matrixView = $("matrixView");
+    const tableView = $("tableView");
+    const tabMatrix = $("tabMatrix");
+    const tabTable = $("tabTable");
+    const fMethod = $("fMethod");
+    const fStart = $("fStart");
+    const fFirstBet = $("fFirstBet");
+    const fullBody = $("fullBody");
+    const tableStatus = $("tableStatus");
+
+    $("runsText").textContent = formatMoney(AUTOBET.runs);
+    fillSelect(statsCapSelect, AUTOBET.caps, v => `${v}판`, 10);
+    fMethod.innerHTML = `<option value="">전체</option>` + METHODS.map(m => `<option value="${escapeHtml(m.label)}">${escapeHtml(m.label)}</option>`).join("");
+    fStart.innerHTML = `<option value="">전체</option>` + STARTS.map(s => `<option value="${s}">${formatMoney(s)}</option>`).join("");
+    fFirstBet.innerHTML = `<option value="">전체</option>` + FIRST_BETS.map(b => `<option value="${b}">${formatMoney(b)}</option>`).join("");
+
+    let fullSort = { key: "goal", dir: "desc" };
+
+    function renderMatrix() {
+      const cap = Number(statsCapSelect.value);
+      $("matrixHead").innerHTML = `<tr><th>첫배팅 \\ 시작시드</th>${STARTS.map(s => `<th>${formatMoney(s)}</th>`).join("")}</tr>`;
+      $("matrixBody").innerHTML = FIRST_BETS.map(b => {
+        const cells = STARTS.map(s => {
+          const best = rankMethods(s, b, cap)[0];
+          if (!best) return "<td>-</td>";
+          return `<td class="cell" data-first-bet="${b}" data-start="${s}"><div class="m-name">${escapeHtml(best.method.short)}</div><div class="m-rate">${best.goal.toFixed(1)}%</div></td>`;
+        }).join("");
+        return `<tr><td>${formatMoney(b)}</td>${cells}</tr>`;
+      }).join("");
+      $("matrixLegend").textContent = "약어: " + METHODS.map(m => `${m.short} = ${m.label}`).join(" / ") + ". 각 칸의 % 는 목표달성 확률입니다.";
+    }
+
+    function renderFullTable() {
+      const cap = Number(statsCapSelect.value);
+      let rows = AUTOBET.rows
+        .filter(r => (!fMethod.value || r.label === fMethod.value) &&
+                     (!fStart.value || String(r.start) === fStart.value) &&
+                     (!fFirstBet.value || String(r.firstBet) === fFirstBet.value))
+        .map(r => ({ ...r, ...getRates(r, cap), target: r.firstBet * TARGET_MULT }));
+      tableStatus.textContent = `${rows.length} / ${AUTOBET.rows.length}행 표시 중 (${cap}판 기준)`;
+      rows.sort((a, b) => {
+        const va = a[fullSort.key], vb = b[fullSort.key];
+        if (typeof va === "string") return fullSort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+        return fullSort.dir === "asc" ? va - vb : vb - va;
+      });
+      fullBody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${escapeHtml(r.label)}</td>
+          <td>${formatMoney(r.start)}</td>
+          <td>${formatMoney(r.firstBet)}</td>
+          <td>${formatMoney(r.target)}</td>
+          <td class="goal">${pct(r.goal)}</td>
+          <td class="bust">${pct(r.bust)}</td>
+          <td>${pct(r.un)}</td>
+        </tr>`).join("");
+      document.querySelectorAll("#fullTable th[data-key]").forEach(th => {
+        th.classList.toggle("sorted-asc", th.dataset.key === fullSort.key && fullSort.dir === "asc");
+        th.classList.toggle("sorted-desc", th.dataset.key === fullSort.key && fullSort.dir === "desc");
+      });
+    }
+
+    function renderStats() {
+      renderMatrix();
+      renderFullTable();
+    }
+
+    function setStatsTab(tab) {
+      const isMatrix = tab === "matrix";
+      matrixView.classList.toggle("hidden", !isMatrix);
+      tableView.classList.toggle("hidden", isMatrix);
+      tabMatrix.classList.toggle("active", isMatrix);
+      tabTable.classList.toggle("active", !isMatrix);
+    }
+
+    tabMatrix.addEventListener("click", () => setStatsTab("matrix"));
+    tabTable.addEventListener("click", () => setStatsTab("table"));
+    statsCapSelect.addEventListener("change", renderStats);
+    [fMethod, fStart, fFirstBet].forEach(el => el.addEventListener("change", renderFullTable));
+    $("fReset").addEventListener("click", () => {
+      fMethod.value = ""; fStart.value = ""; fFirstBet.value = "";
+      renderFullTable();
+    });
+    document.querySelectorAll("#fullTable th[data-key]").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        if (fullSort.key === key) fullSort.dir = fullSort.dir === "asc" ? "desc" : "asc";
+        else { fullSort.key = key; fullSort.dir = "desc"; }
+        renderFullTable();
+      });
+    });
+    $("matrixBody").addEventListener("click", (e) => {
+      const cell = e.target.closest("td.cell");
+      if (!cell) return;
+      firstBetSelect.value = cell.dataset.firstBet;
+      startSelect.value = cell.dataset.start;
+      capSelect.value = statsCapSelect.value;
+      renderSetupPreview();
+      showPage("setup");
+    });
+    $("viewStatsBtn").addEventListener("click", () => {
+      statsCapSelect.value = capSelect.value;
+      renderStats();
+      showPage("stats");
+    });
+    $("statsBackBtn").addEventListener("click", () => showPage("setup"));
+
+    // ---------- 2p 게임 ----------
+    const winBtn = $("winBtn");
+    const tieBtn = $("tieBtn");
+    const lossBtn = $("lossBtn");
+    const super6Btn = $("super6Btn");
+    const gameOverBtn = $("gameOverBtn");
+    const resetBtn = $("resetBtn");
+    const gameSummaryText = $("gameSummaryText");
+    const roundInfo = $("roundInfo");
+    const betInfo = $("betInfo");
+    const moneyInfo = $("moneyInfo");
+    const goalInfo = $("goalInfo");
+    const shuffleBox = $("shuffleBox");
+    const resultSide = $("resultSide");
+    const sideBadge = $("sideBadge");
+    const sideMeta = $("sideMeta");
+    const historyEl = $("history");
+    const endBox = $("endBox");
+
+    const state = {
+      method: null,
+      started: false,
+      finished: false,
+      awaitingDecision: false,
+      firstBet: 0,
+      startAmount: 0,
+      goalAmount: 0,
+      cap: 0,
+      money: 0,
+      profit: 0,
+      stage: 1,
+      hand: 0,
+      bet: 0,
+      side: null,
+      history: []
+    };
+
+    function getRandomSide() {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return (buf[0] & 1) === 0 ? "플레이어" : "뱅커";
+    }
+
+    // 정해진 금액이 남은 돈보다 크면 남은 돈 전부를 배팅 (시뮬레이션과 동일 규칙)
+    function computeBet() {
+      const m = state.method;
+      let bet = state.firstBet * stageMultiplier(m, state.stage);
+      if (m.allIn && state.stage === m.limit) bet = state.money;
+      return Math.min(bet, state.money);
+    }
+
+    function setDecisionButtons(enabled) {
+      [winBtn, tieBtn, lossBtn, super6Btn].forEach(b => { b.disabled = !enabled; });
+    }
+    function setGameOverButton(visible) {
+      gameOverBtn.classList.toggle("hidden", !visible);
+      [winBtn, tieBtn, lossBtn, super6Btn].forEach(b => b.classList.toggle("hidden", visible));
+    }
+    function setSummary(msg) { gameSummaryText.textContent = msg; }
+
+    function updateStatus() {
+      roundInfo.textContent = state.started && state.hand > 0 ? `${state.hand}/${state.cap}판` : "-";
+      betInfo.textContent = state.started ? formatMoney(state.bet) : "-";
+      moneyInfo.textContent = state.started ? formatMoney(state.money) : "-";
+      goalInfo.textContent = state.started ? formatMoney(state.goalAmount) : "-";
+    }
+
+    function setIdleMessage(message) {
+      resultSide.classList.add("show");
+      sideBadge.textContent = "대기중";
+      sideBadge.className = "side-badge";
+      sideMeta.textContent = message;
+    }
+
+    function renderHistory() {
+      if (state.history.length === 0) {
+        historyEl.className = "history empty";
+        historyEl.textContent = "아직 진행 기록이 없습니다.";
+        return;
+      }
+      historyEl.className = "history";
+      historyEl.innerHTML = state.history.map(item => `
+        <div class="history-item">
+          <div class="history-top">
+            <div class="history-round">${item.round}판 · ${item.stage}단계</div>
+            <div class="history-status ${item.result === "승리" ? "win" : item.result === "TIE" ? "tie" : item.result === "SUPER6" ? "super6" : "loss"}">${item.result}</div>
+          </div>
+          <div class="history-grid">
+            <div>타겟: <strong class="${item.side === "플레이어" ? "player" : "banker"}">${item.side}</strong></div>
+            <div>배팅금액: <strong>${formatMoney(item.bet)}</strong></div>
+            <div>변동금액: <strong>${item.delta >= 0 ? "+" : ""}${formatMoney(item.delta)}</strong></div>
+            <div>총 금액: <strong>${formatMoney(item.total)}</strong></div>
+          </div>
+        </div>`).join("");
+    }
+
+    function finishGame(kind, reason) {
+      state.finished = true;
+      state.awaitingDecision = false;
+      setDecisionButtons(false);
+      setGameOverButton(true);
+      setSummary(reason);
+      $("endTitle").textContent = kind === "goal" ? "진행 종료 · 목표달성" : kind === "bust" ? "진행 종료 · 파산" : "진행 종료 · 미달성";
+      $("endRounds").textContent = `${state.hand}판`;
+      $("endStart").textContent = formatMoney(state.startAmount);
+      $("endProfit").textContent = `${state.profit >= 0 ? "+" : ""}${formatMoney(state.profit)}`;
+      $("endTotal").textContent = formatMoney(state.money);
+      endBox.classList.remove("hidden");
+      setIdleMessage(reason);
+      updateStatus();
+    }
+
+    function requestNextRound() {
+      if (state.finished) return;
+
+      state.awaitingDecision = false;
+      setDecisionButtons(false);
+      setGameOverButton(false);
+      resultSide.classList.remove("show");
+      shuffleBox.classList.add("active");
+
+      const nextHand = state.hand + 1;
+      const nextBet = computeBet();
+      roundInfo.textContent = `${nextHand}/${state.cap}판`;
+      betInfo.textContent = formatMoney(nextBet);
+      setSummary(`${nextHand}판 생성 중... 카드 셔플 후 결과가 공개됩니다.`);
+
+      window.setTimeout(() => {
+        shuffleBox.classList.remove("active");
+        state.hand = nextHand;
+        state.bet = nextBet;
+        state.side = getRandomSide();
+        state.awaitingDecision = true;
+        resultSide.classList.add("show");
+        sideBadge.textContent = state.side;
+        sideBadge.className = `side-badge ${state.side === "플레이어" ? "player" : "banker"}`;
+        const shortNote = nextBet < state.firstBet * stageMultiplier(state.method, state.stage) ? " (남은 돈 전부)" : "";
+        sideMeta.textContent = `${state.hand}/${state.cap}판 · ${state.stage}단계 · 배팅금액 ${formatMoney(state.bet)}${shortNote}`;
+        setSummary(`${state.hand}판 결과가 나왔습니다. 승리·패배·TIE·SUPER6 중 선택하세요.`);
+        updateStatus();
+        setDecisionButtons(true);
+      }, 500);
+    }
+
+    function recordRound(result) {
+      if (!state.awaitingDecision || state.finished) return;
+      const m = state.method;
+
+      let delta = 0;
+      if (result === "승리") delta = state.bet;
+      else if (result === "SUPER6") delta = Math.round(state.bet * 0.5);
+      else if (result === "패배") delta = -state.bet;
+      state.profit += delta;
+      state.money += delta;
+
+      state.history.unshift({
+        round: state.hand, stage: state.stage, side: state.side,
+        bet: state.bet, delta, total: state.money, result
+      });
+      renderHistory();
+
+      let lostOut = false;
+      if (result === "승리" || result === "SUPER6") {
+        state.stage = 1;
+      } else if (result === "패배") {
+        if (state.money <= 0 || state.stage >= m.limit) lostOut = true;
+        else state.stage += 1;
+      }
+      // TIE: 금액·단계 유지, 1판으로 계산
+
+      updateStatus();
+
+      if (lostOut) {
+        finishGame("bust", state.money <= 0
+          ? "진행 종료. 남은 돈 전부를 건 배팅에서 패배해 파산했습니다."
+          : `진행 종료. ${m.limit}마틴까지 모두 패배해 파산했습니다.`);
+        return;
+      }
+      if (state.money >= state.goalAmount) {
+        finishGame("goal", `진행 종료. 목표금액 ${formatMoney(state.goalAmount)} 이상을 달성했습니다.`);
+        return;
+      }
+      if (state.hand >= state.cap) {
+        finishGame("un", `진행 종료. ${state.cap}판 안에 목표금액을 달성하지 못했습니다.`);
+        return;
+      }
+      setSummary(result === "TIE"
+        ? `${state.hand}판 TIE 처리 완료. 동일한 배팅금액·단계로 다음 판을 진행합니다.`
+        : `${state.hand}판 ${result} 처리 완료. 다음 판은 ${state.stage}단계로 진행합니다.`);
+      requestNextRound();
+    }
+
+    function resetGame() {
+      state.method = null;
+      state.started = false;
+      state.finished = false;
+      state.awaitingDecision = false;
+      state.hand = 0;
+      state.bet = 0;
+      state.money = 0;
+      state.profit = 0;
+      state.stage = 1;
+      state.side = null;
+      state.history = [];
+      endBox.classList.add("hidden");
+      setDecisionButtons(false);
+      setGameOverButton(false);
+      shuffleBox.classList.remove("active");
+      renderHistory();
+      setIdleMessage("");
+      setSummary("게임 대기 중입니다.");
+      updateStatus();
+      renderSetupPreview();
+      showPage("setup");
+    }
+
+    function startGame() {
+      const { firstBet, start, cap } = getSetup();
+      const ranked = rankMethods(start, firstBet, cap);
+      if (ranked.length === 0) {
+        alert("해당 조합의 통계 데이터가 없습니다.");
+        return;
+      }
+      const best = ranked[0];
+
+      state.method = best.method;
+      state.started = true;
+      state.finished = false;
+      state.awaitingDecision = false;
+      state.firstBet = firstBet;
+      state.startAmount = start;
+      state.goalAmount = start + firstBet * TARGET_MULT;
+      state.cap = cap;
+      state.money = start;
+      state.profit = 0;
+      state.stage = 1;
+      state.hand = 0;
+      state.bet = computeBet();
+      state.side = null;
+      state.history = [];
+
+      endBox.classList.add("hidden");
+      renderHistory();
+      setDecisionButtons(false);
+      setGameOverButton(false);
+      $("gameMethodLabel").textContent = `${best.method.label} (목표달성 ${pct(best.goal)})`;
+      showPage("game");
+      updateStatus();
+      requestNextRound();
+    }
+
+    $("startBtn").addEventListener("click", startGame);
+    resetBtn.addEventListener("click", resetGame);
+    gameOverBtn.addEventListener("click", resetGame);
+    winBtn.addEventListener("click", () => recordRound("승리"));
+    tieBtn.addEventListener("click", () => recordRound("TIE"));
+    lossBtn.addEventListener("click", () => recordRound("패배"));
+    super6Btn.addEventListener("click", () => recordRound("SUPER6"));
+
+    renderSetupPreview();
+    showPage("setup");
+  </script>
+</body>
+</html>

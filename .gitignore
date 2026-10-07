@@ -2,3 +2,8 @@
 !/.gitignore
 !/index.html
 !/README.md
+!/2/
+!/2/index.html
+!/sim/
+!/sim/simulate.js
+!/sim/autobet-data.json

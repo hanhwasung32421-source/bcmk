@@ -67,6 +67,11 @@
       background: var(--input-bg); color: var(--white); padding: 0 14px; font-size: 18px; outline: none;
     }
     .select option{ color:#000; }
+    .select.static{ display:flex; align-items:center; font-weight: 900; color: var(--accent1); border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.05); white-space: nowrap; }
+    @media (max-width: 430px){
+      .grid.keep2{ grid-template-columns: 1fr 1fr; gap: 8px; }
+      .grid.keep2 .select{ font-size: 16px; padding: 0 8px; }
+    }
     .btn-row{ display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
     .btn{ height: 52px; border: 0; border-radius: 16px; color: var(--white); font-weight: 900; font-size: 17px; cursor: pointer; }
     .btn.primary{ background: linear-gradient(90deg, var(--accent1), var(--accent2)); }
@@ -255,7 +260,7 @@
     <div id="setupPage" class="page">
       <section class="card">
         <h2 class="section-title">1p 세팅</h2>
-        <div class="grid">
+        <div class="grid keep2">
           <label class="field">
             <span class="label">첫 배팅금액</span>
             <select id="firstBetSelect" class="select"></select>
@@ -264,8 +269,12 @@
             <span class="label">총 시작시드</span>
             <select id="startSelect" class="select"></select>
           </label>
-          <label class="field full">
-            <span class="label">판수 (이 판수 안에 목표를 달성해야 함)</span>
+          <div class="field">
+            <span class="label">목표금액 (<span id="goalProfitText"></span>)</span>
+            <div id="goalAmountText" class="select static">-</div>
+          </div>
+          <label class="field">
+            <span class="label">판수</span>
             <select id="capSelect" class="select"></select>
           </label>
         </div>
@@ -436,7 +445,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-07", version: 12 };
+    const LAST_EDIT = { date: "2026-10-07", version: 13 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -712,6 +721,8 @@ function createOscarEngine(method, unit) {
       const ranked = rankMethods(start, firstBet, cap);
       const byGoal = ranked.slice(0, TOP_N);
       const byBust = [...ranked].sort((a, b) => (a.bust - b.bust) || (b.goal - a.goal) || (a.order - b.order)).slice(0, TOP_N);
+      $("goalAmountText").textContent = formatMoney(start + firstBet * TARGET_MULT);
+      $("goalProfitText").textContent = `+${formatMoney(firstBet * TARGET_MULT)}`;
       goalRankBody.innerHTML = byGoal.map((x, i) => rankItem(x, i, "goal")).join("");
       bustRankBody.innerHTML = byBust.map((x, i) => rankItem(x, i, "bust")).join("");
     }

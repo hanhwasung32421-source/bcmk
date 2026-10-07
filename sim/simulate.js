@@ -1,5 +1,5 @@
 // 자동 배팅법 선택 페이지(2/index.html)용 확률 데이터 생성기.
-//   node sim/simulate.js [runs=1000000] [out=sim/autobet-data.json]
+//   node sim/simulate.js [runs=10000000] [out=sim/autobet-data.json]
 // 첫배팅금액 1,000~10,000(1,000단위) × 총 시작시드 50,000~400,000(50,000단위) × 배팅법 9종(마틴 6종 + 파롤리·1-3-2-6·달랑베르)을
 // 각 조합마다 runs회씩 시뮬레이션하고, 10·20·30·60판컷 결과(목표달성/파산/미달성)를 한 번에 집계한다.
 // 한 번의 시뮬레이션은 최대 60판까지 이어 달리며 "몇 번째 판에 목표달성/파산했는지"만 기록하므로
@@ -118,7 +118,7 @@ function simulateCombo(method, firstBet, start, runs, rnd) {
 }
 
 if (isMainThread) {
-  const runs = Number(process.argv[2]) || 1000000;
+  const runs = Number(process.argv[2]) || 10000000;
   const outFile = process.argv[3] || path.join(__dirname, "autobet-data.json");
   const jobs = [];
   for (const m of METHODS) for (const s of STARTS) for (const b of FIRST_BETS) {

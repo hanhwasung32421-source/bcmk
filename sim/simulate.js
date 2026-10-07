@@ -1,6 +1,6 @@
 // 자동 배팅법 선택 페이지(2/index.html)용 확률 데이터 생성기.
 //   node sim/simulate.js [runs=1000000] [out=sim/autobet-data.json]
-// 첫배팅금액 1,000~10,000(1,000단위) × 총 시작시드 50,000~300,000(50,000단위) × 마틴 계열 배팅법 6종을
+// 첫배팅금액 1,000~10,000(1,000단위) × 총 시작시드 50,000~300,000(50,000단위) × 배팅법 9종(마틴 6종 + 파롤리·1-3-2-6·달랑베르)을
 // 각 조합마다 runs회씩 시뮬레이션하고, 10·20·30·60판컷 결과(목표달성/파산/미달성)를 한 번에 집계한다.
 // 한 번의 시뮬레이션은 최대 60판까지 이어 달리며 "몇 번째 판에 목표달성/파산했는지"만 기록하므로
 // 10·20·30·60판컷은 같은 시행에서 나온 일관된 값이다.
@@ -23,15 +23,48 @@ const T_WIN = P_WIN;
 const T_SUPER6 = T_WIN + P_SUPER6;
 const T_TIE = T_SUPER6 + P_TIE; // 이후 구간은 패배
 
-// 배팅법 정의. kind: super(1,3,7,15...) | classic(1,2,4,8...), limit: 마틴 횟수, allIn: 마지막 단계에서 남은 돈 전부 배팅
+// 배팅법 정의 (2/index.html 의 METHODS 와 규칙이 같아야 함).
+//  super   슈퍼마틴 1,3,7,15...  패배 시 +1단계, 마지막(limit) 단계 패배 시 파산, 승리 시 1단계
+//  classic 일반마틴 1,2,4,8...   위와 같은 단계 이동
+//  paroli  1,2,4 / 승리 시 +1단계(3단계 승리 후 1단계), 패배 시 1단계
+//  s1326   1,3,2,6 / 승리 시 +1단계(4단계 승리 후 1단계), 패배 시 1단계
+//  dalembert 단계 = 배수 / 승리 시 -1단계(최소 1), 패배 시 +1단계
+// allIn: 마지막 마틴 단계에서 정해진 금액 대신 남은 돈 전부 배팅
 const METHODS = [
   { label: "슈퍼마틴(4마틴)", kind: "super", limit: 4, allIn: false },
   { label: "슈퍼마틴(5마틴)", kind: "super", limit: 5, allIn: false },
   { label: "슈퍼마틴(4마틴,올인)", kind: "super", limit: 4, allIn: true },
   { label: "슈퍼마틴(5마틴,올인)", kind: "super", limit: 5, allIn: true },
   { label: "일반마틴(4마틴)", kind: "classic", limit: 4, allIn: false },
-  { label: "일반마틴(5마틴)", kind: "classic", limit: 5, allIn: false }
+  { label: "일반마틴(5마틴)", kind: "classic", limit: 5, allIn: false },
+  { label: "파롤리", kind: "paroli", allIn: false },
+  { label: "1-3-2-6", kind: "s1326", allIn: false },
+  { label: "달랑베르", kind: "dalembert", allIn: false }
 ];
+
+const MAX_STAGE = MAX_HANDS + 2;
+// 단계별 배수 / 승리 후 단계 / 패배 후 단계(0 = 파산)를 배열로 미리 계산
+function buildTables(method) {
+  const mult = new Array(MAX_STAGE + 1).fill(0);
+  const winNext = new Array(MAX_STAGE + 1).fill(1);
+  const lossNext = new Array(MAX_STAGE + 1).fill(1);
+  let lastStage = 0;
+  for (let s = 1; s <= MAX_STAGE; s++) {
+    if (method.kind === "super") {
+      mult[s] = (2 ** s) - 1; lossNext[s] = s >= method.limit ? 0 : s + 1;
+    } else if (method.kind === "classic") {
+      mult[s] = 2 ** (s - 1); lossNext[s] = s >= method.limit ? 0 : s + 1;
+    } else if (method.kind === "paroli") {
+      mult[s] = 2 ** (s - 1); winNext[s] = s >= 3 ? 1 : s + 1; lossNext[s] = 1;
+    } else if (method.kind === "s1326") {
+      mult[s] = [1, 3, 2, 6][s - 1] || 1; winNext[s] = s >= 4 ? 1 : s + 1; lossNext[s] = 1;
+    } else {
+      mult[s] = s; winNext[s] = Math.max(1, s - 1); lossNext[s] = s + 1;
+    }
+  }
+  if (method.allIn) lastStage = method.limit;
+  return { mult, winNext, lossNext, lastStage };
+}
 
 function mulberry32(a) {
   return function () {
@@ -43,10 +76,7 @@ function mulberry32(a) {
 }
 
 function simulateCombo(method, firstBet, start, runs, rnd) {
-  const mult = new Array(method.limit + 1);
-  for (let s = 1; s <= method.limit; s++) {
-    mult[s] = method.kind === "super" ? (2 ** s) - 1 : 2 ** (s - 1);
-  }
+  const { mult, winNext, lossNext, lastStage } = buildTables(method);
   const goalMoney = start + firstBet * TARGET_MULT;
   const goalAt = new Float64Array(MAX_HANDS + 2); // goalAt[h]: h번째 판에 목표달성한 시행 수
   const bustAt = new Float64Array(MAX_HANDS + 2);
@@ -56,22 +86,22 @@ function simulateCombo(method, firstBet, start, runs, rnd) {
     let stage = 1;
     for (let hand = 1; hand <= MAX_HANDS; hand++) {
       let bet = firstBet * mult[stage];
-      if (method.allIn && stage === method.limit) bet = money;
+      if (stage === lastStage) bet = money;
       if (bet > money) bet = money; // 정해진 배팅금액이 남은 돈보다 크면 남은 돈 전부 배팅
 
       const r = rnd();
       if (r < T_WIN) {
         money += bet;
-        stage = 1;
+        stage = winNext[stage];
       } else if (r < T_SUPER6) {
         money += Math.round(bet * 0.5);
-        stage = 1;
+        stage = winNext[stage];
       } else if (r < T_TIE) {
         continue; // TIE: 금액·단계 유지, 1판으로 계산
       } else {
         money -= bet;
-        if (money <= 0 || stage >= method.limit) { bustAt[hand]++; break; }
-        stage++;
+        stage = lossNext[stage];
+        if (money <= 0 || stage === 0) { bustAt[hand]++; break; }
         continue;
       }
       if (money >= goalMoney) { goalAt[hand]++; break; }

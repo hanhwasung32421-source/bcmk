@@ -265,6 +265,11 @@
       gap: 10px;
       align-items:center;
     }
+    .game-stat-row.three{ grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .game-stat-row.three .game-stat-value{ font-size: 22px; }
+    @media (max-width: 430px){
+      .game-stat-row.three .game-stat-value{ font-size: 17px; letter-spacing: -.5px; }
+    }
     .game-stat-split{
       min-width: 0;
     }
@@ -880,7 +885,7 @@
         <h2 class="section-title">2p 게임 · <span id="gameStrategyLabel"></span></h2>
         <div class="game-stack">
           <div class="game-stat">
-            <div class="game-stat-row">
+            <div class="game-stat-row three">
               <div class="game-stat-split">
                 <div class="game-stat-title">현재판</div>
                 <div class="game-stat-value" id="roundInfo">-</div>
@@ -888,6 +893,10 @@
               <div class="game-stat-split">
                 <div class="game-stat-title">배팅금액</div>
                 <div class="game-stat-value" id="betInfo">-</div>
+              </div>
+              <div class="game-stat-split">
+                <div class="game-stat-title">총금액</div>
+                <div class="game-stat-value" id="moneyInfo">-</div>
               </div>
             </div>
           </div>
@@ -912,11 +921,6 @@
 
           <div class="game-reset">
             <button id="resetBtn" class="btn secondary">초기화</button>
-          </div>
-
-          <div class="game-stat">
-            <div class="game-stat-title">총금액</div>
-            <div class="game-stat-value" id="moneyInfo">-</div>
           </div>
 
           <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
@@ -958,7 +962,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-06", version: 2 };
+    const LAST_EDIT = { date: "2026-10-07", version: 2 };
 
     function renderVersionBadge() {
       const today = new Date();

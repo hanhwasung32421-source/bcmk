@@ -33,7 +33,7 @@
         linear-gradient(180deg, var(--bg1), var(--bg2));
       -webkit-tap-highlight-color: transparent;
     }
-    .wrap{ max-width: 560px; margin: 0 auto; padding: 18px 16px 28px; }
+    .wrap{ max-width: 640px; margin: 0 auto; padding: 18px 12px 28px; }
     .wrap.wide{ max-width: 1100px; }
     .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; gap:10px; }
     .home-link{ color: var(--accent3); font-size: 13px; font-weight: 800; text-decoration: none; }
@@ -180,10 +180,29 @@
     .matrix .m-name{ font-weight: 900; color: var(--accent1); }
     .matrix .m-rate{ color: var(--win); font-size: 12px; }
     .sub-title{ margin: 16px 0 0; font-size: 14px; font-weight: 900; color: #eef3ff; }
-    .pickable tbody tr{ cursor: pointer; }
-    .pickable tbody tr:hover{ background: rgba(111,137,255,.2); }
-    .pickable tbody td:first-child{ white-space: normal; }
-    .rank-no{ display:inline-block; min-width: 20px; color: var(--accent1); font-weight: 900; }
+    .rank-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; align-items: start; }
+    .rank-col{ min-width: 0; }
+    .rank-col .sub-title{ margin: 12px 0 6px; font-size: 13px; text-align: center; padding: 6px 4px; border-radius: 10px; }
+    .rank-col .sub-title.goal{ background: rgba(64,209,127,.14); color: var(--win); }
+    .rank-col .sub-title.bust{ background: rgba(255,123,123,.14); color: var(--loss); }
+    .rank-list{ display:flex; flex-direction:column; gap: 6px; }
+    .rank-item{
+      display:block; width:100%; text-align:left; font: inherit; color: var(--white); cursor:pointer;
+      padding: 8px 9px; border-radius: 12px; border: 1px solid rgba(255,255,255,.1);
+      background: rgba(20,33,61,.9); min-width: 0;
+    }
+    .rank-item:hover, .rank-item:active{ border-color: var(--accent3); background: rgba(111,137,255,.2); }
+    .ri-top{ display:flex; align-items:flex-start; gap: 6px; }
+    .rank-no{
+      flex-shrink:0; min-width: 18px; height: 18px; border-radius: 6px; font-size: 11px; font-weight: 900;
+      display:inline-flex; align-items:center; justify-content:center; color:#1d1500; background: var(--accent1);
+    }
+    .ri-name{ font-size: 12px; font-weight: 800; line-height: 1.3; word-break: keep-all; overflow-wrap: anywhere; }
+    .ri-bottom{ display:flex; flex-wrap:wrap; align-items:baseline; gap: 2px 6px; margin-top: 5px; }
+    .ri-main{ font-size: 16px; font-weight: 900; letter-spacing: -.3px; }
+    .ri-main.goal{ color: var(--win); }
+    .ri-main.bust{ color: var(--loss); }
+    .ri-sub{ font-size: 10.5px; color: var(--text-hint); white-space: nowrap; }
     .pick{
       border-radius: 18px; padding: 12px 14px; margin-top: 12px;
       background: rgba(255,208,0,.10); border: 1px solid rgba(255,208,0,.35);
@@ -251,20 +270,15 @@
           </label>
         </div>
 
-        <h3 class="sub-title">목표달성 확률 높은 TOP 5</h3>
-        <div class="table-scroll">
-          <table class="stats-table pickable">
-            <thead><tr><th>순위 · 배팅법</th><th>목표달성</th><th>파산</th><th>미달성</th></tr></thead>
-            <tbody id="goalRankBody"></tbody>
-          </table>
-        </div>
-
-        <h3 class="sub-title">파산 확률 낮은 TOP 5</h3>
-        <div class="table-scroll">
-          <table class="stats-table pickable">
-            <thead><tr><th>순위 · 배팅법</th><th>파산</th><th>목표달성</th><th>미달성</th></tr></thead>
-            <tbody id="bustRankBody"></tbody>
-          </table>
+        <div class="rank-grid">
+          <div class="rank-col">
+            <h3 class="sub-title goal">목표달성 높은 TOP 10</h3>
+            <div class="rank-list" id="goalRankBody"></div>
+          </div>
+          <div class="rank-col">
+            <h3 class="sub-title bust">파산 낮은 TOP 10</h3>
+            <div class="rank-list" id="bustRankBody"></div>
+          </div>
         </div>
 
         <div class="btn-row">
@@ -422,7 +436,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-07", version: 10 };
+    const LAST_EDIT = { date: "2026-10-07", version: 11 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -681,30 +695,31 @@ function createOscarEngine(method, unit) {
       };
     }
 
-    function rankRow(x, i, firstKey) {
-      const second = firstKey === "goal" ? ["bust", "un"] : ["goal", "un"];
-      const cls = { goal: "goal", bust: "bust", un: "" };
-      return `<tr data-label="${escapeHtml(x.method.label)}">
-        <td><span class="rank-no">${i + 1}</span> ${escapeHtml(x.method.label)}</td>
-        <td class="${cls[firstKey]}">${pct(x[firstKey])}</td>
-        <td class="${cls[second[0]]}">${pct(x[second[0]])}</td>
-        <td>${pct(x[second[1]])}</td>
-      </tr>`;
+    const TOP_N = 10;
+
+    function rankItem(x, i, mainKey) {
+      const subs = mainKey === "goal"
+        ? `파산 ${x.bust.toFixed(1)} · 미달 ${x.un.toFixed(1)}`
+        : `달성 ${x.goal.toFixed(1)} · 미달 ${x.un.toFixed(1)}`;
+      return `<button type="button" class="rank-item" data-label="${escapeHtml(x.method.label)}">
+        <div class="ri-top"><span class="rank-no">${i + 1}</span><span class="ri-name">${escapeHtml(x.method.label)}</span></div>
+        <div class="ri-bottom"><b class="ri-main ${mainKey}">${x[mainKey].toFixed(2)}%</b><span class="ri-sub">${subs}</span></div>
+      </button>`;
     }
 
     function renderSetupPreview() {
       const { firstBet, start, cap } = getSetup();
       const ranked = rankMethods(start, firstBet, cap);
-      const byGoal = ranked.slice(0, 5);
-      const byBust = [...ranked].sort((a, b) => (a.bust - b.bust) || (b.goal - a.goal) || (a.order - b.order)).slice(0, 5);
-      goalRankBody.innerHTML = byGoal.map((x, i) => rankRow(x, i, "goal")).join("");
-      bustRankBody.innerHTML = byBust.map((x, i) => rankRow(x, i, "bust")).join("");
+      const byGoal = ranked.slice(0, TOP_N);
+      const byBust = [...ranked].sort((a, b) => (a.bust - b.bust) || (b.goal - a.goal) || (a.order - b.order)).slice(0, TOP_N);
+      goalRankBody.innerHTML = byGoal.map((x, i) => rankItem(x, i, "goal")).join("");
+      bustRankBody.innerHTML = byBust.map((x, i) => rankItem(x, i, "bust")).join("");
     }
 
     [firstBetSelect, startSelect, capSelect].forEach(el => el.addEventListener("change", renderSetupPreview));
     [goalRankBody, bustRankBody].forEach(body => body.addEventListener("click", (e) => {
-      const tr = e.target.closest("tr[data-label]");
-      if (tr) startGame(METHOD_BY_LABEL[tr.dataset.label]);
+      const item = e.target.closest(".rank-item");
+      if (item) startGame(METHOD_BY_LABEL[item.dataset.label]);
     }));
 
     // ---------- 페이지 전환 ----------

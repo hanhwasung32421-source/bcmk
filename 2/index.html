@@ -81,10 +81,13 @@
     .game-stack{ display:flex; flex-direction:column; gap: 14px; }
     .game-stat{ border-radius: 18px; background: rgba(20,33,61,.9); border: 1px solid rgba(255,255,255,.08); padding: 14px; }
     .game-stat-row{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items:center; }
-    .game-stat-row.three{ grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .game-stat-row.three .game-stat-value{ font-size: 22px; }
+    .game-stat-row.four{ grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .game-stat-row.four .game-stat-value{ font-size: 18px; letter-spacing: -.5px; }
+    .game-stat-row.four .game-stat-title{ white-space: nowrap; }
     @media (max-width: 430px){
-      .game-stat-row.three .game-stat-value{ font-size: 17px; letter-spacing: -.5px; }
+      .game-stat{ padding: 12px 10px; }
+      .game-stat-row.four .game-stat-value{ font-size: 13.5px; letter-spacing: -.6px; }
+      .game-stat-row.four .game-stat-title{ font-size: 11px; }
     }
     .game-stat-split{ min-width: 0; }
     .game-stat-title{ font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 700; }
@@ -225,7 +228,6 @@
     </div>
 
     <h1>자동 배팅법 선택</h1>
-    <p class="desc">첫 배팅금액·시작시드·판수를 정하면, 9가지 배팅법의 100만 회 시뮬레이션 통계에서 <b>목표달성 확률 TOP 5</b>와 <b>파산 확률 낮은 TOP 5</b>가 표로 나옵니다. 배팅법을 눌러 그 방법으로 게임을 시작하세요. 목표수익은 항상 첫 배팅금액의 4배입니다.</p>
 
     <!-- 1p: 세팅 -->
     <div id="setupPage" class="page">
@@ -261,7 +263,6 @@
             <tbody id="bustRankBody"></tbody>
           </table>
         </div>
-        <p class="hint">표에서 배팅법을 누르면 그 방법으로 바로 게임이 시작됩니다. 파산 확률이 낮은 방법은 목표달성도 낮고 "미달성"(판수 안에 목표 못 채움)이 많을 수 있으니 목표달성·미달성 열도 함께 보세요.</p>
 
         <div class="btn-row">
           <button id="viewStatsBtn" class="btn secondary" type="button">전체 통계 보기</button>
@@ -343,7 +344,7 @@
         <h2 class="section-title">2p 게임 · <span id="gameMethodLabel"></span></h2>
         <div class="game-stack">
           <div class="game-stat">
-            <div class="game-stat-row three">
+            <div class="game-stat-row four">
               <div class="game-stat-split">
                 <div class="game-stat-title">현재판</div>
                 <div class="game-stat-value" id="roundInfo">-</div>
@@ -355,6 +356,10 @@
               <div class="game-stat-split">
                 <div class="game-stat-title">총금액</div>
                 <div class="game-stat-value" id="moneyInfo">-</div>
+              </div>
+              <div class="game-stat-split">
+                <div class="game-stat-title">목표금액</div>
+                <div class="game-stat-value" id="goalInfo">-</div>
               </div>
             </div>
           </div>
@@ -381,15 +386,6 @@
             <button id="resetBtn" class="btn secondary" type="button">초기화</button>
           </div>
 
-          <div class="game-stat">
-            <div class="game-stat-row">
-              <div class="game-stat-split">
-                <div class="game-stat-title">목표금액</div>
-                <div class="game-stat-value" id="goalInfo">-</div>
-              </div>
-            </div>
-          </div>
-
           <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
 
           <div id="endBox" class="end-box hidden">
@@ -414,7 +410,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-07", version: 4 };
+    const LAST_EDIT = { date: "2026-10-07", version: 5 };
 
     function renderVersionBadge() {
       const today = new Date();

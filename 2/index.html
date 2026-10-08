@@ -189,6 +189,10 @@
     .rank-col{ min-width: 0; }
     .rank-col .sub-title{ margin: 12px 0 6px; font-size: 13px; text-align: center; padding: 6px 4px; border-radius: 10px; }
     .rank-col .sub-title.goal{ background: rgba(64,209,127,.14); color: var(--win); }
+    .rank-col .sub-title.diff{ background: rgba(255,208,0,.14); color: var(--accent1); }
+    .rank-wide{ margin-top: 8px; }
+    .rank-list.two{ display:grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+    .ri-stats b.on.diff{ color: var(--accent1); }
     .rank-col .sub-title.bust{ background: rgba(255,123,123,.14); color: var(--loss); }
     .sub-note{ display:block; margin-top: 2px; font-size: 10.5px; font-weight: 700; opacity: .85; }
     .rank-empty{ padding: 14px 8px; font-size: 12px; color: var(--text-hint); text-align:center; border: 1px dashed rgba(255,255,255,.15); border-radius: 12px; }
@@ -295,6 +299,10 @@
             <h3 class="sub-title bust">파산 낮은 TOP 10<span class="sub-note">달성 60% 이상만</span></h3>
             <div class="rank-list" id="bustRankBody"></div>
           </div>
+        </div>
+        <div class="rank-col rank-wide">
+          <h3 class="sub-title diff">달성 − 파산 차이 TOP 10<span class="sub-note">달성 확률에서 파산 확률을 뺀 값이 큰 순</span></h3>
+          <div class="rank-list two" id="diffRankBody"></div>
         </div>
 
         <div class="btn-row">
@@ -452,7 +460,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-07", version: 14 };
+    const LAST_EDIT = { date: "2026-10-08", version: 2 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -694,6 +702,7 @@ function createOscarEngine(method, unit) {
     const startSelect = $("startSelect");
     const capSelect = $("capSelect");
     const goalRankBody = $("goalRankBody");
+    const diffRankBody = $("diffRankBody");
     const bustRankBody = $("bustRankBody");
 
     function fillSelect(el, values, fmt, selected) {
@@ -718,11 +727,12 @@ function createOscarEngine(method, unit) {
     function rankItem(x, i, mainKey) {
       const row = (key, name) => {
         const on = key === mainKey ? " on" : "";
-        return `<span class="${on.trim()}">${name}</span><b class="${key}${on}">${x[key].toFixed(2)}%</b>`;
+        const v = key === "diff" ? `${x.diff >= 0 ? "+" : ""}${x.diff.toFixed(2)}%p` : `${x[key].toFixed(2)}%`;
+        return `<span class="${on.trim()}">${name}</span><b class="${key}${on}">${v}</b>`;
       };
       return `<button type="button" class="rank-item" data-label="${escapeHtml(x.method.label)}">
         <div class="ri-top"><span class="rank-no">${i + 1}</span><span class="ri-name">${escapeHtml(x.method.label)}</span></div>
-        <div class="ri-stats">${row("goal", "달성")}${row("bust", "파산")}${row("un", "미달")}</div>
+        <div class="ri-stats">${row("goal", "달성")}${row("bust", "파산")}${row("un", "미달")}${mainKey === "diff" ? row("diff", "차이") : ""}</div>
       </button>`;
     }
 
@@ -734,6 +744,11 @@ function createOscarEngine(method, unit) {
         .filter(x => x.goal >= MIN_GOAL_FOR_BUST_LIST)
         .sort((a, b) => (a.bust - b.bust) || (b.goal - a.goal) || (a.order - b.order))
         .slice(0, TOP_N);
+      const byDiff = ranked
+        .map(x => ({ ...x, diff: x.goal - x.bust }))
+        .sort((a, b) => (b.diff - a.diff) || (b.goal - a.goal) || (a.order - b.order))
+        .slice(0, TOP_N);
+      diffRankBody.innerHTML = byDiff.map((x, i) => rankItem(x, i, "diff")).join("");
       $("goalAmountText").textContent = formatMoney(start + firstBet * TARGET_MULT);
       $("goalProfitText").textContent = `+${formatMoney(firstBet * TARGET_MULT)}`;
       goalRankBody.innerHTML = byGoal.map((x, i) => rankItem(x, i, "goal")).join("");
@@ -743,7 +758,7 @@ function createOscarEngine(method, unit) {
     }
 
     [firstBetSelect, startSelect, capSelect].forEach(el => el.addEventListener("change", renderSetupPreview));
-    [goalRankBody, bustRankBody].forEach(body => body.addEventListener("click", (e) => {
+    [goalRankBody, bustRankBody, diffRankBody].forEach(body => body.addEventListener("click", (e) => {
       const item = e.target.closest(".rank-item");
       if (item) startGame(METHOD_BY_LABEL[item.dataset.label]);
     }));

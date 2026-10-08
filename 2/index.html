@@ -190,7 +190,18 @@
     .rank-col .sub-title{ margin: 12px 0 6px; font-size: 13px; text-align: center; padding: 6px 4px; border-radius: 10px; }
     .rank-col .sub-title.goal{ background: rgba(64,209,127,.14); color: var(--win); }
     .rank-col .sub-title.diff{ background: rgba(255,208,0,.14); color: var(--accent1); }
-    .rank-wide{ margin-top: 8px; }
+    .rank-wide{ grid-column: 1 / -1; margin-top: 4px; }
+    .rank-col .sub-title.safe{ background: rgba(111,137,255,.18); color: #b9c6ff; }
+    @media (min-width: 900px){
+      .wrap.setup-wide{ max-width: 1280px; }
+      .wrap.setup-wide .grid.keep2{ max-width: 640px; }
+      .rank-grid{ grid-template-columns: repeat(4, 1fr); gap: 12px; }
+      .rank-wide{ grid-column: auto; margin-top: 0; }
+      .rank-col .rank-list.two{ display:flex; flex-direction:column; gap: 6px; }
+      .rank-col .sub-title{ font-size: 14px; }
+      .ri-name{ font-size: 13px; }
+      .ri-stats{ font-size: 12.5px; }
+    }
     .rank-list.two{ display:grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
     .ri-stats b.on.diff{ color: var(--accent1); }
     .rank-col .sub-title.bust{ background: rgba(255,123,123,.14); color: var(--loss); }
@@ -299,10 +310,14 @@
             <h3 class="sub-title bust">파산 낮은 TOP 10<span class="sub-note">달성 60% 이상만</span></h3>
             <div class="rank-list" id="bustRankBody"></div>
           </div>
-        </div>
-        <div class="rank-col rank-wide">
-          <h3 class="sub-title diff">달성 − 파산 차이 TOP 10<span class="sub-note">달성 확률에서 파산 확률을 뺀 값이 큰 순</span></h3>
-          <div class="rank-list two" id="diffRankBody"></div>
+          <div class="rank-col rank-wide">
+            <h3 class="sub-title diff">달성 − 파산 차이 TOP 10<span class="sub-note">달성 확률에서 파산 확률을 뺀 값이 큰 순</span></h3>
+            <div class="rank-list two" id="diffRankBody"></div>
+          </div>
+          <div class="rank-col rank-wide">
+            <h3 class="sub-title safe">파산 1% 미만 중 달성 TOP 10<span class="sub-note">파산 확률 1% 미만인 방법만, 달성 높은 순</span></h3>
+            <div class="rank-list two" id="safeRankBody"></div>
+          </div>
         </div>
 
         <div class="btn-row">
@@ -460,7 +475,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-08", version: 2 };
+    const LAST_EDIT = { date: "2026-10-08", version: 3 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -703,6 +718,7 @@ function createOscarEngine(method, unit) {
     const capSelect = $("capSelect");
     const goalRankBody = $("goalRankBody");
     const diffRankBody = $("diffRankBody");
+    const safeRankBody = $("safeRankBody");
     const bustRankBody = $("bustRankBody");
 
     function fillSelect(el, values, fmt, selected) {
@@ -722,6 +738,7 @@ function createOscarEngine(method, unit) {
 
     const TOP_N = 10;
 
+    const MAX_BUST_FOR_SAFE_LIST = 1;  // 안전 순위는 파산 1% 미만인 배팅법만
     const MIN_GOAL_FOR_BUST_LIST = 60; // 파산 낮은 순위는 목표달성 60% 이상인 배팅법만
 
     function rankItem(x, i, mainKey) {
@@ -749,6 +766,13 @@ function createOscarEngine(method, unit) {
         .sort((a, b) => (b.diff - a.diff) || (b.goal - a.goal) || (a.order - b.order))
         .slice(0, TOP_N);
       diffRankBody.innerHTML = byDiff.map((x, i) => rankItem(x, i, "diff")).join("");
+      const bySafe = ranked
+        .filter(x => x.bust < MAX_BUST_FOR_SAFE_LIST)
+        .sort((a, b) => (b.goal - a.goal) || (a.bust - b.bust) || (a.order - b.order))
+        .slice(0, TOP_N);
+      safeRankBody.innerHTML = bySafe.length
+        ? bySafe.map((x, i) => rankItem(x, i, "goal")).join("")
+        : `<div class="rank-empty">파산 ${MAX_BUST_FOR_SAFE_LIST}% 미만인 배팅법이 없습니다.</div>`;
       $("goalAmountText").textContent = formatMoney(start + firstBet * TARGET_MULT);
       $("goalProfitText").textContent = `+${formatMoney(firstBet * TARGET_MULT)}`;
       goalRankBody.innerHTML = byGoal.map((x, i) => rankItem(x, i, "goal")).join("");
@@ -758,7 +782,7 @@ function createOscarEngine(method, unit) {
     }
 
     [firstBetSelect, startSelect, capSelect].forEach(el => el.addEventListener("change", renderSetupPreview));
-    [goalRankBody, bustRankBody, diffRankBody].forEach(body => body.addEventListener("click", (e) => {
+    [goalRankBody, bustRankBody, diffRankBody, safeRankBody].forEach(body => body.addEventListener("click", (e) => {
       const item = e.target.closest(".rank-item");
       if (item) startGame(METHOD_BY_LABEL[item.dataset.label]);
     }));
@@ -774,6 +798,7 @@ function createOscarEngine(method, unit) {
       statsPage.classList.toggle("hidden", page !== "stats");
       gamePage.classList.toggle("hidden", page !== "game");
       wrap.classList.toggle("wide", page === "stats");
+      wrap.classList.toggle("setup-wide", page === "setup");
       window.scrollTo(0, 0);
     }
 

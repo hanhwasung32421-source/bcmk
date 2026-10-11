@@ -678,6 +678,16 @@
       .guide-table{ font-size: 12.5px; }
       .guide-table td{ padding: 10px 8px; }
     }
+    .game-head{ display:flex; align-items:center; justify-content:space-between; gap: 8px; margin-bottom: 12px; }
+    .game-head .section-title{ margin: 0; }
+    .auto-btn{
+      flex-shrink: 0; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 800;
+      color: var(--text-sub); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); cursor: pointer;
+    }
+    .auto-btn.on{ color: #fff; background: rgba(111,137,255,.55); border-color: var(--accent3); }
+    .auto-btn:disabled{ opacity: .4; cursor: not-allowed; }
+    .auto-tally{ font-size: 12px; line-height: 1.6; color: var(--text-sub); background: rgba(255,255,255,.05); border: 1px dashed rgba(255,255,255,.2); border-radius: 12px; padding: 8px 10px; }
+    .auto-tally b{ color: var(--white); }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
       100%{ transform: translateX(30px) rotate(10deg); }
@@ -882,7 +892,10 @@
 
     <div id="gamePage" class="page hidden">
       <section class="card">
-        <h2 class="section-title">2p 게임 · <span id="gameStrategyLabel"></span></h2>
+        <div class="game-head">
+          <h2 class="section-title">2p 게임 · <span id="gameStrategyLabel"></span></h2>
+          <button id="autoBtn" class="auto-btn" type="button">자동검증</button>
+        </div>
         <div class="game-stack">
           <div class="game-stat">
             <div class="game-stat-row three">
@@ -924,6 +937,7 @@
           </div>
 
           <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
+          <div id="autoTally" class="auto-tally hidden"></div>
         </div>
       </section>
     </div>
@@ -962,7 +976,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-08", version: 3 };
+    const LAST_EDIT = { date: "2026-10-12", version: 2 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1130,6 +1144,66 @@
       targetEdited: false
     };
 
+    // ---------- 자동검증 ----------
+    // 승리/패배/TIE/SUPER6 를 확률대로 자동으로 눌러 게임이 끝날 때까지 진행한다.
+    // 확률은 통계 시뮬레이션과 같은 가정: 승리 40.25% · SUPER6 5% · TIE 9.5% · 패배 45.25% (승리+SUPER6 = 패배 = 45.25%, 승/패 약 50:50)
+    const AUTO = { on: false, used: false, timer: null };
+    const AUTO_P_WIN = 0.4025, AUTO_P_SUPER6 = 0.05, AUTO_P_TIE = 0.095;
+
+    function autoRandom() {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return buf[0] / 4294967296;
+    }
+    function pickAutoResult() {
+      const r = autoRandom();
+      if (r < AUTO_P_WIN) return "승리";
+      if (r < AUTO_P_WIN + AUTO_P_SUPER6) return "SUPER6";
+      if (r < AUTO_P_WIN + AUTO_P_SUPER6 + AUTO_P_TIE) return "TIE";
+      return "패배";
+    }
+    function autoStep() {
+      clearTimeout(AUTO.timer);
+      if (!AUTO.on) return;
+      AUTO.timer = setTimeout(() => {
+        if (AUTO.on && state.awaitingDecision && !state.finished) recordRound(pickAutoResult());
+      }, 150);
+    }
+    function stopAuto() {
+      AUTO.on = false;
+      clearTimeout(AUTO.timer);
+      const btn = $("autoBtn");
+      btn.textContent = "자동검증";
+      btn.classList.remove("on");
+      btn.disabled = state.finished;
+    }
+    function startAuto() {
+      AUTO.on = true;
+      AUTO.used = true;
+      const btn = $("autoBtn");
+      btn.textContent = "정지";
+      btn.classList.add("on");
+      updateAutoTally();
+      if (state.awaitingDecision) autoStep();
+    }
+    function resetAuto() {
+      AUTO.used = false;
+      stopAuto();
+      $("autoBtn").disabled = false;
+      updateAutoTally();
+    }
+    function updateAutoTally() {
+      const el = $("autoTally");
+      if (!AUTO.used) { el.classList.add("hidden"); return; }
+      const count = (name) => state.history.filter(h => h.result === name).length;
+      const win = count("승리"), loss = count("패배"), tie = count("TIE"), s6 = count("SUPER6");
+      const total = win + loss + tie + s6;
+      const p = (n, d) => d > 0 ? (n / d * 100).toFixed(1) + "%" : "-";
+      const decisive = win + s6 + loss;
+      el.classList.remove("hidden");
+      el.innerHTML = `자동검증 ${total}판 · 승리 <b>${win}</b>(${p(win, total)}) · 패배 <b>${loss}</b>(${p(loss, total)}) · TIE <b>${tie}</b>(${p(tie, total)}) · SUPER6 <b>${s6}</b>(${p(s6, total)})<br>승리계열(승리+SUPER6) ${p(win + s6, decisive)} / 패배 ${p(loss, decisive)} (TIE 제외)`;
+    }
+
     function getStrategy() {
       return state.strategyId ? STRATEGIES[state.strategyId] : null;
     }
@@ -1245,6 +1319,7 @@
     }
 
     function renderHistory() {
+      updateAutoTally();
       if (state.history.length === 0) {
         history.className = "history empty";
         history.innerHTML = "아직 진행 기록이 없습니다.";
@@ -1283,7 +1358,7 @@
     }
 
     async function logSessionResult(reason) {
-      if (!sb || !state.strategyId || state.roundNumber <= 0) return;
+      if (!sb || !state.strategyId || state.roundNumber <= 0 || AUTO.used) return;
       const strategy = STRATEGIES[state.strategyId];
       const winCount = state.history.filter(h => h.result === "승리").length;
       const lossCount = state.history.filter(h => h.result === "패배").length;
@@ -1312,6 +1387,7 @@
 
     function finishGame(reason, showGameOverButton = false) {
       state.finished = true;
+      stopAuto();
       logSessionResult(reason);
       state.awaitingDecision = false;
       setDecisionButtons(false);
@@ -1368,7 +1444,8 @@
         gameSummaryText.textContent = `${state.roundNumber}판 결과가 나왔습니다. 승리 또는 패배를 선택하세요.`;
         updateStatus();
         setDecisionButtons(true);
-      }, 500);
+        autoStep();
+      }, AUTO.on ? 120 : 500);
     }
 
     function recordRound(result) {
@@ -1463,6 +1540,7 @@
       if (state.started && !state.finished && state.roundNumber > 0) {
         logSessionResult("사용자가 초기화(중간 종료)");
       }
+      resetAuto();
 
       state.started = false;
       state.finished = false;
@@ -1500,6 +1578,7 @@
     }
 
     function startGame() {
+      resetAuto();
       const strategy = getStrategy();
       if (!strategy) {
         showPage("strategy");
@@ -2138,6 +2217,7 @@
     });
 
     startBtn.addEventListener("click", startGame);
+    $("autoBtn").addEventListener("click", () => { if (AUTO.on) stopAuto(); else startAuto(); });
     resetBtn.addEventListener("click", resetGame);
     winBtn.addEventListener("click", () => recordRound("승리"));
     tieBtn.addEventListener("click", () => recordRound("TIE"));

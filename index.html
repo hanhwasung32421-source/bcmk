@@ -1066,7 +1066,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 8 };
+    const LAST_EDIT = { date: "2026-10-12", version: 9 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -2747,8 +2747,17 @@
       if (e.key === "Escape" && !probModalOverlay.classList.contains("hidden")) closeProbModal();
     });
 
+    // 게임별 폴더: 배팅방법을 고르면 bcmk.vercel.app/supermartin 처럼 그 게임의 주소로 이동한다.
+    // 각 폴더(index.html 복사본, sim/build_games.js 가 생성)는 window.BCMK_GAME 으로 열리자마자 그 배팅방법의 세팅 화면에 들어간다.
+    const STRATEGY_SLUG = { superMartin: "supermartin", classicMartin: "classicmartin", paroli: "paroli", system1326: "1326", dalembert: "dalembert" };
+    const GAME_FOLDER = window.BCMK_GAME && STRATEGIES[window.BCMK_GAME] ? window.BCMK_GAME : null;
+
     document.querySelectorAll(".strategy-card").forEach(card => {
       card.addEventListener("click", () => {
+        if (!GAME_FOLDER) {
+          location.href = STRATEGY_SLUG[card.dataset.strategy] + "/";
+          return;
+        }
         state.strategyId = card.dataset.strategy;
         clearSetupInputs();
         applyStrategyToSetupUI(state.strategyId);
@@ -2757,6 +2766,7 @@
     });
 
     backToStrategyBtn.addEventListener("click", () => {
+      if (GAME_FOLDER) { location.href = "../"; return; }
       state.strategyId = null;
       showPage("strategy");
     });
@@ -2801,7 +2811,15 @@
 
     setIdleMessage("시작 버튼을 눌러 첫 판을 생성하세요.");
     setGameOverButton(false);
-    showPage("strategy");
+    if (GAME_FOLDER) {
+      state.strategyId = GAME_FOLDER;
+      clearSetupInputs();
+      applyStrategyToSetupUI(GAME_FOLDER);
+      document.querySelectorAll(".desc").forEach(el => { el.classList.add("hidden"); });
+      showPage("setup");
+    } else {
+      showPage("strategy");
+    }
     updateStatus();
   </script>
 </body>

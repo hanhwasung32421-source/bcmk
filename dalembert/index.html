@@ -1,0 +1,2827 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>바카라 마틴 메이커 · 달랑베르</title>
+  <style>
+    :root{
+      --bg1:#1d2b53;
+      --bg2:#0d132b;
+      --panel:#14213d;
+      --panel-soft:#182749;
+      --panel-stroke:#355cbb;
+      --input-bg:#223661;
+      --input-stroke:#5879c6;
+      --player:#4f9dff;
+      --banker:#ff5c5c;
+      --win:#40d17f;
+      --loss:#ff7b7b;
+      --accent1:#ffd000;
+      --accent2:#ff7b00;
+      --accent3:#6f89ff;
+      --text-sub:#dde5ff;
+      --text-hint:#a9b8e8;
+      --white:#fff;
+      --shadow:0 14px 34px rgba(0, 0, 0, .25);
+    }
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Noto Sans KR", "Segoe UI", Roboto, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      color: var(--white);
+      background:
+        radial-gradient(circle at top, rgba(120,142,255,.16), transparent 28%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap{
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 18px 16px 28px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:flex-end;
+      margin-bottom: 8px;
+    }
+    .footer{
+      display:flex;
+      justify-content:center;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .version{
+      display:inline-flex;
+      align-items:center;
+      height:28px;
+      padding:0 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      color:#eaf1ff;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      backdrop-filter: blur(8px);
+    }
+    h1{
+      margin: 6px 0 8px;
+      font-size: 28px;
+      letter-spacing: -.3px;
+    }
+    .desc{
+      margin: 0 0 16px;
+      color: var(--text-sub);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 14px;
+    }
+    .page.hidden{
+      display:none;
+    }
+    .hidden{
+      display:none !important;
+    }
+    .section-title{
+      margin: 0 0 12px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #eef3ff;
+    }
+    .setup-header{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .setup-header .section-title{ margin:0; }
+    .btn.back{
+      height: 40px;
+      width: auto;
+      flex-shrink: 0;
+      padding: 0 14px;
+      font-size: 13px;
+      background: linear-gradient(90deg, #4a5b86, #6b7da8);
+    }
+    .strategy-list{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin: 4px 0 12px;
+    }
+    .strategy-card{
+      text-align:left;
+      border: 2px solid rgba(255,255,255,.1);
+      background: rgba(20,33,61,.9);
+      border-radius: 18px;
+      padding: 14px 16px;
+      cursor: pointer;
+      color: var(--white);
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .strategy-card:hover{
+      border-color: var(--accent3);
+      background: rgba(111,137,255,.14);
+    }
+    .strategy-name{
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+    .strategy-desc{
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+    .field.full{ grid-column: 1 / -1; }
+    .label{
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .input{
+      width: 100%;
+      height: 52px;
+      border-radius: 16px;
+      border: 2px solid var(--input-stroke);
+      background: var(--input-bg);
+      color: var(--white);
+      padding: 0 14px;
+      font-size: 18px;
+      outline: none;
+    }
+    .input::placeholder{ color: var(--text-hint); }
+    .btn-row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .decision-row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn{
+      height: 52px;
+      border: 0;
+      border-radius: 16px;
+      color: var(--white);
+      font-weight: 900;
+      font-size: 17px;
+      cursor: pointer;
+    }
+    .btn.primary{
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    }
+    .btn.win{
+      background: linear-gradient(90deg, #1ea85d, #40d17f);
+    }
+    .btn.loss{
+      background: linear-gradient(90deg, #d74848, #ff7b7b);
+    }
+    .btn.tie{
+      background: linear-gradient(90deg, #d4a017, #ffd85e);
+    }
+    .btn.super6{
+      background: linear-gradient(90deg, #00b8a9, #4fd8c9);
+      grid-column: 2;
+    }
+    .btn.secondary{
+      background: linear-gradient(90deg, #4a5b86, #6b7da8);
+    }
+    .btn.gameover{
+      background: linear-gradient(90deg, #7b4dff, #4e7cff);
+      grid-column: 1 / -1;
+    }
+    .btn.hidden{
+      display:none;
+    }
+    .btn:disabled{
+      cursor:not-allowed;
+      opacity:.45;
+      filter: grayscale(.25);
+    }
+    .stats{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat{
+      border-radius: 18px;
+      background: rgba(20,33,61,.9);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 12px;
+    }
+    .stat-label{
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+    }
+    .stat-value{
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -.3px;
+    }
+    .stat-value.player{ color: var(--player); }
+    .stat-value.banker{ color: var(--banker); }
+    .game-stack{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+    .game-stat{
+      border-radius: 18px;
+      background: rgba(20,33,61,.9);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 14px;
+    }
+    .game-stat-row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items:center;
+    }
+    .game-stat-row.three{ grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .game-stat-row.three .game-stat-value{ font-size: 22px; }
+    @media (max-width: 430px){
+      .game-stat-row.three .game-stat-value{ font-size: 17px; letter-spacing: -.5px; }
+    }
+    .game-stat-split{
+      min-width: 0;
+    }
+    .game-stat-title{
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .game-stat-value{
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -.3px;
+    }
+    .game-actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .game-reset{
+      margin-top: 4px;
+    }
+    .shuffle-box{
+      position: relative;
+      height: 188px;
+      border-radius: 22px;
+      border: 2px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255,255,255,.12), transparent 30%),
+        linear-gradient(180deg, #18305c, #0f1935);
+      overflow:hidden;
+    }
+    .shuffle-box.active .deck-card.left{
+      animation: shuffleLeft .5s ease-in-out infinite alternate;
+    }
+    .shuffle-box.active .deck-card.right{
+      animation: shuffleRight .5s ease-in-out infinite alternate;
+    }
+    .table-glow{
+      position:absolute;
+      inset:auto 24px 18px;
+      height:60px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(37, 214, 118, .35), rgba(37, 214, 118, .02) 72%);
+      filter: blur(10px);
+    }
+    .deck-card{
+      position:absolute;
+      top: 42px;
+      width: 92px;
+      height: 126px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fff, #e8eefc);
+      box-shadow: 0 12px 24px rgba(0,0,0,.22);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .deck-card::before{
+      content:"";
+      width: 66px;
+      height: 92px;
+      border-radius: 12px;
+      background:
+        repeating-linear-gradient(45deg, #214c9d 0 8px, #193b79 8px 16px);
+      border: 3px solid #f7fbff;
+    }
+    .deck-card.left{ left: calc(50% - 88px); transform: rotate(-10deg); }
+    .deck-card.right{ left: calc(50% - 4px); transform: rotate(10deg); }
+    .result-side{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+    }
+    .result-side.show{ opacity:1; }
+    .side-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width: 178px;
+      height: 62px;
+      padding: 0 20px;
+      border-radius: 18px;
+      border: 2px solid rgba(255,255,255,.18);
+      font-size: 28px;
+      font-weight: 900;
+      box-shadow: var(--shadow);
+    }
+    .side-badge.player{
+      background: rgba(79,157,255,.18);
+      color: var(--player);
+    }
+    .side-badge.banker{
+      background: rgba(255,92,92,.18);
+      color: var(--banker);
+    }
+    .side-meta{
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .hint{
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-sub);
+      opacity: .95;
+      line-height: 1.45;
+    }
+    .summary{
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-sub);
+      font-weight: 700;
+      line-height: 1.55;
+    }
+    .history{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .history.empty{
+      min-height: 84px;
+      align-items:center;
+      justify-content:center;
+      color: var(--text-sub);
+      border-radius: 18px;
+      border: 1px dashed rgba(255,255,255,.15);
+      background: rgba(255,255,255,.03);
+    }
+    .history-item{
+      border-radius: 18px;
+      background: rgba(20,33,61,.92);
+      border: 1px solid rgba(255,255,255,.07);
+      padding: 12px;
+    }
+    .history-top{
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      align-items:center;
+      margin-bottom: 8px;
+    }
+    .history-round{
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .history-status{
+      font-size: 13px;
+      font-weight: 900;
+      padding: 5px 10px;
+      border-radius: 999px;
+    }
+    .history-status.win{
+      color: var(--win);
+      background: rgba(64,209,127,.12);
+    }
+    .history-status.loss{
+      color: var(--loss);
+      background: rgba(255,123,123,.12);
+    }
+    .history-status.tie{
+      color: var(--accent1);
+      background: rgba(255,208,0,.14);
+    }
+    .history-status.super6{
+      color: #4fd8c9;
+      background: rgba(0,184,169,.14);
+    }
+    .history-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+    .history-grid strong{
+      color: var(--white);
+      font-weight: 900;
+    }
+    .end-box{
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .end-box.hidden{ display:none; }
+    .end-title{
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+    .end-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .end-item{
+      border-radius: 16px;
+      background: rgba(20,33,61,.88);
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .end-label{
+      color: var(--text-sub);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .end-value{
+      font-size: 21px;
+      font-weight: 900;
+    }
+    .table-scroll{
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      margin-top: 10px;
+    }
+    .stats-table{
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .stats-table th,
+    .stats-table td{
+      padding: 10px 10px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .stats-table th:first-child,
+    .stats-table td:first-child{
+      text-align: left;
+    }
+    .stats-table thead th{
+      background: rgba(255,255,255,.06);
+      color: var(--text-sub);
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+      position: sticky;
+      top: 0;
+    }
+    .stats-table thead th.sorted-asc::after{ content: " \25B2"; }
+    .stats-table thead th.sorted-desc::after{ content: " \25BC"; }
+    .stats-table tbody tr:nth-child(even){
+      background: rgba(255,255,255,.03);
+    }
+    .stats-table tbody td{
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .stats-table tbody td.profit-pos{ color: var(--win); }
+    .stats-table tbody td.profit-neg{ color: var(--loss); }
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(5,9,22,.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+    .modal-overlay.hidden{ display:none; }
+    .modal-box{
+      background: linear-gradient(180deg, #182749, #101a37);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.1);
+      box-shadow: var(--shadow);
+      max-width: 680px;
+      width: 100%;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #probModalOverlay .modal-box{
+      max-width: 1420px;
+    }
+    #probTable{
+      width: 100%;
+      table-layout: fixed;
+    }
+    #probTable th,
+    #probTable td{
+      padding: 8px 6px;
+      font-size: 12.5px;
+      white-space: normal;
+      word-break: keep-all;
+    }
+    #probTable thead th{
+      line-height: 1.3;
+      vertical-align: bottom;
+    }
+    #probTable th:first-child,
+    #probTable td:first-child{
+      width: 13%;
+    }
+    .prob-filters{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .prob-filter-field{
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .prob-filter-field span{
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 700;
+    }
+    .prob-filter-select{
+      height: 38px;
+      border-radius: 10px;
+      border: 2px solid var(--input-stroke);
+      background: var(--input-bg);
+      color: var(--white);
+      padding: 0 10px;
+      font-size: 13px;
+      outline: none;
+    }
+    #probTable th, #probTable td{
+      padding: 10px 8px;
+    }
+    .modal-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 16px 16px 6px;
+      flex-shrink: 0;
+    }
+    .modal-title{ font-size:16px; font-weight:900; margin:0; }
+    .modal-close{
+      width:32px; height:32px;
+      flex-shrink: 0;
+      border-radius:10px;
+      border:0;
+      background: rgba(255,255,255,.08);
+      color: var(--white);
+      font-size:16px;
+      cursor:pointer;
+      line-height:1;
+    }
+    .modal-body{
+      padding: 0 16px 16px;
+      overflow-y: auto;
+    }
+    .modal-hint{
+      font-size:12.5px;
+      color: var(--text-sub);
+      margin: 0 0 10px;
+      line-height:1.5;
+    }
+    .label-link{
+      background: none;
+      border: 0;
+      padding: 0;
+      font: inherit;
+      color: var(--accent3);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .label-link:hover{ color: var(--accent1); }
+    #guideModalOverlay{ z-index: 110; }
+    .guide-table{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .guide-table td{
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .guide-table tr:first-child td{ border-top: none; }
+    .guide-table td:first-child{
+      font-weight: 900;
+      color: var(--accent3);
+      white-space: nowrap;
+      width: 1%;
+      padding-right: 16px;
+    }
+    .guide-table td:last-child{
+      color: var(--text-sub);
+      line-height: 1.65;
+    }
+    @media (max-width: 430px){
+      .modal-box{ max-height: 92vh; }
+      .stats-table{ font-size: 12px; }
+      .stats-table th, .stats-table td{ padding: 8px 7px; }
+      .guide-table{ font-size: 12.5px; }
+      .guide-table td{ padding: 10px 8px; }
+    }
+    .game-head{ display:flex; align-items:center; justify-content:space-between; gap: 8px; margin-bottom: 12px; }
+    .game-head .section-title{ margin: 0; }
+    .auto-btn{
+      flex-shrink: 0; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 800;
+      color: var(--text-sub); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); cursor: pointer;
+    }
+    .auto-btn.on{ color: #fff; background: rgba(111,137,255,.55); border-color: var(--accent3); }
+    .auto-btn:disabled{ opacity: .4; cursor: not-allowed; }
+    .auto-tally{ font-size: 12px; line-height: 1.6; color: var(--text-sub); background: rgba(255,255,255,.05); border: 1px dashed rgba(255,255,255,.2); border-radius: 12px; padding: 8px 10px; }
+    .auto-tally b{ color: var(--white); }
+    .game-reset{ display:flex; gap: 8px; margin-top: 4px; }
+    .game-reset .btn{ flex: 1; height: 48px; font-size: 14px; padding: 0 6px; }
+    .game-reset .btn.retry-auto{ flex: 1.7; }
+    .extend-box{ margin-top: 8px; padding: 10px; border-radius: 14px; background: rgba(111,137,255,.12); border: 1px solid rgba(111,137,255,.35); }
+    .extend-title{ display:block; margin-bottom: 8px; font-size: 13px; font-weight: 800; color: var(--text-sub); }
+    .extend-btns{ display:flex; gap: 8px; }
+    .extend-btns .btn{ flex: 1; height: 44px; font-size: 14px; padding: 0 4px; }
+    .roads{ margin-top: 4px; }
+    .road-title{ margin: 12px 0 6px; font-size: 13px; font-weight: 900; color: #eef3ff; display:flex; align-items:center; justify-content:space-between; gap: 8px; flex-wrap: wrap; }
+    .road-title small{ font-size: 11px; font-weight: 700; color: var(--text-hint); }
+    .road-canvas{ display:block; width: 100%; height: 100px; border-radius: 10px; border: 1px solid rgba(255,255,255,.18); background: #fff; }
+    .road-summary{ font-size: 12px; font-weight: 700; color: var(--text-sub); margin-top: 4px; }
+    .road-legend{ display:flex; flex-wrap:wrap; gap: 4px 12px; font-size: 11px; color: var(--text-hint); margin-top: 6px; }
+    .road-legend i{ display:inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .shuffle-box.dealing{ height: 268px; }
+    .deal-table{
+      position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; gap:4px; padding: 8px 8px 6px;
+      background: radial-gradient(circle at 50% 0%, #1d7a4c, #0b4a2d 70%);
+    }
+    .deal-bet{ text-align:center; font-size: 12px; font-weight: 800; color: #ffe9a8; min-height: 16px; }
+    .deal-hands{ display:grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; min-height: 0; }
+    .deal-side{ border: 1px solid rgba(255,255,255,.28); border-radius: 12px; padding: 6px 4px; display:flex; flex-direction:column; align-items:center; gap: 6px; background: rgba(0,0,0,.14); }
+    .deal-side.player{ border-color: #7ab8ff; }
+    .deal-side.banker{ border-color: #ff9a9a; }
+    .deal-label{ font-weight: 900; font-size: 13px; color: #fff; }
+    .deal-label b{ display:inline-block; min-width: 20px; margin-left: 4px; padding: 0 5px; border-radius: 8px; background: rgba(0,0,0,.35); font-size: 15px; text-align:center; }
+    .deal-cards{ display:flex; gap: 4px; align-items:center; justify-content:center; min-height: 62px; flex-wrap: nowrap; }
+    .pcard{
+      width: 38px; height: 54px; border-radius: 6px; background: #fff; color: #111; flex-shrink: 0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; line-height: 1.05;
+      font-weight: 900; box-shadow: 0 3px 7px rgba(0,0,0,.4); animation: dealIn .3s ease-out;
+    }
+    .pcard.red{ color: #d62b2b; }
+    .pcard.third{ transform: rotate(90deg); margin: 0 8px; }
+    .pc-r{ font-size: 15px; }
+    .pc-s{ font-size: 17px; }
+    .deal-result{ text-align:center; font-weight: 900; font-size: 15px; min-height: 20px; color: #fff; }
+    .deal-result.player{ color: #a9d1ff; }
+    .deal-result.banker{ color: #ffb9b9; }
+    .deal-result.tie{ color: #93f0b8; }
+    .deal-info{ text-align:center; font-size: 10.5px; color: rgba(255,255,255,.72); min-height: 13px; }
+    @keyframes dealIn{ from{ opacity: 0; translate: 0 -26px; scale: .7; } to{ opacity: 1; translate: 0 0; scale: 1; } }
+    @media (max-width: 430px){
+      .pcard{ width: 32px; height: 46px; }
+      .pcard.third{ margin: 0 7px; }
+      .pc-r{ font-size: 13px; }
+      .pc-s{ font-size: 15px; }
+      .shuffle-box.dealing{ height: 252px; }
+    }
+    .road-canvas{ border: 2px solid #b8923a; }
+    @keyframes shuffleLeft{
+      0%{ transform: translateX(0) rotate(-10deg); }
+      100%{ transform: translateX(30px) rotate(10deg); }
+    }
+    @keyframes shuffleRight{
+      0%{ transform: translateX(0) rotate(10deg); }
+      100%{ transform: translateX(-30px) rotate(-10deg); }
+    }
+    @media (max-width: 430px){
+      .grid, .stats, .end-grid{ grid-template-columns: 1fr; }
+      .btn-row, .decision-row, .game-actions{ grid-template-columns: 1fr; }
+      .btn.super6{ grid-column: auto; }
+      .side-badge{ min-width: 100%; }
+      .history-grid{ grid-template-columns: 1fr; }
+      .deck-card.left{ left: calc(50% - 82px); }
+      .deck-card.right{ left: calc(50% - 10px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="version" id="versionBadge"></div>
+    </div>
+
+    <h1>바카라 마틴 메이커</h1>
+    <p class="desc">배팅방법을 먼저 선택하고, 금액을 세팅한 뒤 시작하면 게임이 진행됩니다. 초기화하면 같은 배팅방법의 세팅 화면으로 돌아갑니다.</p>
+
+    <div id="strategyPage" class="page">
+      <section class="card">
+        <h2 class="section-title">배팅방법 선택</h2>
+        <p class="hint">카지노의 수학적 우위(하우스 엣지)로 인해 장기적으로 100% 이기는 전략은 없습니다. 아래 방식들은 자금을 얼마나 안전하게 운용하며 즐기는지의 차이일 뿐입니다.</p>
+        <div class="strategy-list">
+          <button type="button" class="strategy-card" data-strategy="superMartin">
+            <div class="strategy-name">슈퍼마틴</div>
+            <div class="strategy-desc">패배 시 배팅금액 급상승(1,3,7,15...), 승리 시 그 판의 배팅금액 전액이 이득. 파산 위험 매우 높음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="classicMartin">
+            <div class="strategy-name">일반마틴 (Martingale)</div>
+            <div class="strategy-desc">패배 시 배팅금액 2배 증가(1,2,4,8...), 승리 시 그동안의 손실을 회복하고 1유닛 이익. 파산 위험 매우 높음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="paroli">
+            <div class="strategy-name">파롤리 (Paroli)</div>
+            <div class="strategy-desc">역마틴게일. 패배 시 항상 1유닛, 승리 시에만 2배로 증가해 3연승까지 노림. 3연승 성공 또는 패배 시 1유닛으로 복귀. 파산 위험 매우 낮음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="system1326">
+            <div class="strategy-name">1-3-2-6 시스템</div>
+            <div class="strategy-desc">승리할 때마다 1→3→2→6 배수로 배팅, 4단계 완주 또는 패배 시 1단계로 복귀. 2연승만 성공하면 이후 손해 방어. 파산 위험 낮음.</div>
+          </button>
+          <button type="button" class="strategy-card" data-strategy="dalembert">
+            <div class="strategy-name">달랑베르 (D'Alembert)</div>
+            <div class="strategy-desc">패배 시 1유닛 증가, 승리 시 1유닛 감소로 완만하게 조절. 급격한 파산 없이 시드를 오래 유지하는 데 적합.</div>
+          </button>
+        </div>
+        <div class="btn-row">
+          <button id="viewStatsBtn" class="btn secondary" type="button">통계보기</button>
+        </div>
+        <div class="btn-row">
+          <button id="viewProbBtn" class="btn secondary" type="button">확률표</button>
+        </div>
+        <div class="btn-row">
+          <button id="viewGuideBtn" class="btn secondary" type="button">배팅법 설명서</button>
+        </div>
+        <div class="btn-row">
+          <a class="btn primary" href="../2/" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">자동 배팅법 선택 (최고 승률)</a>
+        </div>
+      </section>
+    </div>
+
+    <div id="probModalOverlay" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">배팅법별 확률표</h3>
+          <button id="probModalClose" class="modal-close" type="button" aria-label="닫기">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-hint">마틴 계열 6개 배팅법 × 첫배팅금액(1,000·2,000·3,000·4,000·5,000·6,000·7,000·8,000·9,000·10,000원) × 총 시작금액(100,000·200,000·300,000·400,000원) 전체 조합을 각 1,000만 회씩 시뮬레이션한 결과입니다. "5판컷·10판컷·20판컷"은 각각 최대 5·10·20판까지 진행하는 조건이며, 그 안에 목표수익에 도달하면 <b>목표달성</b>, 마지막 마틴 단계에서 패배하거나 남은 돈 전부를 건 배팅에서 패배하면 <b>파산</b>, 둘 다 아니면 <b>미달성</b>으로 집계합니다(달성·파산 시 즉시 종료, TIE도 1판으로 계산). 정해진 배팅금액이 남은 돈보다 크면 게임을 끝내지 않고 남은 돈 전부를 배팅하며, 이때 이기면 정해진 금액보다 적게 벌고 1단계로 돌아갑니다. 판정 확률 가정은 TIE 9.5%, 패배 45.25%, 승리 40.25%, SUPER6 5%(승리 처리, 수익은 배팅금액의 50%)이며, 승·패를 동률로 단순화한 값이라 실제 바카라의 뱅커/플레이어 확률과는 약간 다릅니다. 목표수익은 시작금액과 무관하게 <b>첫배팅금액×4 고정 금액</b>입니다(1,000→+4,000 / 2,000→+8,000 / 3,000→+12,000 / 4,000→+16,000 / 5,000→+20,000 / 6,000→+24,000 / 7,000→+28,000 / 8,000→+32,000 / 9,000→+36,000 / 10,000→+40,000). "올인" 표시된 슈퍼마틴은 마지막 마틴 단계에서 정해진 공식 금액 대신 남은 금액 전부를 배팅합니다. 열 제목을 클릭하면 정렬됩니다.</p>
+          <div class="prob-filters">
+            <label class="prob-filter-field">
+              <span>배팅법</span>
+              <select id="filterLabel" class="prob-filter-select"><option value="">전체</option></select>
+            </label>
+            <label class="prob-filter-field">
+              <span>시작금액</span>
+              <select id="filterStart" class="prob-filter-select"><option value="">전체</option></select>
+            </label>
+            <label class="prob-filter-field">
+              <span>첫배팅금액</span>
+              <select id="filterFirstBet" class="prob-filter-select"><option value="">전체</option></select>
+            </label>
+            <button id="filterResetBtn" class="btn back" type="button">필터 초기화</button>
+          </div>
+          <p class="modal-hint" id="filterStatusText"></p>
+          <div class="table-scroll">
+            <table class="stats-table" id="probTable">
+              <thead>
+                <tr>
+                  <th data-key="label">배팅법</th>
+                  <th data-key="start">총 시작금액</th>
+                  <th data-key="firstBet">첫배팅금액</th>
+                  <th data-key="target10">목표수익</th>
+                  <th data-key="fiveGoal">5판컷 목표달성</th>
+                  <th data-key="fiveBust">5판컷 파산</th>
+                  <th data-key="fiveUn">5판컷 미달성</th>
+                  <th data-key="tenGoal">10판컷 목표달성</th>
+                  <th data-key="tenBust">10판컷 파산</th>
+                  <th data-key="tenUn">10판컷 미달성</th>
+                  <th data-key="twentyGoal">20판컷 목표달성</th>
+                  <th data-key="twentyBust">20판컷 파산</th>
+                  <th data-key="twentyUn">20판컷 미달성</th>
+                </tr>
+              </thead>
+              <tbody id="probTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="guideModalOverlay" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title" id="guideModalTitle">배팅방법 설명서</h3>
+          <button id="guideModalClose" class="modal-close" type="button" aria-label="닫기">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-hint" id="guideModalHint">초등학생도 이해할 수 있게 쉽게 풀어썼어요.</p>
+          <button id="guideShowAllBtn" class="btn back hidden" type="button" style="margin-bottom:10px;">← 전체 설명 목록 보기</button>
+          <table class="guide-table" id="guideTable">
+            <tbody id="guideTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="statsPage" class="page hidden">
+      <section class="card">
+        <div class="setup-header">
+          <button id="statsBackBtn" class="btn back" type="button">← 배팅방법</button>
+          <h2 class="section-title">배팅방법별 통계</h2>
+        </div>
+        <div class="btn-row" style="margin-top:0; margin-bottom:10px;">
+          <button id="statsRefreshBtn" class="btn secondary" type="button">새로고침</button>
+        </div>
+        <p class="summary" id="statsStatusText">불러오는 중...</p>
+        <div class="table-scroll">
+          <table class="stats-table" id="statsTable">
+            <thead>
+              <tr>
+                <th data-key="strategy_label">배팅방법</th>
+                <th data-key="session_count">게임횟수</th>
+                <th data-key="total_rounds">총판수</th>
+                <th data-key="win_count">승</th>
+                <th data-key="loss_count">패</th>
+                <th data-key="tie_count">무</th>
+                <th data-key="super6_count">SUPER6</th>
+                <th data-key="win_rate">승률</th>
+                <th data-key="loss_rate">패배율</th>
+                <th data-key="total_start_amount">환산총투입액(10만기준)</th>
+                <th data-key="total_profit">환산총수익(10만기준)</th>
+                <th data-key="profit_rate">수익률</th>
+                <th data-key="avg_profit">환산평균수익/게임</th>
+              </tr>
+            </thead>
+            <tbody id="statsTableBody"></tbody>
+          </table>
+        </div>
+        <p class="hint">저장된 모든 게임 종료 기록(진행 중 초기화 포함)을 배팅방법별로 합산한 값입니다. 열 제목을 클릭하면 정렬됩니다. 승률/패배율은 TIE를 제외한 승·SUPER6·패 판수 기준이며, 금액 관련 지표는 실제 시작금액과 무관하게 시작금액 10만원 기준으로 환산해 배팅방법 간 공정하게 비교할 수 있도록 계산됩니다.</p>
+      </section>
+    </div>
+
+    <div id="setupPage" class="page hidden">
+      <section class="card">
+        <div class="setup-header">
+          <button id="backToStrategyBtn" class="btn back" type="button">← 배팅방법</button>
+          <h2 class="section-title" id="setupTitle">1p 금액 세팅</h2>
+        </div>
+        <div class="grid">
+          <label class="field" id="martinLimitField">
+            <span class="label">마틴횟수</span>
+            <input id="martinLimitInput" class="input" type="number" inputmode="numeric" min="1" placeholder="예: 4" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span class="label" id="baseBetLabel">1마틴 금액</span>
+            <input id="baseBetInput" class="input" type="number" inputmode="numeric" min="0" placeholder="" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span class="label">시작금액</span>
+            <input id="startAmountInput" class="input" type="number" inputmode="numeric" min="0" placeholder="자동 계산 가능" autocomplete="off" />
+          </label>
+          <label class="field" id="targetAmountField">
+            <span class="label">목표금액</span>
+            <input id="targetAmountInput" class="input" type="number" inputmode="numeric" min="0" placeholder="자동 계산 가능" autocomplete="off" />
+          </label>
+        </div>
+        <div class="btn-row">
+          <button id="startBtn" class="btn primary">게임 시작</button>
+        </div>
+        <div class="summary" id="summaryText">시작 전입니다.</div>
+      </section>
+    </div>
+
+    <div id="gamePage" class="page hidden">
+      <section class="card">
+        <div class="game-head">
+          <h2 class="section-title">2p 게임 · <span id="gameStrategyLabel"></span></h2>
+          <button id="autoBtn" class="auto-btn" type="button">자동검증</button>
+        </div>
+        <div class="game-stack">
+          <div class="game-stat">
+            <div class="game-stat-row three">
+              <div class="game-stat-split">
+                <div class="game-stat-title">현재판</div>
+                <div class="game-stat-value" id="roundInfo">-</div>
+              </div>
+              <div class="game-stat-split">
+                <div class="game-stat-title">배팅금액</div>
+                <div class="game-stat-value" id="betInfo">-</div>
+              </div>
+              <div class="game-stat-split">
+                <div class="game-stat-title">총금액</div>
+                <div class="game-stat-value" id="moneyInfo">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="shuffleBox" class="shuffle-box">
+            <div class="table-glow"></div>
+            <div class="deck-card left"></div>
+            <div class="deck-card right"></div>
+            <div id="dealTable" class="deal-table hidden">
+              <div class="deal-bet" id="dealBet"></div>
+              <div class="deal-hands">
+                <div class="deal-side player">
+                  <div class="deal-label">플레이어 <b id="dealPTotal"></b></div>
+                  <div class="deal-cards" id="dealPCards"></div>
+                </div>
+                <div class="deal-side banker">
+                  <div class="deal-label">뱅커 <b id="dealBTotal"></b></div>
+                  <div class="deal-cards" id="dealBCards"></div>
+                </div>
+              </div>
+              <div class="deal-result" id="dealResult"></div>
+              <div class="deal-info" id="dealInfo"></div>
+            </div>
+            <div id="resultSide" class="result-side">
+              <div id="sideBadge" class="side-badge">대기중</div>
+              <div class="side-meta" id="sideMeta">시작 버튼을 눌러 첫 판을 생성하세요.</div>
+            </div>
+          </div>
+
+          <div class="game-actions">
+            <button id="winBtn" class="btn win" disabled>승리</button>
+            <button id="tieBtn" class="btn tie" disabled>TIE</button>
+            <button id="lossBtn" class="btn loss" disabled>패배</button>
+            <button id="super6Btn" class="btn super6" disabled>SUPER6</button>
+            <button id="gameOverBtn" class="btn gameover hidden">게임종료</button>
+          </div>
+
+          <div class="game-reset">
+            <button id="resetBtn" class="btn secondary">초기화</button>
+            <button id="retryBtn" class="btn secondary hidden" type="button">재시도</button>
+            <button id="unlimitedBtn" class="btn secondary retry-auto hidden" type="button">무제한 이어서 하기</button>
+          </div>
+
+          <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
+          <div id="extendBox" class="extend-box hidden">
+            <span class="extend-title">몇 판까지 이어서 검증할까요?</span>
+            <div class="extend-btns" id="extendBtns"></div>
+          </div>
+          <div id="autoTally" class="auto-tally hidden"></div>
+          <div class="roads" id="roads">
+            <div class="road-title">구슬판 <small>가로 20칸 × 세로 6칸</small></div>
+            <canvas id="roadBead" class="road-canvas"></canvas>
+            <div class="road-summary" id="roadSummary"></div>
+            <div class="road-legend">
+              <span><i style="background:#1f5fe0"></i>플레이어</span>
+              <span><i style="background:#e0302f"></i>뱅커</span>
+              <span><i style="background:#1fa35c"></i>타이</span>
+              <span><i style="background:#f2a900"></i>슈퍼6(뱅커 6점 승)</span>
+            </div>
+            <div class="road-title">대로 <small>가로 30칸 × 세로 6칸 · 타이는 초록 사선</small></div>
+            <canvas id="roadBig" class="road-canvas"></canvas>
+            <div class="road-title">중국점 · 큰눈이 <small>빨강=규칙 / 파랑=불규칙</small></div>
+            <canvas id="roadEye" class="road-canvas"></canvas>
+            <div class="road-title">중국점 · 작은눈이</div>
+            <canvas id="roadSmall" class="road-canvas"></canvas>
+            <div class="road-title">중국점 · 바퀴벌레</div>
+            <canvas id="roadRoach" class="road-canvas"></canvas>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card hidden">
+      <h2 class="section-title">진행 기록</h2>
+      <div id="history" class="history empty">아직 진행 기록이 없습니다.</div>
+      <div id="endBox" class="end-box hidden">
+        <div class="end-title">진행 종료</div>
+        <div class="end-grid">
+          <div class="end-item">
+            <div class="end-label">판 횟수</div>
+            <div class="end-value" id="endRounds">0판</div>
+          </div>
+          <div class="end-item">
+            <div class="end-label">시작금액</div>
+            <div class="end-value" id="endStartAmount">0</div>
+          </div>
+          <div class="end-item">
+            <div class="end-label">총 수익</div>
+            <div class="end-value" id="endProfit">0</div>
+          </div>
+          <div class="end-item">
+            <div class="end-label">총 금액</div>
+            <div class="end-value" id="endTotalAmount">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="version" id="versionBadgeBottom"></div>
+    </footer>
+  </div>
+
+  <script>window.BCMK_GAME = "dalembert";</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
+    const LAST_EDIT = { date: "2026-10-12", version: 9 };
+
+    function renderVersionBadge() {
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      const version = todayKey === LAST_EDIT.date ? LAST_EDIT.version : 1;
+      const text = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 - 버전${version}`;
+      ["versionBadge", "versionBadgeBottom"].forEach(id => {
+        const badge = document.getElementById(id);
+        if (badge) badge.textContent = text;
+      });
+    }
+    renderVersionBadge();
+
+    const $ = (id) => document.getElementById(id);
+
+    // Supabase 연동: anon key만 클라이언트에 사용 (service_role 키는 절대 클라이언트에 넣지 않음)
+    const SUPABASE_URL = "https://onudikupmynqtirkmmlc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9udWRpa3VwbXlucXRpcmttbWxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODk0MDIsImV4cCI6MjEwNTA2NTQwMn0.HyT8vGYXwvoL0NK4Ip2VVYTZ4PtVhDWPL7_E6QnpA44";
+    const sb = (window.supabase && window.supabase.createClient)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+
+    // 배팅 시스템 정의: 각 방식은 배팅금액 계산과 승/패 시 다음 단계 계산 방식만 다르다.
+    const STRATEGIES = {
+      superMartin: {
+        label: "슈퍼마틴",
+        baseLabel: "1마틴 금액",
+        needsMartinLimit: true,
+        autoLink: true,
+        getBet(base, stage) { return base * ((2 ** stage) - 1); },
+        getRequiredStart(base, limit) {
+          // 합계: (2^2-1) ... (2^m-1) = (2^(m+1) - 2) - m = 2^(m+1) - m - 2
+          return base * ((2 ** (limit + 1)) - limit - 2);
+        },
+        getBaseFromStart(start, limit) {
+          const divisor = (2 ** (limit + 1)) - limit - 2;
+          return divisor > 0 ? start / divisor : null;
+        },
+        onWin() { return 1; },
+        onLoss(stage, limit) { return stage >= limit ? null : stage + 1; }
+      },
+      classicMartin: {
+        label: "일반마틴",
+        baseLabel: "1마틴 금액",
+        needsMartinLimit: true,
+        autoLink: true,
+        getBet(base, stage) { return base * (2 ** (stage - 1)); },
+        getRequiredStart(base, limit) { return base * ((2 ** limit) - 1); },
+        getBaseFromStart(start, limit) {
+          const divisor = (2 ** limit) - 1;
+          return divisor > 0 ? start / divisor : null;
+        },
+        onWin() { return 1; },
+        onLoss(stage, limit) { return stage >= limit ? null : stage + 1; }
+      },
+      paroli: {
+        label: "파롤리",
+        baseLabel: "1유닛 금액",
+        needsMartinLimit: false,
+        autoLink: false,
+        getBet(base, stage) { return base * (2 ** (stage - 1)); },
+        onWin(stage) { return stage >= 3 ? 1 : stage + 1; },
+        onLoss() { return 1; }
+      },
+      system1326: {
+        label: "1-3-2-6",
+        baseLabel: "1유닛 금액",
+        needsMartinLimit: false,
+        autoLink: false,
+        sequence: [1, 3, 2, 6],
+        getBet(base, stage) { return base * STRATEGIES.system1326.sequence[stage - 1]; },
+        onWin(stage) { return stage >= 4 ? 1 : stage + 1; },
+        onLoss() { return 1; }
+      },
+      dalembert: {
+        label: "달랑베르",
+        baseLabel: "1유닛 금액",
+        needsMartinLimit: false,
+        autoLink: false,
+        getBet(base, stage) { return base * stage; },
+        onWin(stage) { return Math.max(1, stage - 1); },
+        onLoss(stage) { return stage + 1; }
+      }
+    };
+
+    const strategyPage = $("strategyPage");
+    const setupPage = $("setupPage");
+    const gamePage = $("gamePage");
+    const statsPage = $("statsPage");
+    const viewStatsBtn = $("viewStatsBtn");
+    const statsBackBtn = $("statsBackBtn");
+    const statsRefreshBtn = $("statsRefreshBtn");
+    const statsStatusText = $("statsStatusText");
+    const statsTableBody = $("statsTableBody");
+    const viewProbBtn = $("viewProbBtn");
+    const probModalOverlay = $("probModalOverlay");
+    const probModalClose = $("probModalClose");
+    const probTableBody = $("probTableBody");
+    const filterLabelSelect = $("filterLabel");
+    const filterStartSelect = $("filterStart");
+    const filterFirstBetSelect = $("filterFirstBet");
+    const filterResetBtn = $("filterResetBtn");
+    const filterStatusText = $("filterStatusText");
+    const viewGuideBtn = $("viewGuideBtn");
+    const guideModalOverlay = $("guideModalOverlay");
+    const guideModalClose = $("guideModalClose");
+    const guideModalTitle = $("guideModalTitle");
+    const guideModalHint = $("guideModalHint");
+    const guideShowAllBtn = $("guideShowAllBtn");
+    const guideTableBody = $("guideTableBody");
+    const backToStrategyBtn = $("backToStrategyBtn");
+    const setupTitle = $("setupTitle");
+    const martinLimitField = $("martinLimitField");
+    const martinLimitInput = $("martinLimitInput");
+    const baseBetLabel = $("baseBetLabel");
+    const baseBetInput = $("baseBetInput");
+    const startAmountInput = $("startAmountInput");
+    const targetAmountField = $("targetAmountField");
+    const targetAmountInput = $("targetAmountInput");
+    const startBtn = $("startBtn");
+    const resetBtn = $("resetBtn");
+    const winBtn = $("winBtn");
+    const tieBtn = $("tieBtn");
+    const lossBtn = $("lossBtn");
+    const super6Btn = $("super6Btn");
+    const gameOverBtn = $("gameOverBtn");
+    const summaryText = $("summaryText");
+    const gameSummaryText = $("gameSummaryText");
+    const gameStrategyLabel = $("gameStrategyLabel");
+    const roundInfo = $("roundInfo");
+    const betInfo = $("betInfo");
+    const moneyInfo = $("moneyInfo");
+    const shuffleBox = $("shuffleBox");
+    const resultSide = $("resultSide");
+    const sideBadge = $("sideBadge");
+    const sideMeta = $("sideMeta");
+    const history = $("history");
+    const endBox = $("endBox");
+    const endRounds = $("endRounds");
+    const endStartAmount = $("endStartAmount");
+    const endProfit = $("endProfit");
+    const endTotalAmount = $("endTotalAmount");
+
+    const state = {
+      strategyId: null,
+      started: false,
+      finished: false,
+      awaitingDecision: false,
+      roundNumber: 0,
+      startAmount: 0,
+      targetAmount: 0,
+      currentAmount: 0,
+      totalProfit: 0,
+      baseBet: 0,
+      martinLimit: 0,
+      stage: 1,
+      currentBet: 0,
+      currentSide: null,
+      history: [],
+      unlimited: false,
+      extendCap: 0,
+      endKind: null
+    };
+
+    const auto = {
+      lastEdited: null, // "start" | "base"
+      isUpdating: false,
+      targetEdited: false
+    };
+
+    // ---------- 자동검증 ----------
+    // 한 판의 실제 결과(플레이어 / 뱅커 / 슈퍼6 / 타이)는 아래 6덱 슈에서 실제로 카드를 나눠 결정하고,
+    // 화면에 나온 배팅 쪽(플레이어/뱅커)에 맞춰 승리 / 패배 / TIE / SUPER6 로 판정해 자동으로 누른다.
+    const AUTO = { on: false, used: false, fast: false, timer: null, counts: null };
+    const DEAL = { timers: [], handId: 0, active: false }; // playDeal 이 사용 (아래 딜러 블록)
+    function newAutoCounts() {
+      return { player: 0, banker: 0, super6: 0, tie: 0, win: 0, loss: 0, betTie: 0, s6: 0 };
+    }
+    AUTO.counts = newAutoCounts();
+
+    // 배팅한 쪽(side)과 실제 결과(outcome)로 버튼 판정을 결정
+    function resultForBet(outcome, side) {
+      if (outcome === "tie") return "TIE";
+      if (side === "플레이어") return outcome === "player" ? "승리" : "패배";
+      if (outcome === "banker") return "승리";
+      if (outcome === "super6") return "SUPER6";
+      return "패배";
+    }
+    function setRetryVisible(visible) {
+      if (!visible) $("extendBox").classList.add("hidden");
+      $("retryBtn").classList.toggle("hidden", !visible);
+      $("unlimitedBtn").classList.toggle("hidden", !visible);
+    }
+    function autoStep() {
+      clearTimeout(AUTO.timer);
+      if (!AUTO.on || DEAL.active) return;
+      AUTO.timer = setTimeout(() => {
+        if (!(AUTO.on && state.awaitingDecision && !state.finished) || DEAL.active) return;
+        const hid = DEAL.handId;
+        const side = getAutoSide();
+        DEAL.active = true;
+        playDeal(`${side} 배팅 · ${sideMeta.textContent}`, AUTO.fast, (outcome) => {
+          DEAL.active = false;
+          // 카드를 나누는 도중 게임이 바뀌었거나 손으로 판정했다면 이 판은 버린다
+          if (hid !== DEAL.handId || !state.awaitingDecision || state.finished) { autoStep(); return; }
+          const result = resultForBet(outcome, side);
+          const c = AUTO.counts;
+          c[outcome]++;
+          if (result === "승리") c.win++;
+          else if (result === "패배") c.loss++;
+          else if (result === "SUPER6") c.s6++;
+          else c.betTie++;
+          recordRound(result, ROAD_FROM_AUTO[outcome]);
+          updateAutoTally();
+        });
+      }, AUTO.fast ? 16 : 300);
+    }
+    function stopAuto() {
+      AUTO.on = false;
+      clearTimeout(AUTO.timer);
+      const btn = $("autoBtn");
+      btn.textContent = "자동검증";
+      btn.classList.remove("on");
+      btn.disabled = state.finished;
+    }
+    function startAuto() {
+      AUTO.on = true;
+      AUTO.used = true;
+      AUTO.fast = !!state.unlimited;
+      const btn = $("autoBtn");
+      btn.textContent = "정지";
+      btn.classList.add("on");
+      btn.disabled = false;
+      updateAutoTally();
+      if (state.awaitingDecision) autoStep();
+    }
+    function resetAuto() {
+      roadReset(); // 게임 시작/초기화 때만 호출됨
+      dealReset();
+      setRetryVisible(false);
+      AUTO.used = false;
+      AUTO.fast = false;
+      AUTO.counts = newAutoCounts();
+      stopAuto();
+      $("autoBtn").disabled = false;
+      updateAutoTally();
+    }
+    function updateAutoTally() {
+      const el = $("autoTally");
+      if (!AUTO.used) { el.classList.add("hidden"); return; }
+      const c = AUTO.counts;
+      const n = c.player + c.banker + c.super6 + c.tie;
+      const bankerAll = c.banker + c.super6;
+      const decisive = c.win + c.s6 + c.loss;
+      const pc = (v) => n > 0 ? (v / n * 100).toFixed(2) : "-";
+      const pd = (v) => decisive > 0 ? (v / decisive * 100).toFixed(1) : "-";
+      el.classList.remove("hidden");
+      el.innerHTML =
+        `자동검증 <b>${n}</b>판 · 실제 결과 (괄호 안은 6덱 이론 확률)<br>` +
+        `플레이어 <b>${c.player}</b> ${pc(c.player)}% (${(DECK6_P.player * 100).toFixed(2)}) · 뱅커 <b>${bankerAll}</b> ${pc(bankerAll)}% (${((DECK6_P.banker) * 100).toFixed(2)}) · 그중 슈퍼6 <b>${c.super6}</b> ${pc(c.super6)}% (${(DECK6_P.super6 * 100).toFixed(2)}) · 타이 <b>${c.tie}</b> ${pc(c.tie)}% (${(DECK6_P.tie * 100).toFixed(2)})<br>` +
+        `내 배팅 기준 · 승리 <b>${c.win}</b> · 패배 <b>${c.loss}</b> · TIE <b>${c.betTie}</b> · SUPER6 <b>${c.s6}</b> → 승리계열 ${pd(c.win + c.s6)}% / 패배 ${pd(c.loss)}% (TIE 제외)`;
+    }
+
+    function getAutoSide() { return state.currentSide; }
+    // ---------- 카지노 로드 (구슬판 / 대로 / 중국점) ----------
+    // 한 판의 실제 결과를 P(플레이어) / B(뱅커) / S(슈퍼6: 뱅커가 6점으로 승) / T(타이)로 쌓아 가로 30칸(구슬판 20칸) × 세로 6칸 판에 그린다.
+    //  구슬판 : 판마다 한 칸, 위에서 아래로 채우고 다음 칸으로 (타이 포함)
+    //  대로   : 같은 쪽이 이기면 아래로, 바뀌면 오른쪽 새 줄. 세로 10칸을 넘으면 오른쪽으로 꺾음(용꼬리). 타이는 직전 칸에 초록 사선
+    //  중국점 : 대로에서 파생. 큰눈이(1줄 전) · 작은눈이(2줄 전) · 바퀴벌레(3줄 전)와 비교해 빨강(규칙적) / 파랑(불규칙)
+    // 손으로 진행할 때는 배팅 쪽과 승리/패배로 실제 결과를 거꾸로 추정한다(패배 = 반대쪽 승, SUPER6 = 뱅커 6점 승).
+    const ROAD_ROWS = 6, ROAD_COLS = 30, BEAD_COLS = 20;
+    const ROAD = { seq: [] };
+    const ROAD_FROM_AUTO = { player: "P", banker: "B", super6: "S", tie: "T" };
+    const ROAD_COLOR = { P: "#1f5fe0", B: "#e0302f", T: "#1fa35c", Y: "#f2a900", R: "#e0302f", Bl: "#1f5fe0" };
+
+    function outcomeFromResult(side, result) {
+      if (result === "TIE") return "T";
+      if (result === "SUPER6") return "S";
+      if (result === "승리") return side === "플레이어" ? "P" : "B";
+      return side === "플레이어" ? "B" : "P"; // 패배
+    }
+    function roadReset() {
+      ROAD.seq.length = 0;
+      drawRoads();
+    }
+    function roadPush(o) {
+      ROAD.seq.push(o);
+      if (ROAD.seq.length > 6000) ROAD.seq = ROAD.seq.slice(-4000);
+      drawRoads();
+    }
+
+    // keys: 같은 값이면 같은 줄, 바뀌면 새 줄. 반환: 칸 좌표(x,y), 논리 줄/행(c,r), 줄별 길이
+    function layoutRoad(keys, rows) {
+      const occ = new Set();
+      const pos = [];
+      const cols = [];
+      let x = 0, y = 0, c = -1, r = 0, startX = 0, tail = false;
+      for (let i = 0; i < keys.length; i++) {
+        if (i === 0 || keys[i] !== keys[i - 1]) {
+          c++; r = 0; tail = false;
+          x = i === 0 ? 0 : startX + 1;
+          y = 0;
+          while (occ.has(x + "," + y)) x++;
+          startX = x;
+          cols.push(1);
+        } else {
+          r++; cols[c]++;
+          if (!tail && y + 1 < rows && !occ.has(x + "," + (y + 1))) y++;
+          else { tail = true; x++; }
+        }
+        occ.add(x + "," + y);
+        pos.push({ x, y, c, r });
+      }
+      return { pos, cols };
+    }
+
+    function buildBigRoad(seq) {
+      const keys = [], meta = [];
+      let pending = 0;
+      for (const o of seq) {
+        if (o === "T") { if (meta.length) meta[meta.length - 1].ties++; else pending++; continue; }
+        keys.push(o === "P" ? "P" : "B");
+        meta.push({ s6: o === "S", ties: 0 });
+      }
+      if (meta.length) meta[0].ties += pending;
+      return { keys, meta, lay: layoutRoad(keys, ROAD_ROWS) };
+    }
+
+    // 중국점: k = 1(큰눈이) / 2(작은눈이) / 3(바퀴벌레). 빨강 'R' = 앞 줄을 따라감, 파랑 'Bl' = 따라가지 않음
+    function deriveRoad(pos, cols, k) {
+      const out = [];
+      for (const p of pos) {
+        const c = p.c + 1, r = p.r + 1; // 1부터 시작하는 줄/행 번호
+        let v = null;
+        if (r === 1) {
+          if (c >= k + 2) v = cols[c - 2] === cols[c - 2 - k] ? "R" : "Bl";
+        } else if (c >= k + 1) {
+          const left = cols[c - k - 1]; // k줄 왼쪽 줄의 길이
+          v = left >= r ? "R" : left === r - 1 ? "Bl" : "R";
+        }
+        if (v) out.push(v);
+      }
+      return out;
+    }
+
+    function prepRoadCanvas(cv, cols) {
+      const w = cv.clientWidth;
+      if (!w) return null;
+      const s = w / cols;
+      const h = s * ROAD_ROWS;
+      const dpr = window.devicePixelRatio || 1;
+      cv.style.height = h + "px";
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+      const ctx = cv.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#d3d8e3";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= cols; i++) { ctx.moveTo(Math.round(i * s) + .5, 0); ctx.lineTo(Math.round(i * s) + .5, h); }
+      for (let j = 0; j <= ROAD_ROWS; j++) { ctx.moveTo(0, Math.round(j * s) + .5); ctx.lineTo(w, Math.round(j * s) + .5); }
+      ctx.stroke();
+      return { ctx, s };
+    }
+    function roadCenter(b, x, y) { return [(x + .5) * b.s, (y + .5) * b.s]; }
+    function roadCircle(b, x, y, color, fill, scale) {
+      const [cx, cy] = roadCenter(b, x, y);
+      const rad = b.s * (scale || .38);
+      b.ctx.beginPath();
+      b.ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      if (fill) { b.ctx.fillStyle = color; b.ctx.fill(); }
+      else { b.ctx.strokeStyle = color; b.ctx.lineWidth = Math.max(1.5, b.s * .12); b.ctx.stroke(); }
+    }
+    function roadText(b, x, y, text, color, scale) {
+      const [cx, cy] = roadCenter(b, x, y);
+      b.ctx.fillStyle = color;
+      b.ctx.font = `800 ${Math.max(7, b.s * (scale || .5))}px system-ui, sans-serif`;
+      b.ctx.textAlign = "center";
+      b.ctx.textBaseline = "middle";
+      b.ctx.fillText(text, cx, cy + b.s * .03);
+    }
+    function roadSlash(b, x, y, color, width) {
+      b.ctx.strokeStyle = color;
+      b.ctx.lineWidth = width || Math.max(1.5, b.s * .12);
+      b.ctx.beginPath();
+      b.ctx.moveTo((x + .8) * b.s, (y + .2) * b.s);
+      b.ctx.lineTo((x + .2) * b.s, (y + .8) * b.s);
+      b.ctx.stroke();
+    }
+    function roadOffset(pos) {
+      let maxX = -1;
+      for (const p of pos) if (p.x > maxX) maxX = p.x;
+      return Math.max(0, maxX + 1 - ROAD_COLS);
+    }
+
+    function drawRoads() {
+      const beadCv = $("roadBead");
+      if (!beadCv) return;
+      const seq = ROAD.seq;
+
+      // 구슬판
+      let b = prepRoadCanvas(beadCv, BEAD_COLS);
+      if (!b) return;
+      const totalCols = Math.ceil(seq.length / ROAD_ROWS);
+      const off = Math.max(0, totalCols - BEAD_COLS);
+      seq.forEach((o, i) => {
+        const x = Math.floor(i / ROAD_ROWS) - off, y = i % ROAD_ROWS;
+        if (x < 0) return;
+        const color = o === "T" ? ROAD_COLOR.T : o === "P" ? ROAD_COLOR.P : ROAD_COLOR.B;
+        roadCircle(b, x, y, color, true, .42);
+        roadText(b, x, y, o === "P" ? "闲" : o === "T" ? "和" : "庄", "#ffffff", .46);
+        if (o === "S") { // 슈퍼6: 뱅커 구슬 오른쪽 위에 노란 "6" 배지
+          b.ctx.beginPath();
+          b.ctx.arc((x + .8) * b.s, (y + .22) * b.s, b.s * .2, 0, Math.PI * 2);
+          b.ctx.fillStyle = ROAD_COLOR.Y;
+          b.ctx.fill();
+          roadText(b, x + .3, y - .28, "6", "#3a2700", .3);
+        }
+      });
+
+      // 대로
+      const big = buildBigRoad(seq);
+      b = prepRoadCanvas($("roadBig"), ROAD_COLS);
+      if (b) {
+        const o2 = roadOffset(big.lay.pos);
+        big.lay.pos.forEach((p, i) => {
+          const x = p.x - o2;
+          if (x < 0) return;
+          roadCircle(b, x, p.y, big.keys[i] === "P" ? ROAD_COLOR.P : ROAD_COLOR.B, false, .34);
+          const m = big.meta[i];
+          if (m.s6) roadCircle(b, x, p.y, ROAD_COLOR.Y, true, .13);
+          if (m.ties > 0) {
+            roadSlash(b, x, p.y, ROAD_COLOR.T);
+            if (m.ties > 1) roadText(b, x + .28, p.y + .3, String(m.ties), ROAD_COLOR.T, .34);
+          }
+        });
+      }
+
+      // 중국점 3종
+      [["roadEye", 1, "ring"], ["roadSmall", 2, "dot"], ["roadRoach", 3, "slash"]].forEach(([id, k, shape]) => {
+        const cv = $(id);
+        const bb = prepRoadCanvas(cv, ROAD_COLS);
+        if (!bb) return;
+        const keys = deriveRoad(big.lay.pos, big.lay.cols, k);
+        const lay = layoutRoad(keys, ROAD_ROWS);
+        const o3 = roadOffset(lay.pos);
+        lay.pos.forEach((p, i) => {
+          const x = p.x - o3;
+          if (x < 0) return;
+          const color = keys[i] === "R" ? ROAD_COLOR.R : ROAD_COLOR.Bl;
+          if (shape === "ring") roadCircle(bb, x, p.y, color, false, .3);
+          else if (shape === "dot") roadCircle(bb, x, p.y, color, true, .28);
+          else roadSlash(bb, x, p.y, color, Math.max(1.5, bb.s * .14));
+        });
+      });
+
+      // 요약
+      const cnt = { P: 0, B: 0, S: 0, T: 0 };
+      seq.forEach(o => { cnt[o]++; });
+      const sum = $("roadSummary");
+      if (sum) sum.textContent = `플레이어 ${cnt.P} · 뱅커 ${cnt.B + cnt.S} (슈퍼6 ${cnt.S}) · 타이 ${cnt.T} · 총 ${seq.length}판`;
+    }
+    window.addEventListener("resize", () => drawRoads());
+
+    // ---------- 6덱 슈 + 카드 딜러 (자동검증) ----------
+    // 실제 카지노(punto banco)처럼 6덱(312장)을 섞은 슈에서 카드를 한 장씩 꺼낸다.
+    //  1) 슈를 새로 섞으면 첫 카드를 공개하고, 그 숫자(A=1, 그림=10)만큼 더 소각한다.
+    //  2) 플레이어 → 뱅커 → 플레이어 → 뱅커 순으로 두 장씩, 이어서 세 번째 카드 규칙대로 필요한 만큼만 더 나눈다.
+    //     내추럴(첫 두 장이 8·9)이면 추가 없음 / 플레이어 0~5 받고 6~7 스탠드 / 뱅커는 표에 따라(아래 bankerDraws)
+    //  3) 컷카드: 슈 끝에서 7번째 카드 앞. 컷카드에 닿으면 그 판이 마지막 판이고 다음 판 전에 새로 섞는다.
+    // 한 판의 결과(플레이어 / 뱅커 / 슈퍼6 = 뱅커가 6점으로 승 / 타이)는 실제로 나온 카드로 결정한다.
+    const SHOE_DECKS = 6, CUT_FROM_END = 7;
+    const DECK6_P = { player: 0.446279, banker: 0.458653, super6: 0.053844, tie: 0.095069 }; // 6덱 이론 확률 (sim/exact_probs.js 로 계산, 뱅커는 슈퍼6 포함)
+    const CARD_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    const CARD_SUITS = ["♠", "♥", "♦", "♣"];
+    const SHOE = { cards: [], pos: 0, no: 0, burn: 0 };
+
+    function randInt(n) { // 0 ≤ x < n, 편향 없는 정수 난수 (거부 샘플링)
+      const buf = new Uint32Array(1);
+      const limit = Math.floor(4294967296 / n) * n;
+      do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+      return buf[0] % n;
+    }
+    function cardValue(c) { return c.r >= 10 ? 0 : c.r; } // c.r: 1(A) ~ 13(K)
+    function cardText(c) { return CARD_RANKS[c.r - 1] + CARD_SUITS[c.s]; }
+
+    function shuffleShoe() {
+      const cards = [];
+      for (let d = 0; d < SHOE_DECKS; d++) for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) cards.push({ r, s });
+      for (let i = cards.length - 1; i > 0; i--) { // Fisher–Yates
+        const j = randInt(i + 1);
+        const t = cards[i]; cards[i] = cards[j]; cards[j] = t;
+      }
+      SHOE.cards = cards;
+      SHOE.no += 1;
+      const first = cards[0];
+      SHOE.burn = first.r >= 10 ? 10 : first.r; // 첫 카드를 공개하고 그 숫자만큼 소각
+      SHOE.pos = 1 + SHOE.burn;
+      return first;
+    }
+    function shoeNeedsShuffle() {
+      return SHOE.cards.length === 0 || SHOE.pos >= SHOE.cards.length - CUT_FROM_END;
+    }
+    function shoeDraw() { return SHOE.cards[SHOE.pos++]; }
+
+    function bankerDraws(bt, p3) { // p3: 플레이어 세 번째 카드 가치, null = 플레이어가 스탠드
+      if (p3 === null) return bt <= 5;
+      if (bt <= 2) return true;
+      if (bt === 3) return p3 !== 8;
+      if (bt === 4) return p3 >= 2 && p3 <= 7;
+      if (bt === 5) return p3 >= 4 && p3 <= 7;
+      if (bt === 6) return p3 === 6 || p3 === 7;
+      return false;
+    }
+
+    // 한 판을 슈에서 실제로 나눈다. seq: 나눠진 순서대로 [{to: "P"|"B", card}]
+    function dealHandFromShoe() {
+      const seq = [];
+      const P = [], B = [];
+      const give = (to) => { const card = shoeDraw(); (to === "P" ? P : B).push(card); seq.push({ to, card }); return card; };
+      give("P"); give("B"); give("P"); give("B");
+      const sum = (h) => h.reduce((t, c) => t + cardValue(c), 0) % 10;
+      let natural = false;
+      if (sum(P) >= 8 || sum(B) >= 8) natural = true;
+      else {
+        let p3 = null;
+        if (sum(P) <= 5) p3 = cardValue(give("P"));
+        if (bankerDraws(sum(B), p3)) give("B");
+      }
+      const pt = sum(P), bt = sum(B);
+      const outcome = pt > bt ? "player" : bt > pt ? (bt === 6 ? "super6" : "banker") : "tie";
+      return { seq, pt, bt, natural, outcome };
+    }
+
+    // ----- 화면 -----
+    function dealCancel() {
+      DEAL.timers.forEach(clearTimeout);
+      DEAL.timers = [];
+      DEAL.active = false;
+    }
+    function dealLater(ms, fn) { DEAL.timers.push(setTimeout(fn, ms)); }
+    function hideDealTable() {
+      const t = $("dealTable");
+      if (!t) return;
+      t.classList.add("hidden");
+      $("shuffleBox").classList.remove("dealing");
+    }
+    function dealReset() { // 게임 시작/초기화: 슈를 비워 다음 판에서 새로 섞게 한다
+      dealCancel();
+      DEAL.handId++;
+      SHOE.cards = [];
+      SHOE.pos = 0;
+      SHOE.no = 0;
+      hideDealTable();
+    }
+    function cardHtml(c, third) {
+      const red = c.s === 1 || c.s === 2;
+      return `<div class="pcard${red ? " red" : ""}${third ? " third" : ""}"><span class="pc-r">${CARD_RANKS[c.r - 1]}</span><span class="pc-s">${CARD_SUITS[c.s]}</span></div>`;
+    }
+    function dealShoeInfo() {
+      const left = SHOE.cards.length - SHOE.pos;
+      return `6덱 슈 #${SHOE.no} · 남은 카드 ${left}장 / ${SHOE.cards.length}장 · 컷카드까지 ${Math.max(0, left - CUT_FROM_END)}장`;
+    }
+    function dealOutcomeText(h) {
+      const score = `${h.pt} : ${h.bt}`;
+      if (h.outcome === "player") return { text: `플레이어 승 (${score})`, cls: "player" };
+      if (h.outcome === "banker") return { text: `뱅커 승 (${score})`, cls: "banker" };
+      if (h.outcome === "super6") return { text: `뱅커 승 · 슈퍼6! (${score})`, cls: "banker" };
+      return { text: `타이 (${score})`, cls: "tie" };
+    }
+
+    // 한 판을 나누고 화면에 보여준 뒤 onDone(outcome) 호출. fast=true 면 애니메이션 없이 바로.
+    function playDeal(betText, fast, onDone) {
+      const table = $("dealTable");
+      const CARD_MS = 350, HOLD_MS = 600;
+      const pEl = $("dealPCards"), bEl = $("dealBCards");
+      const pTot = $("dealPTotal"), bTot = $("dealBTotal"), res = $("dealResult"), info = $("dealInfo");
+      $("shuffleBox").classList.add("dealing");
+      table.classList.remove("hidden");
+      $("dealBet").textContent = betText;
+      pEl.innerHTML = ""; bEl.innerHTML = "";
+      pTot.textContent = ""; bTot.textContent = "";
+      res.textContent = ""; res.className = "deal-result";
+
+      let t = 0;
+      if (shoeNeedsShuffle()) {
+        const first = shuffleShoe();
+        info.textContent = `6덱(312장)을 섞었습니다. 첫 카드 ${cardText(first)} 공개 → ${SHOE.burn}장 소각`;
+        res.textContent = "카드를 섞는 중...";
+        if (!fast) t += 1400;
+      }
+      const h = dealHandFromShoe();
+      const totals = { P: 0, B: 0 };
+      const counts = { P: 0, B: 0 };
+      const draw = (i) => {
+        const { to, card } = h.seq[i];
+        counts[to]++;
+        totals[to] = (totals[to] + cardValue(card)) % 10;
+        (to === "P" ? pEl : bEl).insertAdjacentHTML("beforeend", cardHtml(card, counts[to] === 3));
+        (to === "P" ? pTot : bTot).textContent = totals[to];
+        res.textContent = "";
+      };
+      const finish = () => {
+        const o = dealOutcomeText(h);
+        res.textContent = (h.natural ? "내추럴 · " : "") + o.text;
+        res.className = "deal-result " + o.cls;
+        info.textContent = dealShoeInfo();
+      };
+      if (fast) {
+        for (let i = 0; i < h.seq.length; i++) draw(i);
+        finish();
+        dealLater(0, () => onDone(h.outcome));
+        return;
+      }
+      dealLater(t, () => { res.textContent = "카드를 나눕니다..."; });
+      h.seq.forEach((_, i) => dealLater(t + 300 + i * CARD_MS, () => draw(i)));
+      const end = t + 300 + h.seq.length * CARD_MS;
+      dealLater(end, finish);
+      dealLater(end + HOLD_MS, () => onDone(h.outcome));
+    }
+
+
+    function getStrategy() {
+      return state.strategyId ? STRATEGIES[state.strategyId] : null;
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat("ko-KR").format(value);
+    }
+
+    function getRandomSide() {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return (buf[0] & 1) === 0 ? "플레이어" : "뱅커";
+    }
+
+    function getNum(inputEl) {
+      const raw = String(inputEl.value || "").trim();
+      if (!raw) return null;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function setValueSafely(inputEl, value) {
+      inputEl.value = value === null ? "" : String(value);
+    }
+
+    function getTargetDefault(startAmount, baseBet) {
+      return startAmount + (baseBet * 10);
+    }
+
+    function updateTargetDefault() {
+      if (auto.targetEdited) return;
+      const s = getNum(startAmountInput);
+      const b = getNum(baseBetInput);
+      if (s === null || s <= 0 || b === null || b <= 0) return;
+      setValueSafely(targetAmountInput, getTargetDefault(s, b));
+    }
+
+    function recalcAutoFields(trigger) {
+      if (auto.isUpdating) return;
+      auto.isUpdating = true;
+      try {
+        const strategy = getStrategy();
+        if (!strategy || !strategy.autoLink) return;
+
+        const m = getNum(martinLimitInput);
+        const s = getNum(startAmountInput);
+        const b = getNum(baseBetInput);
+
+        if (!m || m <= 0) return;
+
+        // 1) 시작금액 + 마틴횟수 -> 1마틴 자동
+        // 2) 1마틴 + 마틴횟수 -> 시작금액 자동
+        // 둘 다 입력된 경우: 마지막 수정한 쪽을 기준으로 반대쪽을 맞춤
+        if ((s !== null && s > 0) && (b === null || b === 0)) {
+          const bb = strategy.getBaseFromStart(s, m);
+          if (bb !== null) setValueSafely(baseBetInput, Math.round(bb));
+          return;
+        }
+
+        if ((b !== null && b > 0) && (s === null || s === 0)) {
+          const required = strategy.getRequiredStart(b, m);
+          setValueSafely(startAmountInput, required);
+          return;
+        }
+
+        if ((s !== null && s > 0) && (b !== null && b > 0)) {
+          if (auto.lastEdited === "start" && trigger !== "base") {
+            const bb = strategy.getBaseFromStart(s, m);
+            if (bb !== null) setValueSafely(baseBetInput, Math.round(bb));
+          } else if (auto.lastEdited === "base" && trigger !== "start") {
+            const required = strategy.getRequiredStart(b, m);
+            setValueSafely(startAmountInput, required);
+          }
+        }
+      } finally {
+        updateTargetDefault();
+        auto.isUpdating = false;
+      }
+    }
+
+    function setDecisionButtons(enabled) {
+      winBtn.disabled = !enabled;
+      tieBtn.disabled = !enabled;
+      lossBtn.disabled = !enabled;
+      super6Btn.disabled = !enabled;
+    }
+
+    function showPage(page) {
+      strategyPage.classList.toggle("hidden", page !== "strategy");
+      setupPage.classList.toggle("hidden", page !== "setup");
+      gamePage.classList.toggle("hidden", page !== "game");
+      statsPage.classList.toggle("hidden", page !== "stats");
+    }
+
+    function setGameOverButton(visible) {
+      gameOverBtn.classList.toggle("hidden", !visible);
+      winBtn.classList.toggle("hidden", visible);
+      tieBtn.classList.toggle("hidden", visible);
+      lossBtn.classList.toggle("hidden", visible);
+      super6Btn.classList.toggle("hidden", visible);
+    }
+
+    function roundText(n) {
+      return state.extendCap ? `${n}/${state.extendCap}판` : `${n}판`;
+    }
+
+    function updateStatus() {
+      roundInfo.textContent = state.started && state.roundNumber > 0
+        ? roundText(state.roundNumber)
+        : "-";
+      betInfo.textContent = state.started
+        ? `${formatMoney(state.currentBet)}`
+        : "-";
+      moneyInfo.textContent = state.started
+        ? `${formatMoney(state.currentAmount)}`
+        : "-";
+    }
+
+    function renderHistory() {
+      if (state.history.length === 0) {
+        history.className = "history empty";
+        history.innerHTML = "아직 진행 기록이 없습니다.";
+        return;
+      }
+
+      history.className = "history";
+      history.innerHTML = state.history.map(item => `
+        <div class="history-item">
+          <div class="history-top">
+            <div class="history-round">${item.round}판 · ${item.stage}단계</div>
+            <div class="history-status ${item.result === "승리" ? "win" : item.result === "TIE" ? "tie" : item.result === "SUPER6" ? "super6" : "loss"}">${item.result}</div>
+          </div>
+          <div class="history-grid">
+            <div>타겟: <strong class="${item.side === "플레이어" ? "player" : "banker"}">${item.side}</strong></div>
+            <div>배팅금액: <strong>${formatMoney(item.bet)}</strong></div>
+            <div>변동금액: <strong>${item.delta >= 0 ? "+" : ""}${formatMoney(item.delta)}</strong></div>
+            <div>총 금액: <strong>${formatMoney(item.totalAmount)}</strong></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function showResult(side, round, stage, bet) {
+      resultSide.classList.add("show");
+      sideBadge.textContent = side;
+      sideBadge.className = `side-badge ${side === "플레이어" ? "player" : "banker"}`;
+      sideMeta.textContent = `${round}판 · ${stage}단계 · 배팅금액 ${formatMoney(bet)}`;
+    }
+
+    function setIdleMessage(message) {
+      resultSide.classList.add("show");
+      sideBadge.textContent = "대기중";
+      sideBadge.className = "side-badge";
+      sideMeta.textContent = message;
+    }
+
+    async function logSessionResult(reason) {
+      if (!sb || !state.strategyId || state.roundNumber <= 0 || AUTO.used || state.unlimited) return;
+      const strategy = STRATEGIES[state.strategyId];
+      const winCount = state.history.filter(h => h.result === "승리").length;
+      const lossCount = state.history.filter(h => h.result === "패배").length;
+      const tieCount = state.history.filter(h => h.result === "TIE").length;
+      const super6Count = state.history.filter(h => h.result === "SUPER6").length;
+      try {
+        const { error } = await sb.from("bcmk_game_sessions").insert({
+          strategy_id: state.strategyId,
+          strategy_label: strategy.label,
+          start_amount: state.startAmount,
+          target_amount: state.targetAmount,
+          final_amount: state.currentAmount,
+          total_profit: state.totalProfit,
+          rounds: state.roundNumber,
+          win_count: winCount,
+          loss_count: lossCount,
+          tie_count: tieCount,
+          super6_count: super6Count,
+          finish_reason: reason
+        });
+        if (error) console.error("Supabase 저장 실패:", error.message);
+      } catch (err) {
+        console.error("Supabase 저장 실패:", err);
+      }
+    }
+
+    function finishGame(reason, showGameOverButton = false, kind = null) {
+      state.finished = true;
+      state.endKind = kind;
+      stopAuto();
+      setRetryVisible(true);
+      $("unlimitedBtn").disabled = state.currentAmount <= 0;
+      logSessionResult(reason);
+      state.awaitingDecision = false;
+      setDecisionButtons(false);
+      setGameOverButton(showGameOverButton);
+      startBtn.disabled = false;
+      summaryText.textContent = reason;
+      gameSummaryText.textContent = reason;
+      endRounds.textContent = `${state.roundNumber}판`;
+      endStartAmount.textContent = formatMoney(state.startAmount);
+      endProfit.textContent = `${state.totalProfit >= 0 ? "+" : ""}${formatMoney(state.totalProfit)}`;
+      endTotalAmount.textContent = formatMoney(state.currentAmount);
+      endBox.classList.remove("hidden");
+      setIdleMessage(reason);
+      updateStatus();
+    }
+
+    function requestNextRound() {
+      if (state.finished) return;
+
+      if (!state.unlimited && state.targetAmount > 0 && state.currentAmount >= state.targetAmount) {
+        finishGame(`진행 종료. 목표금액 ${formatMoney(state.targetAmount)} 이상을 달성했습니다.`, true, "goal");
+        return;
+      }
+
+      if (state.extendCap && state.roundNumber >= state.extendCap) {
+        finishGame(`진행 종료. ${state.extendCap}판까지 진행했습니다.`, true, "cap");
+        return;
+      }
+
+      state.awaitingDecision = false;
+      setDecisionButtons(false);
+      setGameOverButton(false);
+      resultSide.classList.remove("show");
+      DEAL.handId++;
+      hideDealTable();
+      shuffleBox.classList.add("active");
+
+      const strategy = getStrategy();
+      const nextRound = state.roundNumber + 1;
+      let nextBet = strategy.getBet(state.baseBet, state.stage);
+      if (state.unlimited && nextBet > state.currentAmount) nextBet = state.currentAmount; // 무제한: 부족하면 남은 돈 전부 배팅
+
+      if (state.currentAmount < nextBet || nextBet <= 0) {
+        shuffleBox.classList.remove("active");
+        finishGame(`진행 종료. 총 금액이 다음 배팅금액 ${formatMoney(nextBet)}보다 부족합니다.`, true, "funds");
+        return;
+      }
+
+      roundInfo.textContent = roundText(nextRound);
+      betInfo.textContent = `${formatMoney(nextBet)}`;
+      summaryText.textContent = `${nextRound}판 생성 중... 카드 셔플 후 결과가 공개됩니다.`;
+      gameSummaryText.textContent = `${nextRound}판 생성 중... 카드 셔플 후 결과가 공개됩니다.`;
+
+      window.setTimeout(() => {
+        shuffleBox.classList.remove("active");
+        state.roundNumber = nextRound;
+        state.currentBet = nextBet;
+        state.currentSide = getRandomSide();
+        state.awaitingDecision = true;
+        showResult(state.currentSide, state.roundNumber, state.stage, state.currentBet);
+        summaryText.textContent = `${state.roundNumber}판 결과가 나왔습니다. 승리 또는 패배를 선택하세요.`;
+        gameSummaryText.textContent = `${state.roundNumber}판 결과가 나왔습니다. 승리 또는 패배를 선택하세요.`;
+        updateStatus();
+        setDecisionButtons(true);
+        autoStep();
+      }, AUTO.on ? (AUTO.fast ? 20 : 240) : 500);
+    }
+
+    function recordRound(result, outcome) {
+      if (!state.awaitingDecision || state.finished) return;
+      roadPush(outcome || outcomeFromResult(getAutoSide(), result));
+      const strategy = getStrategy();
+
+      if (result === "TIE") {
+        state.history.unshift({
+          round: state.roundNumber,
+          stage: state.stage,
+          side: state.currentSide,
+          bet: state.currentBet,
+          delta: 0,
+          totalAmount: state.currentAmount,
+          result
+        });
+        if (AUTO.on && state.history.length > 300) state.history.length = 300;
+        renderHistory();
+
+        summaryText.textContent = `${state.roundNumber}판 TIE 처리 완료. 동일한 배팅금액으로 다음 판을 진행합니다.`;
+        gameSummaryText.textContent = `${state.roundNumber}판 TIE 처리 완료. 동일한 배팅금액으로 다음 판을 진행합니다.`;
+
+        updateStatus();
+        requestNextRound();
+        return;
+      }
+
+      let delta = 0;
+      if (result === "승리") {
+        delta = state.currentBet;
+      } else if (result === "SUPER6") {
+        delta = Math.round(state.currentBet * 0.5);
+      } else {
+        delta = -state.currentBet;
+      }
+      state.totalProfit += delta;
+      state.currentAmount += delta;
+
+      state.history.unshift({
+        round: state.roundNumber,
+        stage: state.stage,
+        side: state.currentSide,
+        bet: state.currentBet,
+        delta,
+        totalAmount: state.currentAmount,
+        result
+      });
+      if (AUTO.on && state.history.length > 300) state.history.length = 300;
+      renderHistory();
+
+      if (result === "승리" || result === "SUPER6") {
+        state.stage = strategy.onWin(state.stage);
+        const label = result === "SUPER6" ? "SUPER6 처리 완료 (배팅금액의 50% 수익)" : "승리 처리 완료";
+        const msg = `${state.roundNumber}판 ${label}. 다음 판은 ${state.stage}단계로 진행합니다.`;
+        summaryText.textContent = msg;
+        gameSummaryText.textContent = msg;
+      } else {
+        if (state.unlimited && state.currentAmount <= 0) {
+          finishGame("진행 종료. 총 금액을 모두 잃었습니다.", true, "ruin");
+          return;
+        }
+        const nextStage = strategy.onLoss(state.stage, state.martinLimit);
+        if (nextStage === null && !(state.unlimited && state.currentAmount > 0)) {
+          finishGame(`진행 종료. ${state.martinLimit}마틴까지 모두 패배했습니다.`, true, "limit");
+          return;
+        }
+        state.stage = nextStage === null ? 1 : nextStage; // 무제한: 마틴 한도에서 졌지만 돈이 남았으면 1단계부터 계속
+        const msg = `${state.roundNumber}판 패배 처리 완료. 다음 판은 ${state.stage}단계로 진행합니다.`;
+        summaryText.textContent = msg;
+        gameSummaryText.textContent = msg;
+      }
+
+      updateStatus();
+      requestNextRound();
+    }
+
+    function clearSetupInputs() {
+      startAmountInput.value = "";
+      baseBetInput.value = "";
+      martinLimitInput.value = "";
+      targetAmountInput.value = "";
+      auto.targetEdited = false;
+      auto.lastEdited = null;
+    }
+
+    function applyStrategyToSetupUI(strategyId) {
+      const strategy = STRATEGIES[strategyId];
+      martinLimitField.classList.toggle("hidden", !strategy.needsMartinLimit);
+      targetAmountField.classList.toggle("full", !strategy.needsMartinLimit);
+      baseBetLabel.textContent = strategy.baseLabel;
+      setupTitle.textContent = `1p 금액 세팅 · ${strategy.label}`;
+      summaryText.textContent = strategy.autoLink
+        ? "시작 전입니다. (시작금액+마틴횟수 → 1마틴 자동 / 1마틴+마틴횟수 → 시작금액 자동 / 목표금액 기본값 = 시작금액 + 1마틴금액×10)"
+        : `시작 전입니다. (${strategy.label} 방식 / 목표금액 기본값 = 시작금액 + ${strategy.baseLabel}×10)`;
+    }
+
+    function resetGame() {
+      if (state.started && !state.finished && state.roundNumber > 0) {
+        logSessionResult("사용자가 초기화(중간 종료)");
+      }
+      resetAuto();
+      state.unlimited = false;
+      state.extendCap = 0;
+      state.endKind = null;
+
+      state.started = false;
+      state.finished = false;
+      state.awaitingDecision = false;
+      state.roundNumber = 0;
+      state.startAmount = 0;
+      state.targetAmount = 0;
+      state.currentAmount = 0;
+      state.totalProfit = 0;
+      state.baseBet = 0;
+      state.martinLimit = 0;
+      state.stage = 1;
+      state.currentBet = 0;
+      state.currentSide = null;
+      state.history = [];
+
+      clearSetupInputs();
+
+      history.className = "history empty";
+      history.innerHTML = "아직 진행 기록이 없습니다.";
+      endBox.classList.add("hidden");
+      startBtn.disabled = false;
+      setDecisionButtons(false);
+      setGameOverButton(false);
+      setIdleMessage("시작 버튼을 눌러 첫 판을 생성하세요.");
+      gameSummaryText.textContent = "게임 대기 중입니다.";
+
+      if (state.strategyId) {
+        applyStrategyToSetupUI(state.strategyId);
+        showPage("setup");
+      } else {
+        showPage("strategy");
+      }
+      updateStatus();
+    }
+
+    // "무제한 이어서 하기": 다음 60의 배수 판수 3개(예: 60 / 120 / 180판까지)를 고르게 한다.
+    function extendTargets(hand) {
+      const base = Math.floor(hand / 60) * 60;
+      return [base + 60, base + 120, base + 180];
+    }
+    function toggleExtendBox() {
+      const box = $("extendBox");
+      if (!box.classList.contains("hidden")) { box.classList.add("hidden"); return; }
+      $("extendBtns").innerHTML = extendTargets(state.roundNumber).map(n =>
+        `<button type="button" class="btn secondary" data-cap="${n}">${n}판까지</button>`).join("");
+      box.classList.remove("hidden");
+    }
+
+    // 끝난 시점 그대로 이어서 진행: 목표 제한을 없애고 고른 판수까지(돈이 먼저 떨어지면 거기서 종료) 계속
+    function continueExtended(cap) {
+      if (!state.started || !state.finished || state.currentAmount <= 0 || !(cap > state.roundNumber)) return;
+      state.unlimited = true;
+      state.extendCap = cap;
+      if (state.endKind === "limit") state.stage = 1;
+      state.finished = false;
+      state.endKind = null;
+      endBox.classList.add("hidden");
+      setRetryVisible(false);
+      setGameOverButton(false);
+      startBtn.disabled = true;
+      if (AUTO.used) startAuto();
+      updateStatus();
+      requestNextRound();
+    }
+
+    function startGame() {
+      resetAuto();
+      const strategy = getStrategy();
+      if (!strategy) {
+        showPage("strategy");
+        return;
+      }
+
+      // 자동계산 반영 후 시작
+      recalcAutoFields("start");
+
+      const startAmount = Number(String(startAmountInput.value || "").trim());
+      const baseBet = Number(String(baseBetInput.value || "").trim());
+      const targetAmountRaw = String(targetAmountInput.value || "").trim();
+      const targetAmount = targetAmountRaw ? Number(targetAmountRaw) : null;
+      let martinLimit = 0;
+
+      if (!Number.isFinite(startAmount) || startAmount <= 0) {
+        alert("시작금액은 1 이상으로 입력하세요.");
+        return;
+      }
+      if (!Number.isFinite(baseBet) || baseBet <= 0) {
+        alert(`${strategy.baseLabel}은 1 이상으로 입력하세요.`);
+        return;
+      }
+      if (strategy.needsMartinLimit) {
+        martinLimit = Number(String(martinLimitInput.value || "").trim());
+        if (!Number.isInteger(martinLimit) || martinLimit <= 0) {
+          alert("마틴횟수는 1 이상의 정수로 입력하세요.");
+          return;
+        }
+      }
+
+      const initialBet = strategy.getBet(baseBet, 1);
+      if (startAmount < initialBet) {
+        alert("시작금액이 첫 배팅금액보다 작습니다.");
+        return;
+      }
+      if (targetAmount !== null && (!Number.isFinite(targetAmount) || targetAmount <= startAmount)) {
+        alert("목표금액은 시작금액보다 큰 값으로 입력하세요.");
+        return;
+      }
+
+      state.started = true;
+      state.unlimited = false;
+      state.extendCap = 0;
+      state.endKind = null;
+      state.finished = false;
+      state.awaitingDecision = false;
+      state.roundNumber = 0;
+      state.startAmount = startAmount;
+      state.targetAmount = targetAmount || 0;
+      state.currentAmount = startAmount;
+      state.totalProfit = 0;
+      state.baseBet = baseBet;
+      state.martinLimit = martinLimit;
+      state.stage = 1;
+      state.currentBet = initialBet;
+      state.currentSide = null;
+      state.history = [];
+
+      history.className = "history empty";
+      history.innerHTML = "아직 진행 기록이 없습니다.";
+      endBox.classList.add("hidden");
+      startBtn.disabled = true;
+      setDecisionButtons(false);
+      setGameOverButton(false);
+      gameStrategyLabel.textContent = strategy.label;
+      showPage("game");
+      requestAnimationFrame(drawRoads);
+      updateStatus();
+      requestNextRound();
+    }
+
+    let statsRows = [];
+    let statsSort = { key: "session_count", dir: "desc" };
+
+    // 실제 배팅한 시작금액과 무관하게, 모든 세션을 시작금액 10만원 기준으로 환산해 합산한다.
+    // (예: 시작금액 1만원으로 +5천원 벌었다면 10만원 기준으로는 +5만원으로 환산됨 — 배팅방법 간 공정 비교 목적)
+    const STATS_NORMALIZED_START = 100000;
+
+    function aggregateStats(rows) {
+      const byStrategy = {};
+      rows.forEach(r => {
+        const key = r.strategy_id;
+        if (!byStrategy[key]) {
+          byStrategy[key] = {
+            strategy_id: key,
+            strategy_label: r.strategy_label,
+            session_count: 0,
+            total_rounds: 0,
+            win_count: 0,
+            loss_count: 0,
+            tie_count: 0,
+            super6_count: 0,
+            total_start_amount: 0,
+            total_profit: 0
+          };
+        }
+        const agg = byStrategy[key];
+        const actualStart = Number(r.start_amount) || 0;
+        const scale = actualStart > 0 ? STATS_NORMALIZED_START / actualStart : 0;
+
+        agg.session_count += 1;
+        agg.total_rounds += r.rounds || 0;
+        agg.win_count += r.win_count || 0;
+        agg.loss_count += r.loss_count || 0;
+        agg.tie_count += r.tie_count || 0;
+        agg.super6_count += r.super6_count || 0;
+        agg.total_start_amount += scale > 0 ? STATS_NORMALIZED_START : 0;
+        agg.total_profit += (Number(r.total_profit) || 0) * scale;
+      });
+
+      return Object.values(byStrategy).map(agg => {
+        const decisive = agg.win_count + agg.super6_count + agg.loss_count;
+        const winRate = decisive > 0 ? ((agg.win_count + agg.super6_count) / decisive) * 100 : 0;
+        const lossRate = decisive > 0 ? (agg.loss_count / decisive) * 100 : 0;
+        const profitRate = agg.total_start_amount > 0 ? (agg.total_profit / agg.total_start_amount) * 100 : 0;
+        const avgProfit = agg.session_count > 0 ? agg.total_profit / agg.session_count : 0;
+        return {
+          ...agg,
+          win_rate: winRate,
+          loss_rate: lossRate,
+          profit_rate: profitRate,
+          avg_profit: avgProfit
+        };
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    }
+
+    function renderStatsTable() {
+      const sorted = [...statsRows].sort((a, b) => {
+        const va = a[statsSort.key];
+        const vb = b[statsSort.key];
+        if (typeof va === "string") {
+          return statsSort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        return statsSort.dir === "asc" ? va - vb : vb - va;
+      });
+
+      statsTableBody.innerHTML = sorted.map(r => `
+        <tr>
+          <td>${escapeHtml(r.strategy_label)}</td>
+          <td>${r.session_count}</td>
+          <td>${r.total_rounds}</td>
+          <td>${r.win_count}</td>
+          <td>${r.loss_count}</td>
+          <td>${r.tie_count}</td>
+          <td>${r.super6_count}</td>
+          <td>${r.win_rate.toFixed(1)}%</td>
+          <td>${r.loss_rate.toFixed(1)}%</td>
+          <td>${formatMoney(Math.round(r.total_start_amount))}</td>
+          <td class="${r.total_profit > 0 ? "profit-pos" : r.total_profit < 0 ? "profit-neg" : ""}">${r.total_profit >= 0 ? "+" : ""}${formatMoney(Math.round(r.total_profit))}</td>
+          <td class="${r.profit_rate > 0 ? "profit-pos" : r.profit_rate < 0 ? "profit-neg" : ""}">${r.profit_rate >= 0 ? "+" : ""}${r.profit_rate.toFixed(1)}%</td>
+          <td class="${r.avg_profit > 0 ? "profit-pos" : r.avg_profit < 0 ? "profit-neg" : ""}">${r.avg_profit >= 0 ? "+" : ""}${formatMoney(Math.round(r.avg_profit))}</td>
+        </tr>
+      `).join("");
+
+      document.querySelectorAll("#statsTable th[data-key]").forEach(th => {
+        th.classList.toggle("sorted-asc", th.dataset.key === statsSort.key && statsSort.dir === "asc");
+        th.classList.toggle("sorted-desc", th.dataset.key === statsSort.key && statsSort.dir === "desc");
+      });
+    }
+
+    async function loadStats() {
+      if (!sb) {
+        statsStatusText.textContent = "Supabase가 연결되어 있지 않습니다.";
+        statsTableBody.innerHTML = "";
+        return;
+      }
+      statsStatusText.textContent = "불러오는 중...";
+      const { data, error } = await sb.from("bcmk_game_sessions").select("*");
+      if (error) {
+        statsStatusText.textContent = `불러오기 실패: ${error.message}`;
+        return;
+      }
+      if (!data || data.length === 0) {
+        statsStatusText.textContent = "아직 저장된 게임 기록이 없습니다.";
+        statsRows = [];
+        statsTableBody.innerHTML = "";
+        return;
+      }
+      statsRows = aggregateStats(data);
+      statsStatusText.textContent = `총 ${data.length}개 게임 기록 · 배팅방법 ${statsRows.length}종 기준`;
+      renderStatsTable();
+    }
+
+    document.querySelectorAll("#statsTable th[data-key]").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        if (statsSort.key === key) {
+          statsSort.dir = statsSort.dir === "asc" ? "desc" : "asc";
+        } else {
+          statsSort.key = key;
+          statsSort.dir = "desc";
+        }
+        renderStatsTable();
+      });
+    });
+
+    viewStatsBtn.addEventListener("click", () => {
+      showPage("stats");
+      loadStats();
+    });
+    statsBackBtn.addEventListener("click", () => {
+      showPage("strategy");
+    });
+    statsRefreshBtn.addEventListener("click", loadStats);
+
+    // 시작금액 100,000 / 목표금액 120,000(+20%) 기준, "60판 컷"과 "무제한"(목표달성·파산까지) 각각 100만 회 시뮬레이션 결과 (정적 값).
+    // 시작금액 100,000 / 목표금액 120,000(+20%) 고정, 첫 배팅금액 1000/2000/3000/4000 각각으로
+    // "60판 컷"과 "무제한"(목표달성·파산까지) 두 조건, 각 100만 회씩 재시뮬레이션한 전체 결과 (2026-09-21 같은 배치로 전부 재실행, 시작20만 행은 시작 200,000/목표 240,000).
+    const PROBABILITY_DATA = [
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 1000, fiveGoal: 47.90, fiveBust: 7.68, fiveUn: 44.42, tenGoal: 80.05, tenBust: 16.68, tenUn: 3.27, twentyGoal: 82.47, twentyBust: 17.47, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 2000, fiveGoal: 47.88, fiveBust: 7.69, fiveUn: 44.43, tenGoal: 80.04, tenBust: 16.70, tenUn: 3.26, twentyGoal: 82.45, twentyBust: 17.48, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 3000, fiveGoal: 47.89, fiveBust: 7.69, fiveUn: 44.42, tenGoal: 80.04, tenBust: 16.70, tenUn: 3.26, twentyGoal: 82.45, twentyBust: 17.48, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 4000, fiveGoal: 44.24, fiveBust: 7.68, fiveUn: 48.08, tenGoal: 79.50, tenBust: 17.03, tenUn: 3.47, twentyGoal: 81.99, twentyBust: 17.89, twentyUn: 0.12 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 5000, fiveGoal: 41.07, fiveBust: 7.66, fiveUn: 51.27, tenGoal: 71.15, tenBust: 17.42, tenUn: 11.43, twentyGoal: 78.69, twentyBust: 20.07, twentyUn: 1.24 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 6000, fiveGoal: 41.05, fiveBust: 7.69, fiveUn: 51.26, tenGoal: 65.27, tenBust: 17.74, tenUn: 16.99, twentyGoal: 74.04, twentyBust: 22.56, twentyUn: 3.40 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 7000, fiveGoal: 41.09, fiveBust: 7.68, fiveUn: 51.23, tenGoal: 65.31, tenBust: 19.13, tenUn: 15.56, twentyGoal: 70.78, twentyBust: 24.74, twentyUn: 4.48 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 8000, fiveGoal: 41.08, fiveBust: 7.68, fiveUn: 51.24, tenGoal: 65.30, tenBust: 20.86, tenUn: 13.84, twentyGoal: 68.38, twentyBust: 27.34, twentyUn: 4.28 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 9000, fiveGoal: 41.09, fiveBust: 9.57, fiveUn: 49.34, tenGoal: 65.32, tenBust: 24.58, tenUn: 10.10, twentyGoal: 66.89, twentyBust: 30.07, twentyUn: 3.04 },
+      { label: "슈퍼마틴(4마틴)", start: 100000, firstBet: 10000, fiveGoal: 37.61, fiveBust: 18.43, fiveUn: 43.96, tenGoal: 64.23, tenBust: 28.74, tenUn: 7.03, twentyGoal: 65.44, twentyBust: 32.73, twentyUn: 1.83 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 1000, fiveGoal: 47.92, fiveBust: 7.68, fiveUn: 44.40, tenGoal: 80.04, tenBust: 16.69, tenUn: 3.27, twentyGoal: 82.46, twentyBust: 17.48, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 2000, fiveGoal: 47.90, fiveBust: 7.67, fiveUn: 44.43, tenGoal: 80.04, tenBust: 16.70, tenUn: 3.26, twentyGoal: 82.45, twentyBust: 17.48, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 3000, fiveGoal: 47.87, fiveBust: 7.68, fiveUn: 44.45, tenGoal: 80.05, tenBust: 16.69, tenUn: 3.26, twentyGoal: 82.46, twentyBust: 17.47, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 4000, fiveGoal: 47.90, fiveBust: 7.68, fiveUn: 44.42, tenGoal: 80.05, tenBust: 16.69, tenUn: 3.26, twentyGoal: 82.47, twentyBust: 17.47, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 5000, fiveGoal: 47.88, fiveBust: 7.69, fiveUn: 44.43, tenGoal: 80.02, tenBust: 16.71, tenUn: 3.27, twentyGoal: 82.43, twentyBust: 17.50, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 6000, fiveGoal: 47.88, fiveBust: 7.69, fiveUn: 44.43, tenGoal: 80.02, tenBust: 16.72, tenUn: 3.26, twentyGoal: 82.43, twentyBust: 17.50, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 7000, fiveGoal: 47.89, fiveBust: 7.68, fiveUn: 44.43, tenGoal: 80.04, tenBust: 16.69, tenUn: 3.27, twentyGoal: 82.45, twentyBust: 17.48, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 8000, fiveGoal: 44.23, fiveBust: 7.69, fiveUn: 48.08, tenGoal: 79.49, tenBust: 17.05, tenUn: 3.46, twentyGoal: 81.97, twentyBust: 17.91, twentyUn: 0.12 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 9000, fiveGoal: 41.07, fiveBust: 7.68, fiveUn: 51.25, tenGoal: 76.10, tenBust: 17.38, tenUn: 6.52, twentyGoal: 80.59, twentyBust: 18.98, twentyUn: 0.43 },
+      { label: "슈퍼마틴(4마틴)", start: 200000, firstBet: 10000, fiveGoal: 41.06, fiveBust: 7.67, fiveUn: 51.27, tenGoal: 71.16, tenBust: 17.43, tenUn: 11.41, twentyGoal: 78.69, twentyBust: 20.08, twentyUn: 1.23 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 1000, fiveGoal: 47.90, fiveBust: 7.70, fiveUn: 44.40, tenGoal: 80.05, tenBust: 16.69, tenUn: 3.26, twentyGoal: 82.46, twentyBust: 17.47, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 2000, fiveGoal: 47.89, fiveBust: 7.69, fiveUn: 44.42, tenGoal: 80.03, tenBust: 16.69, tenUn: 3.28, twentyGoal: 82.45, twentyBust: 17.48, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 3000, fiveGoal: 47.87, fiveBust: 7.68, fiveUn: 44.45, tenGoal: 80.05, tenBust: 16.68, tenUn: 3.27, twentyGoal: 82.46, twentyBust: 17.47, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 4000, fiveGoal: 47.91, fiveBust: 7.68, fiveUn: 44.41, tenGoal: 80.05, tenBust: 16.68, tenUn: 3.27, twentyGoal: 82.46, twentyBust: 17.47, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 5000, fiveGoal: 47.91, fiveBust: 7.67, fiveUn: 44.42, tenGoal: 80.05, tenBust: 16.68, tenUn: 3.27, twentyGoal: 82.47, twentyBust: 17.47, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 6000, fiveGoal: 47.88, fiveBust: 7.68, fiveUn: 44.44, tenGoal: 80.04, tenBust: 16.70, tenUn: 3.26, twentyGoal: 82.46, twentyBust: 17.48, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 7000, fiveGoal: 47.89, fiveBust: 7.69, fiveUn: 44.42, tenGoal: 80.04, tenBust: 16.70, tenUn: 3.26, twentyGoal: 82.45, twentyBust: 17.49, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 8000, fiveGoal: 47.87, fiveBust: 7.69, fiveUn: 44.44, tenGoal: 80.04, tenBust: 16.69, tenUn: 3.27, twentyGoal: 82.46, twentyBust: 17.47, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 9000, fiveGoal: 47.88, fiveBust: 7.68, fiveUn: 44.44, tenGoal: 80.04, tenBust: 16.69, tenUn: 3.27, twentyGoal: 82.46, twentyBust: 17.48, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 300000, firstBet: 10000, fiveGoal: 47.88, fiveBust: 7.67, fiveUn: 44.45, tenGoal: 80.05, tenBust: 16.68, tenUn: 3.27, twentyGoal: 82.46, twentyBust: 17.47, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 1000, fiveGoal: 47.90, fiveBust: 7.69, fiveUn: 44.41, tenGoal: 80.05, tenBust: 16.69, tenUn: 3.26, twentyGoal: 82.46, twentyBust: 17.48, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 2000, fiveGoal: 47.92, fiveBust: 7.66, fiveUn: 44.42, tenGoal: 80.06, tenBust: 16.68, tenUn: 3.26, twentyGoal: 82.48, twentyBust: 17.46, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 3000, fiveGoal: 47.88, fiveBust: 7.68, fiveUn: 44.44, tenGoal: 80.03, tenBust: 16.72, tenUn: 3.25, twentyGoal: 82.44, twentyBust: 17.50, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 4000, fiveGoal: 47.88, fiveBust: 7.69, fiveUn: 44.43, tenGoal: 80.03, tenBust: 16.71, tenUn: 3.26, twentyGoal: 82.44, twentyBust: 17.50, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 5000, fiveGoal: 47.88, fiveBust: 7.68, fiveUn: 44.44, tenGoal: 80.03, tenBust: 16.70, tenUn: 3.27, twentyGoal: 82.44, twentyBust: 17.49, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 6000, fiveGoal: 47.90, fiveBust: 7.68, fiveUn: 44.42, tenGoal: 80.04, tenBust: 16.69, tenUn: 3.27, twentyGoal: 82.46, twentyBust: 17.48, twentyUn: 0.06 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 7000, fiveGoal: 47.90, fiveBust: 7.68, fiveUn: 44.42, tenGoal: 80.03, tenBust: 16.71, tenUn: 3.26, twentyGoal: 82.44, twentyBust: 17.49, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 8000, fiveGoal: 47.91, fiveBust: 7.68, fiveUn: 44.41, tenGoal: 80.04, tenBust: 16.70, tenUn: 3.26, twentyGoal: 82.45, twentyBust: 17.48, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 9000, fiveGoal: 47.89, fiveBust: 7.68, fiveUn: 44.43, tenGoal: 80.05, tenBust: 16.68, tenUn: 3.27, twentyGoal: 82.47, twentyBust: 17.46, twentyUn: 0.07 },
+      { label: "슈퍼마틴(4마틴)", start: 400000, firstBet: 10000, fiveGoal: 47.89, fiveBust: 7.67, fiveUn: 44.44, tenGoal: 80.05, tenBust: 16.68, tenUn: 3.27, twentyGoal: 82.47, twentyBust: 17.47, twentyUn: 0.06 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 1000, fiveGoal: 49.56, fiveBust: 1.90, fiveUn: 48.54, tenGoal: 87.18, tenBust: 8.07, tenUn: 4.75, twentyGoal: 90.25, twentyBust: 8.87, twentyUn: 0.88 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 2000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 82.01, tenBust: 8.11, tenUn: 9.88, twentyGoal: 89.10, twentyBust: 9.45, twentyUn: 1.45 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 3000, fiveGoal: 47.87, fiveBust: 1.90, fiveUn: 50.23, tenGoal: 80.05, tenBust: 8.30, tenUn: 11.65, twentyGoal: 82.46, twentyBust: 11.30, twentyUn: 6.24 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 4000, fiveGoal: 44.24, fiveBust: 7.68, fiveUn: 48.08, tenGoal: 79.50, tenBust: 13.73, tenUn: 6.77, twentyGoal: 81.98, twentyBust: 16.63, twentyUn: 1.39 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 5000, fiveGoal: 41.04, fiveBust: 7.70, fiveUn: 51.26, tenGoal: 71.13, tenBust: 17.46, tenUn: 11.41, twentyGoal: 78.66, twentyBust: 20.11, twentyUn: 1.23 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 6000, fiveGoal: 41.07, fiveBust: 7.68, fiveUn: 51.25, tenGoal: 65.28, tenBust: 17.74, tenUn: 16.98, twentyGoal: 74.05, twentyBust: 22.56, twentyUn: 3.39 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 7000, fiveGoal: 41.06, fiveBust: 7.68, fiveUn: 51.26, tenGoal: 65.28, tenBust: 19.15, tenUn: 15.57, twentyGoal: 70.76, twentyBust: 24.76, twentyUn: 4.48 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 8000, fiveGoal: 41.06, fiveBust: 7.70, fiveUn: 51.24, tenGoal: 65.29, tenBust: 20.89, tenUn: 13.82, twentyGoal: 68.36, twentyBust: 27.37, twentyUn: 4.27 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 9000, fiveGoal: 41.07, fiveBust: 9.58, fiveUn: 49.35, tenGoal: 65.30, tenBust: 24.58, tenUn: 10.12, twentyGoal: 66.88, twentyBust: 30.09, twentyUn: 3.03 },
+      { label: "슈퍼마틴(5마틴)", start: 100000, firstBet: 10000, fiveGoal: 37.59, fiveBust: 18.41, fiveUn: 44, tenGoal: 64.24, tenBust: 28.73, tenUn: 7.03, twentyGoal: 65.45, twentyBust: 32.72, twentyUn: 1.83 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 1000, fiveGoal: 49.61, fiveBust: 1.90, fiveUn: 48.49, tenGoal: 87.20, tenBust: 8.06, tenUn: 4.74, twentyGoal: 90.25, twentyBust: 8.86, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 2000, fiveGoal: 49.59, fiveBust: 1.90, fiveUn: 48.51, tenGoal: 87.19, tenBust: 8.07, tenUn: 4.74, twentyGoal: 90.24, twentyBust: 8.86, twentyUn: 0.90 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 3000, fiveGoal: 49.61, fiveBust: 1.90, fiveUn: 48.49, tenGoal: 87.20, tenBust: 8.07, tenUn: 4.73, twentyGoal: 90.25, twentyBust: 8.86, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 4000, fiveGoal: 47.91, fiveBust: 1.90, fiveUn: 50.19, tenGoal: 82.03, tenBust: 8.10, tenUn: 9.87, twentyGoal: 89.10, twentyBust: 9.44, twentyUn: 1.46 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 5000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 80.02, tenBust: 8.13, tenUn: 11.85, twentyGoal: 82.90, twentyBust: 10.10, twentyUn: 7 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 6000, fiveGoal: 47.92, fiveBust: 1.89, fiveUn: 50.19, tenGoal: 80.04, tenBust: 8.31, tenUn: 11.65, twentyGoal: 82.45, twentyBust: 11.29, twentyUn: 6.26 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 7000, fiveGoal: 47.91, fiveBust: 1.89, fiveUn: 50.20, tenGoal: 80.06, tenBust: 8.99, tenUn: 10.95, twentyGoal: 82.47, twentyBust: 12.93, twentyUn: 4.60 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 8000, fiveGoal: 44.22, fiveBust: 7.70, fiveUn: 48.08, tenGoal: 79.47, tenBust: 13.75, tenUn: 6.78, twentyGoal: 81.97, twentyBust: 16.65, twentyUn: 1.38 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 9000, fiveGoal: 41.06, fiveBust: 7.67, fiveUn: 51.27, tenGoal: 76.09, tenBust: 17.38, tenUn: 6.53, twentyGoal: 80.59, twentyBust: 18.98, twentyUn: 0.43 },
+      { label: "슈퍼마틴(5마틴)", start: 200000, firstBet: 10000, fiveGoal: 41.09, fiveBust: 7.68, fiveUn: 51.23, tenGoal: 71.15, tenBust: 17.44, tenUn: 11.41, twentyGoal: 78.68, twentyBust: 20.09, twentyUn: 1.23 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 1000, fiveGoal: 49.58, fiveBust: 1.90, fiveUn: 48.52, tenGoal: 87.18, tenBust: 8.08, tenUn: 4.74, twentyGoal: 90.24, twentyBust: 8.87, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 2000, fiveGoal: 49.59, fiveBust: 1.89, fiveUn: 48.52, tenGoal: 87.19, tenBust: 8.08, tenUn: 4.73, twentyGoal: 90.24, twentyBust: 8.87, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 3000, fiveGoal: 49.60, fiveBust: 1.90, fiveUn: 48.50, tenGoal: 87.19, tenBust: 8.06, tenUn: 4.75, twentyGoal: 90.25, twentyBust: 8.86, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 4000, fiveGoal: 49.58, fiveBust: 1.90, fiveUn: 48.52, tenGoal: 87.19, tenBust: 8.07, tenUn: 4.74, twentyGoal: 90.25, twentyBust: 8.86, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 5000, fiveGoal: 49.54, fiveBust: 1.90, fiveUn: 48.56, tenGoal: 87.18, tenBust: 8.07, tenUn: 4.75, twentyGoal: 90.24, twentyBust: 8.87, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 6000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 82.01, tenBust: 8.11, tenUn: 9.88, twentyGoal: 89.10, twentyBust: 9.45, twentyUn: 1.45 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 7000, fiveGoal: 47.92, fiveBust: 1.89, fiveUn: 50.19, tenGoal: 80.07, tenBust: 8.09, tenUn: 11.84, twentyGoal: 84.50, twentyBust: 9.92, twentyUn: 5.58 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 8000, fiveGoal: 47.87, fiveBust: 1.90, fiveUn: 50.23, tenGoal: 80.03, tenBust: 8.28, tenUn: 11.69, twentyGoal: 82.45, twentyBust: 10.46, twentyUn: 7.09 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 9000, fiveGoal: 47.91, fiveBust: 1.90, fiveUn: 50.19, tenGoal: 80.04, tenBust: 8.31, tenUn: 11.65, twentyGoal: 82.46, twentyBust: 11.28, twentyUn: 6.26 },
+      { label: "슈퍼마틴(5마틴)", start: 300000, firstBet: 10000, fiveGoal: 47.89, fiveBust: 1.90, fiveUn: 50.21, tenGoal: 80.02, tenBust: 8.88, tenUn: 11.10, twentyGoal: 82.43, twentyBust: 12.25, twentyUn: 5.32 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 1000, fiveGoal: 49.57, fiveBust: 1.90, fiveUn: 48.53, tenGoal: 87.21, tenBust: 8.06, tenUn: 4.73, twentyGoal: 90.26, twentyBust: 8.85, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 2000, fiveGoal: 49.59, fiveBust: 1.90, fiveUn: 48.51, tenGoal: 87.19, tenBust: 8.08, tenUn: 4.73, twentyGoal: 90.24, twentyBust: 8.87, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 3000, fiveGoal: 49.58, fiveBust: 1.89, fiveUn: 48.53, tenGoal: 87.20, tenBust: 8.05, tenUn: 4.75, twentyGoal: 90.27, twentyBust: 8.84, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 4000, fiveGoal: 49.59, fiveBust: 1.90, fiveUn: 48.51, tenGoal: 87.18, tenBust: 8.08, tenUn: 4.74, twentyGoal: 90.23, twentyBust: 8.88, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 5000, fiveGoal: 49.57, fiveBust: 1.89, fiveUn: 48.54, tenGoal: 87.18, tenBust: 8.07, tenUn: 4.75, twentyGoal: 90.24, twentyBust: 8.87, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 6000, fiveGoal: 49.56, fiveBust: 1.90, fiveUn: 48.54, tenGoal: 87.19, tenBust: 8.07, tenUn: 4.74, twentyGoal: 90.25, twentyBust: 8.86, twentyUn: 0.89 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 7000, fiveGoal: 49.58, fiveBust: 1.90, fiveUn: 48.52, tenGoal: 87.20, tenBust: 8.07, tenUn: 4.73, twentyGoal: 90.24, twentyBust: 8.86, twentyUn: 0.90 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 8000, fiveGoal: 47.85, fiveBust: 1.90, fiveUn: 50.25, tenGoal: 82, tenBust: 8.11, tenUn: 9.89, twentyGoal: 89.09, twentyBust: 9.46, twentyUn: 1.45 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 9000, fiveGoal: 47.88, fiveBust: 1.90, fiveUn: 50.22, tenGoal: 80.03, tenBust: 8.10, tenUn: 11.87, twentyGoal: 85.89, twentyBust: 9.90, twentyUn: 4.21 },
+      { label: "슈퍼마틴(5마틴)", start: 400000, firstBet: 10000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 80.05, tenBust: 8.12, tenUn: 11.83, twentyGoal: 82.91, twentyBust: 10.10, twentyUn: 6.99 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 1000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.92, tenBust: 20.61, tenUn: 21.47, twentyGoal: 73.49, twentyBust: 25.48, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 2000, fiveGoal: 9.05, fiveBust: 7.68, fiveUn: 83.27, tenGoal: 57.92, tenBust: 20.60, tenUn: 21.48, twentyGoal: 73.50, twentyBust: 25.48, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 3000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.93, tenBust: 20.59, tenUn: 21.48, twentyGoal: 73.52, twentyBust: 25.45, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 4000, fiveGoal: 9.07, fiveBust: 7.68, fiveUn: 83.25, tenGoal: 57.93, tenBust: 20.59, tenUn: 21.48, twentyGoal: 73.52, twentyBust: 25.46, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 5000, fiveGoal: 9.04, fiveBust: 7.68, fiveUn: 83.28, tenGoal: 57.92, tenBust: 20.58, tenUn: 21.50, twentyGoal: 73.52, twentyBust: 25.45, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 6000, fiveGoal: 9.08, fiveBust: 7.68, fiveUn: 83.24, tenGoal: 57.93, tenBust: 20.61, tenUn: 21.46, twentyGoal: 73.49, twentyBust: 25.48, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 7000, fiveGoal: 9.05, fiveBust: 7.69, fiveUn: 83.26, tenGoal: 56.44, tenBust: 20.60, tenUn: 22.96, twentyGoal: 72.86, twentyBust: 25.80, twentyUn: 1.34 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 8000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 52.34, tenBust: 20.60, tenUn: 27.06, twentyGoal: 69.90, twentyBust: 27.01, twentyUn: 3.09 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 9000, fiveGoal: 9.05, fiveBust: 7.68, fiveUn: 83.27, tenGoal: 49.90, tenBust: 20.70, tenUn: 29.40, twentyGoal: 66.44, twentyBust: 28.29, twentyUn: 5.27 },
+      { label: "일반마틴(4마틴)", start: 100000, firstBet: 10000, fiveGoal: 9.05, fiveBust: 7.68, fiveUn: 83.27, tenGoal: 48.87, tenBust: 21.51, tenUn: 29.62, twentyGoal: 63.58, twentyBust: 29.82, twentyUn: 6.60 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 1000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.93, tenBust: 20.62, tenUn: 21.45, twentyGoal: 73.50, twentyBust: 25.48, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 2000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.92, tenBust: 20.60, tenUn: 21.48, twentyGoal: 73.50, twentyBust: 25.47, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 3000, fiveGoal: 9.05, fiveBust: 7.68, fiveUn: 83.27, tenGoal: 57.91, tenBust: 20.60, tenUn: 21.49, twentyGoal: 73.50, twentyBust: 25.47, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 4000, fiveGoal: 9.06, fiveBust: 7.67, fiveUn: 83.27, tenGoal: 57.92, tenBust: 20.59, tenUn: 21.49, twentyGoal: 73.53, twentyBust: 25.45, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 5000, fiveGoal: 9.07, fiveBust: 7.66, fiveUn: 83.27, tenGoal: 57.95, tenBust: 20.58, tenUn: 21.47, twentyGoal: 73.53, twentyBust: 25.45, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 6000, fiveGoal: 9.07, fiveBust: 7.68, fiveUn: 83.25, tenGoal: 57.95, tenBust: 20.59, tenUn: 21.46, twentyGoal: 73.51, twentyBust: 25.46, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 7000, fiveGoal: 9.05, fiveBust: 7.69, fiveUn: 83.26, tenGoal: 57.91, tenBust: 20.62, tenUn: 21.47, twentyGoal: 73.49, twentyBust: 25.49, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 8000, fiveGoal: 9.07, fiveBust: 7.68, fiveUn: 83.25, tenGoal: 57.95, tenBust: 20.58, tenUn: 21.47, twentyGoal: 73.52, twentyBust: 25.46, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 9000, fiveGoal: 9.07, fiveBust: 7.69, fiveUn: 83.24, tenGoal: 57.90, tenBust: 20.60, tenUn: 21.50, twentyGoal: 73.51, twentyBust: 25.47, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 200000, firstBet: 10000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.92, tenBust: 20.60, tenUn: 21.48, twentyGoal: 73.50, twentyBust: 25.47, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 1000, fiveGoal: 9.04, fiveBust: 7.68, fiveUn: 83.28, tenGoal: 57.91, tenBust: 20.60, tenUn: 21.49, twentyGoal: 73.52, twentyBust: 25.47, twentyUn: 1.01 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 2000, fiveGoal: 9.05, fiveBust: 7.69, fiveUn: 83.26, tenGoal: 57.91, tenBust: 20.61, tenUn: 21.48, twentyGoal: 73.49, twentyBust: 25.49, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 3000, fiveGoal: 9.08, fiveBust: 7.68, fiveUn: 83.24, tenGoal: 57.96, tenBust: 20.58, tenUn: 21.46, twentyGoal: 73.53, twentyBust: 25.45, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 4000, fiveGoal: 9.06, fiveBust: 7.68, fiveUn: 83.26, tenGoal: 57.97, tenBust: 20.57, tenUn: 21.46, twentyGoal: 73.53, twentyBust: 25.44, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 5000, fiveGoal: 9.05, fiveBust: 7.69, fiveUn: 83.26, tenGoal: 57.91, tenBust: 20.61, tenUn: 21.48, twentyGoal: 73.49, twentyBust: 25.48, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 6000, fiveGoal: 9.07, fiveBust: 7.68, fiveUn: 83.25, tenGoal: 57.92, tenBust: 20.61, tenUn: 21.47, twentyGoal: 73.50, twentyBust: 25.48, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 7000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.91, tenBust: 20.60, tenUn: 21.49, twentyGoal: 73.50, twentyBust: 25.47, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 8000, fiveGoal: 9.05, fiveBust: 7.68, fiveUn: 83.27, tenGoal: 57.93, tenBust: 20.59, tenUn: 21.48, twentyGoal: 73.51, twentyBust: 25.47, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 9000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.93, tenBust: 20.62, tenUn: 21.45, twentyGoal: 73.49, twentyBust: 25.49, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 300000, firstBet: 10000, fiveGoal: 9.07, fiveBust: 7.68, fiveUn: 83.25, tenGoal: 57.92, tenBust: 20.60, tenUn: 21.48, twentyGoal: 73.52, twentyBust: 25.46, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 1000, fiveGoal: 9.06, fiveBust: 7.70, fiveUn: 83.24, tenGoal: 57.93, tenBust: 20.61, tenUn: 21.46, twentyGoal: 73.49, twentyBust: 25.48, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 2000, fiveGoal: 9.06, fiveBust: 7.69, fiveUn: 83.25, tenGoal: 57.93, tenBust: 20.59, tenUn: 21.48, twentyGoal: 73.53, twentyBust: 25.44, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 3000, fiveGoal: 9.06, fiveBust: 7.68, fiveUn: 83.26, tenGoal: 57.93, tenBust: 20.59, tenUn: 21.48, twentyGoal: 73.51, twentyBust: 25.46, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 4000, fiveGoal: 9.07, fiveBust: 7.69, fiveUn: 83.24, tenGoal: 57.92, tenBust: 20.60, tenUn: 21.48, twentyGoal: 73.50, twentyBust: 25.48, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 5000, fiveGoal: 9.06, fiveBust: 7.68, fiveUn: 83.26, tenGoal: 57.89, tenBust: 20.61, tenUn: 21.50, twentyGoal: 73.49, twentyBust: 25.48, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 6000, fiveGoal: 9.05, fiveBust: 7.68, fiveUn: 83.27, tenGoal: 57.93, tenBust: 20.59, tenUn: 21.48, twentyGoal: 73.51, twentyBust: 25.47, twentyUn: 1.02 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 7000, fiveGoal: 9.05, fiveBust: 7.69, fiveUn: 83.26, tenGoal: 57.92, tenBust: 20.59, tenUn: 21.49, twentyGoal: 73.51, twentyBust: 25.46, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 8000, fiveGoal: 9.05, fiveBust: 7.68, fiveUn: 83.27, tenGoal: 57.92, tenBust: 20.58, tenUn: 21.50, twentyGoal: 73.52, twentyBust: 25.45, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 9000, fiveGoal: 9.06, fiveBust: 7.68, fiveUn: 83.26, tenGoal: 57.90, tenBust: 20.61, tenUn: 21.49, twentyGoal: 73.49, twentyBust: 25.48, twentyUn: 1.03 },
+      { label: "일반마틴(4마틴)", start: 400000, firstBet: 10000, fiveGoal: 9.07, fiveBust: 7.68, fiveUn: 83.25, tenGoal: 57.95, tenBust: 20.58, tenUn: 21.47, twentyGoal: 73.54, twentyBust: 25.44, twentyUn: 1.02 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 1000, fiveGoal: 9.05, fiveBust: 1.90, fiveUn: 89.05, tenGoal: 60.87, tenBust: 9.23, tenUn: 29.90, twentyGoal: 83.72, twentyBust: 13.43, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 2000, fiveGoal: 9.06, fiveBust: 1.89, fiveUn: 89.05, tenGoal: 60.87, tenBust: 9.24, tenUn: 29.89, twentyGoal: 83.71, twentyBust: 13.45, twentyUn: 2.84 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 3000, fiveGoal: 9.07, fiveBust: 1.89, fiveUn: 89.04, tenGoal: 60.88, tenBust: 9.23, tenUn: 29.89, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 4000, fiveGoal: 9.08, fiveBust: 1.89, fiveUn: 89.03, tenGoal: 57.93, tenBust: 9.25, tenUn: 32.82, twentyGoal: 76.86, twentyBust: 14.13, twentyUn: 9.01 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 5000, fiveGoal: 9.05, fiveBust: 1.90, fiveUn: 89.05, tenGoal: 57.93, tenBust: 9.41, tenUn: 32.66, twentyGoal: 73.56, twentyBust: 15.38, twentyUn: 11.06 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 6000, fiveGoal: 9.07, fiveBust: 1.90, fiveUn: 89.03, tenGoal: 57.90, tenBust: 10.29, tenUn: 31.81, twentyGoal: 73.47, twentyBust: 17.77, twentyUn: 8.76 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 7000, fiveGoal: 9.07, fiveBust: 6, fiveUn: 84.93, tenGoal: 56.47, tenBust: 14.71, tenUn: 28.82, twentyGoal: 72.87, twentyBust: 22.23, twentyUn: 4.90 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 8000, fiveGoal: 9.06, fiveBust: 7.68, fiveUn: 83.26, tenGoal: 52.34, tenBust: 19.01, tenUn: 28.65, twentyGoal: 69.93, twentyBust: 26.18, twentyUn: 3.89 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 9000, fiveGoal: 9.06, fiveBust: 7.67, fiveUn: 83.27, tenGoal: 49.94, tenBust: 20.69, tenUn: 29.37, twentyGoal: 66.46, twentyBust: 28.28, twentyUn: 5.26 },
+      { label: "일반마틴(5마틴)", start: 100000, firstBet: 10000, fiveGoal: 9.05, fiveBust: 7.70, fiveUn: 83.25, tenGoal: 48.83, tenBust: 21.55, tenUn: 29.62, twentyGoal: 63.56, twentyBust: 29.85, twentyUn: 6.59 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 1000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.85, tenBust: 9.25, tenUn: 29.90, twentyGoal: 83.70, twentyBust: 13.46, twentyUn: 2.84 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 2000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.88, tenBust: 9.24, tenUn: 29.88, twentyGoal: 83.70, twentyBust: 13.45, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 3000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.86, tenBust: 9.24, tenUn: 29.90, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 4000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.89, tenBust: 9.23, tenUn: 29.88, twentyGoal: 83.70, twentyBust: 13.44, twentyUn: 2.86 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 5000, fiveGoal: 9.05, fiveBust: 1.90, fiveUn: 89.05, tenGoal: 60.88, tenBust: 9.24, tenUn: 29.88, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 6000, fiveGoal: 9.07, fiveBust: 1.90, fiveUn: 89.03, tenGoal: 60.88, tenBust: 9.24, tenUn: 29.88, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 7000, fiveGoal: 9.08, fiveBust: 1.89, fiveUn: 89.03, tenGoal: 58.95, tenBust: 9.23, tenUn: 31.82, twentyGoal: 81.96, twentyBust: 13.76, twentyUn: 4.28 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 8000, fiveGoal: 9.07, fiveBust: 1.90, fiveUn: 89.03, tenGoal: 57.94, tenBust: 9.23, tenUn: 32.83, twentyGoal: 76.87, twentyBust: 14.12, twentyUn: 9.01 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 9000, fiveGoal: 9.07, fiveBust: 1.91, fiveUn: 89.02, tenGoal: 57.93, tenBust: 9.37, tenUn: 32.70, twentyGoal: 73.90, twentyBust: 14.53, twentyUn: 11.57 },
+      { label: "일반마틴(5마틴)", start: 200000, firstBet: 10000, fiveGoal: 9.07, fiveBust: 1.90, fiveUn: 89.03, tenGoal: 57.92, tenBust: 9.43, tenUn: 32.65, twentyGoal: 73.52, twentyBust: 15.39, twentyUn: 11.09 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 1000, fiveGoal: 9.07, fiveBust: 1.90, fiveUn: 89.03, tenGoal: 60.88, tenBust: 9.24, tenUn: 29.88, twentyGoal: 83.71, twentyBust: 13.45, twentyUn: 2.84 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 2000, fiveGoal: 9.07, fiveBust: 1.90, fiveUn: 89.03, tenGoal: 60.85, tenBust: 9.25, tenUn: 29.90, twentyGoal: 83.70, twentyBust: 13.46, twentyUn: 2.84 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 3000, fiveGoal: 9.05, fiveBust: 1.90, fiveUn: 89.05, tenGoal: 60.85, tenBust: 9.22, tenUn: 29.93, twentyGoal: 83.72, twentyBust: 13.43, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 4000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.86, tenBust: 9.24, tenUn: 29.90, twentyGoal: 83.70, twentyBust: 13.45, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 5000, fiveGoal: 9.05, fiveBust: 1.90, fiveUn: 89.05, tenGoal: 60.84, tenBust: 9.22, tenUn: 29.94, twentyGoal: 83.71, twentyBust: 13.42, twentyUn: 2.87 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 6000, fiveGoal: 9.06, fiveBust: 1.89, fiveUn: 89.05, tenGoal: 60.89, tenBust: 9.23, tenUn: 29.88, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 7000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.85, tenBust: 9.25, tenUn: 29.90, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 8000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.89, tenBust: 9.22, tenUn: 29.89, twentyGoal: 83.73, twentyBust: 13.42, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 9000, fiveGoal: 9.05, fiveBust: 1.90, fiveUn: 89.05, tenGoal: 60.87, tenBust: 9.25, tenUn: 29.88, twentyGoal: 83.70, twentyBust: 13.44, twentyUn: 2.86 },
+      { label: "일반마틴(5마틴)", start: 300000, firstBet: 10000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.31, tenBust: 9.24, tenUn: 30.45, twentyGoal: 83.42, twentyBust: 13.51, twentyUn: 3.07 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 1000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.86, tenBust: 9.24, tenUn: 29.90, twentyGoal: 83.72, twentyBust: 13.44, twentyUn: 2.84 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 2000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.88, tenBust: 9.24, tenUn: 29.88, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 3000, fiveGoal: 9.06, fiveBust: 1.90, fiveUn: 89.04, tenGoal: 60.85, tenBust: 9.23, tenUn: 29.92, twentyGoal: 83.72, twentyBust: 13.43, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 4000, fiveGoal: 9.06, fiveBust: 1.89, fiveUn: 89.05, tenGoal: 60.89, tenBust: 9.23, tenUn: 29.88, twentyGoal: 83.73, twentyBust: 13.43, twentyUn: 2.84 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 5000, fiveGoal: 9.07, fiveBust: 1.89, fiveUn: 89.04, tenGoal: 60.89, tenBust: 9.23, tenUn: 29.88, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 6000, fiveGoal: 9.05, fiveBust: 1.90, fiveUn: 89.05, tenGoal: 60.85, tenBust: 9.25, tenUn: 29.90, twentyGoal: 83.69, twentyBust: 13.46, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 7000, fiveGoal: 9.07, fiveBust: 1.90, fiveUn: 89.03, tenGoal: 60.87, tenBust: 9.24, tenUn: 29.89, twentyGoal: 83.71, twentyBust: 13.45, twentyUn: 2.84 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 8000, fiveGoal: 9.07, fiveBust: 1.89, fiveUn: 89.04, tenGoal: 60.89, tenBust: 9.23, tenUn: 29.88, twentyGoal: 83.72, twentyBust: 13.43, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 9000, fiveGoal: 9.07, fiveBust: 1.91, fiveUn: 89.02, tenGoal: 60.88, tenBust: 9.24, tenUn: 29.88, twentyGoal: 83.71, twentyBust: 13.44, twentyUn: 2.85 },
+      { label: "일반마틴(5마틴)", start: 400000, firstBet: 10000, fiveGoal: 9.06, fiveBust: 1.89, fiveUn: 89.05, tenGoal: 60.91, tenBust: 9.23, tenUn: 29.86, twentyGoal: 83.73, twentyBust: 13.43, twentyUn: 2.84 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 1000, fiveGoal: 49.81, fiveBust: 1.90, fiveUn: 48.29, tenGoal: 88.10, tenBust: 8.07, tenUn: 3.83, twentyGoal: 91.18, twentyBust: 8.74, twentyUn: 0.08 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 2000, fiveGoal: 47.86, fiveBust: 1.90, fiveUn: 50.24, tenGoal: 82, tenBust: 8.10, tenUn: 9.90, twentyGoal: 89.10, twentyBust: 9.45, twentyUn: 1.45 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 3000, fiveGoal: 47.88, fiveBust: 1.89, fiveUn: 50.23, tenGoal: 80.04, tenBust: 8.31, tenUn: 11.65, twentyGoal: 82.45, twentyBust: 11.28, twentyUn: 6.27 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 4000, fiveGoal: 44.25, fiveBust: 7.70, fiveUn: 48.05, tenGoal: 79.48, tenBust: 13.75, tenUn: 6.77, twentyGoal: 81.96, twentyBust: 16.65, twentyUn: 1.39 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 5000, fiveGoal: 41.06, fiveBust: 7.69, fiveUn: 51.25, tenGoal: 71.14, tenBust: 17.46, tenUn: 11.40, twentyGoal: 78.66, twentyBust: 20.11, twentyUn: 1.23 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 6000, fiveGoal: 41.05, fiveBust: 7.68, fiveUn: 51.27, tenGoal: 65.27, tenBust: 17.74, tenUn: 16.99, twentyGoal: 74.04, twentyBust: 22.56, twentyUn: 3.40 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 7000, fiveGoal: 41.05, fiveBust: 7.69, fiveUn: 51.26, tenGoal: 65.29, tenBust: 19.15, tenUn: 15.56, twentyGoal: 70.74, twentyBust: 24.76, twentyUn: 4.50 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 8000, fiveGoal: 41.03, fiveBust: 7.69, fiveUn: 51.28, tenGoal: 65.27, tenBust: 20.89, tenUn: 13.84, twentyGoal: 68.35, twentyBust: 27.38, twentyUn: 4.27 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 9000, fiveGoal: 41.07, fiveBust: 9.58, fiveUn: 49.35, tenGoal: 65.29, tenBust: 24.59, tenUn: 10.12, twentyGoal: 66.87, twentyBust: 30.10, twentyUn: 3.03 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 100000, firstBet: 10000, fiveGoal: 37.63, fiveBust: 18.40, fiveUn: 43.97, tenGoal: 64.26, tenBust: 28.72, tenUn: 7.02, twentyGoal: 65.47, twentyBust: 32.70, twentyUn: 1.83 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 1000, fiveGoal: 49.79, fiveBust: 1.90, fiveUn: 48.31, tenGoal: 88.10, tenBust: 8.07, tenUn: 3.83, twentyGoal: 91.19, twentyBust: 8.74, twentyUn: 0.07 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 2000, fiveGoal: 49.81, fiveBust: 1.89, fiveUn: 48.30, tenGoal: 88.11, tenBust: 8.06, tenUn: 3.83, twentyGoal: 91.19, twentyBust: 8.73, twentyUn: 0.08 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 3000, fiveGoal: 49.61, fiveBust: 1.89, fiveUn: 48.50, tenGoal: 87.22, tenBust: 8.07, tenUn: 4.71, twentyGoal: 90.89, twentyBust: 8.85, twentyUn: 0.26 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 4000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 82.02, tenBust: 8.10, tenUn: 9.88, twentyGoal: 89.10, twentyBust: 9.45, twentyUn: 1.45 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 5000, fiveGoal: 47.88, fiveBust: 1.90, fiveUn: 50.22, tenGoal: 80.04, tenBust: 8.12, tenUn: 11.84, twentyGoal: 82.91, twentyBust: 10.09, twentyUn: 7 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 6000, fiveGoal: 47.89, fiveBust: 1.90, fiveUn: 50.21, tenGoal: 80.03, tenBust: 8.32, tenUn: 11.65, twentyGoal: 82.44, twentyBust: 11.30, twentyUn: 6.26 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 7000, fiveGoal: 47.88, fiveBust: 1.90, fiveUn: 50.22, tenGoal: 80.04, tenBust: 9.02, tenUn: 10.94, twentyGoal: 82.46, twentyBust: 12.96, twentyUn: 4.58 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 8000, fiveGoal: 44.24, fiveBust: 7.69, fiveUn: 48.07, tenGoal: 79.49, tenBust: 13.73, tenUn: 6.78, twentyGoal: 81.97, twentyBust: 16.64, twentyUn: 1.39 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 9000, fiveGoal: 41.08, fiveBust: 7.67, fiveUn: 51.25, tenGoal: 76.11, tenBust: 17.37, tenUn: 6.52, twentyGoal: 80.60, twentyBust: 18.97, twentyUn: 0.43 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 200000, firstBet: 10000, fiveGoal: 41.08, fiveBust: 7.68, fiveUn: 51.24, tenGoal: 71.15, tenBust: 17.44, tenUn: 11.41, twentyGoal: 78.68, twentyBust: 20.09, twentyUn: 1.23 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 1000, fiveGoal: 49.77, fiveBust: 1.90, fiveUn: 48.33, tenGoal: 88.09, tenBust: 8.08, tenUn: 3.83, twentyGoal: 91.17, twentyBust: 8.75, twentyUn: 0.08 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 2000, fiveGoal: 49.79, fiveBust: 1.90, fiveUn: 48.31, tenGoal: 88.10, tenBust: 8.07, tenUn: 3.83, twentyGoal: 91.18, twentyBust: 8.74, twentyUn: 0.08 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 3000, fiveGoal: 49.81, fiveBust: 1.89, fiveUn: 48.30, tenGoal: 88.11, tenBust: 8.06, tenUn: 3.83, twentyGoal: 91.20, twentyBust: 8.73, twentyUn: 0.07 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 4000, fiveGoal: 49.57, fiveBust: 1.90, fiveUn: 48.53, tenGoal: 87.32, tenBust: 8.07, tenUn: 4.61, twentyGoal: 91.08, twentyBust: 8.81, twentyUn: 0.11 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 5000, fiveGoal: 49.57, fiveBust: 1.89, fiveUn: 48.54, tenGoal: 87.20, tenBust: 8.07, tenUn: 4.73, twentyGoal: 90.49, twentyBust: 8.86, twentyUn: 0.65 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 6000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 82.01, tenBust: 8.09, tenUn: 9.90, twentyGoal: 89.11, twentyBust: 9.44, twentyUn: 1.45 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 7000, fiveGoal: 47.89, fiveBust: 1.89, fiveUn: 50.22, tenGoal: 80.05, tenBust: 8.09, tenUn: 11.86, twentyGoal: 84.48, twentyBust: 9.93, twentyUn: 5.59 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 8000, fiveGoal: 47.89, fiveBust: 1.89, fiveUn: 50.22, tenGoal: 80.04, tenBust: 8.29, tenUn: 11.67, twentyGoal: 82.45, twentyBust: 10.46, twentyUn: 7.09 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 9000, fiveGoal: 47.86, fiveBust: 1.89, fiveUn: 50.25, tenGoal: 80.02, tenBust: 8.30, tenUn: 11.68, twentyGoal: 82.45, twentyBust: 11.28, twentyUn: 6.27 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 300000, firstBet: 10000, fiveGoal: 47.87, fiveBust: 1.90, fiveUn: 50.23, tenGoal: 80.02, tenBust: 8.85, tenUn: 11.13, twentyGoal: 82.44, twentyBust: 12.23, twentyUn: 5.33 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 1000, fiveGoal: 49.79, fiveBust: 1.90, fiveUn: 48.31, tenGoal: 88.12, tenBust: 8.06, tenUn: 3.82, twentyGoal: 91.20, twentyBust: 8.73, twentyUn: 0.07 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 2000, fiveGoal: 49.80, fiveBust: 1.90, fiveUn: 48.30, tenGoal: 88.12, tenBust: 8.06, tenUn: 3.82, twentyGoal: 91.20, twentyBust: 8.73, twentyUn: 0.07 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 3000, fiveGoal: 49.79, fiveBust: 1.90, fiveUn: 48.31, tenGoal: 88.10, tenBust: 8.06, tenUn: 3.84, twentyGoal: 91.19, twentyBust: 8.73, twentyUn: 0.08 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 4000, fiveGoal: 49.79, fiveBust: 1.90, fiveUn: 48.31, tenGoal: 88.10, tenBust: 8.07, tenUn: 3.83, twentyGoal: 91.18, twentyBust: 8.74, twentyUn: 0.08 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 5000, fiveGoal: 49.56, fiveBust: 1.90, fiveUn: 48.54, tenGoal: 87.87, tenBust: 8.07, tenUn: 4.06, twentyGoal: 91.14, twentyBust: 8.77, twentyUn: 0.09 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 6000, fiveGoal: 49.58, fiveBust: 1.89, fiveUn: 48.53, tenGoal: 87.23, tenBust: 8.07, tenUn: 4.70, twentyGoal: 90.89, twentyBust: 8.85, twentyUn: 0.26 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 7000, fiveGoal: 49.62, fiveBust: 1.90, fiveUn: 48.48, tenGoal: 87.20, tenBust: 8.06, tenUn: 4.74, twentyGoal: 90.29, twentyBust: 8.86, twentyUn: 0.85 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 8000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 82.01, tenBust: 8.10, tenUn: 9.89, twentyGoal: 89.09, twentyBust: 9.45, twentyUn: 1.46 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 9000, fiveGoal: 47.91, fiveBust: 1.90, fiveUn: 50.19, tenGoal: 80.07, tenBust: 8.10, tenUn: 11.83, twentyGoal: 85.91, twentyBust: 9.90, twentyUn: 4.19 },
+      { label: "슈퍼마틴(5마틴,올인)", start: 400000, firstBet: 10000, fiveGoal: 47.90, fiveBust: 1.90, fiveUn: 50.20, tenGoal: 80.02, tenBust: 8.13, tenUn: 11.85, twentyGoal: 82.90, twentyBust: 10.10, twentyUn: 7 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 1000, fiveGoal: 48.73, fiveBust: 7.68, fiveUn: 43.59, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 2000, fiveGoal: 48.74, fiveBust: 7.68, fiveUn: 43.58, tenGoal: 81.90, tenBust: 16.60, tenUn: 1.50, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 3000, fiveGoal: 47.91, fiveBust: 7.68, fiveUn: 44.41, tenGoal: 81.32, tenBust: 16.68, tenUn: 2, twentyGoal: 82.79, twentyBust: 17.21, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 4000, fiveGoal: 44.27, fiveBust: 7.68, fiveUn: 48.05, tenGoal: 79.51, tenBust: 17.04, tenUn: 3.45, twentyGoal: 82.02, twentyBust: 17.87, twentyUn: 0.11 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 5000, fiveGoal: 41.05, fiveBust: 7.68, fiveUn: 51.27, tenGoal: 71.14, tenBust: 17.45, tenUn: 11.41, twentyGoal: 78.67, twentyBust: 20.10, twentyUn: 1.23 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 6000, fiveGoal: 41.08, fiveBust: 7.67, fiveUn: 51.25, tenGoal: 65.30, tenBust: 17.72, tenUn: 16.98, twentyGoal: 74.06, twentyBust: 22.53, twentyUn: 3.41 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 7000, fiveGoal: 41.03, fiveBust: 7.70, fiveUn: 51.27, tenGoal: 65.28, tenBust: 19.15, tenUn: 15.57, twentyGoal: 70.74, twentyBust: 24.75, twentyUn: 4.51 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 8000, fiveGoal: 41.07, fiveBust: 7.68, fiveUn: 51.25, tenGoal: 65.29, tenBust: 20.88, tenUn: 13.83, twentyGoal: 68.36, twentyBust: 27.36, twentyUn: 4.28 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 9000, fiveGoal: 41.04, fiveBust: 9.60, fiveUn: 49.36, tenGoal: 65.28, tenBust: 24.61, tenUn: 10.11, twentyGoal: 66.84, twentyBust: 30.11, twentyUn: 3.05 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 100000, firstBet: 10000, fiveGoal: 37.63, fiveBust: 18.43, fiveUn: 43.94, tenGoal: 64.24, tenBust: 28.73, tenUn: 7.03, twentyGoal: 65.44, twentyBust: 32.73, twentyUn: 1.83 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 1000, fiveGoal: 48.74, fiveBust: 7.69, fiveUn: 43.57, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 2000, fiveGoal: 48.74, fiveBust: 7.67, fiveUn: 43.59, tenGoal: 81.91, tenBust: 16.59, tenUn: 1.50, twentyGoal: 83, twentyBust: 17, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 3000, fiveGoal: 48.73, fiveBust: 7.69, fiveUn: 43.58, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 4000, fiveGoal: 48.73, fiveBust: 7.69, fiveUn: 43.58, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 5000, fiveGoal: 48.30, fiveBust: 7.68, fiveUn: 44.02, tenGoal: 81.85, tenBust: 16.63, tenUn: 1.52, twentyGoal: 82.95, twentyBust: 17.05, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 6000, fiveGoal: 47.89, fiveBust: 7.69, fiveUn: 44.42, tenGoal: 81.30, tenBust: 16.71, tenUn: 1.99, twentyGoal: 82.76, twentyBust: 17.24, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 7000, fiveGoal: 47.91, fiveBust: 7.68, fiveUn: 44.41, tenGoal: 80.34, tenBust: 16.69, tenUn: 2.97, twentyGoal: 82.61, twentyBust: 17.37, twentyUn: 0.02 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 8000, fiveGoal: 44.26, fiveBust: 7.67, fiveUn: 48.07, tenGoal: 79.52, tenBust: 17.03, tenUn: 3.45, twentyGoal: 82.03, twentyBust: 17.86, twentyUn: 0.11 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 9000, fiveGoal: 41.07, fiveBust: 7.67, fiveUn: 51.26, tenGoal: 76.11, tenBust: 17.38, tenUn: 6.51, twentyGoal: 80.60, twentyBust: 18.98, twentyUn: 0.42 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 200000, firstBet: 10000, fiveGoal: 41.03, fiveBust: 7.70, fiveUn: 51.27, tenGoal: 71.13, tenBust: 17.46, tenUn: 11.41, twentyGoal: 78.66, twentyBust: 20.11, twentyUn: 1.23 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 1000, fiveGoal: 48.72, fiveBust: 7.69, fiveUn: 43.59, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 2000, fiveGoal: 48.73, fiveBust: 7.69, fiveUn: 43.58, tenGoal: 81.89, tenBust: 16.60, tenUn: 1.51, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 3000, fiveGoal: 48.75, fiveBust: 7.67, fiveUn: 43.58, tenGoal: 81.91, tenBust: 16.60, tenUn: 1.49, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 4000, fiveGoal: 48.72, fiveBust: 7.68, fiveUn: 43.60, tenGoal: 81.90, tenBust: 16.60, tenUn: 1.50, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 5000, fiveGoal: 48.76, fiveBust: 7.67, fiveUn: 43.57, tenGoal: 81.91, tenBust: 16.59, tenUn: 1.50, twentyGoal: 83, twentyBust: 17, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 6000, fiveGoal: 48.73, fiveBust: 7.69, fiveUn: 43.58, tenGoal: 81.88, tenBust: 16.63, tenUn: 1.49, twentyGoal: 82.96, twentyBust: 17.04, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 7000, fiveGoal: 48.72, fiveBust: 7.68, fiveUn: 43.60, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 8000, fiveGoal: 47.89, fiveBust: 7.69, fiveUn: 44.42, tenGoal: 81.73, tenBust: 16.69, tenUn: 1.58, twentyGoal: 82.87, twentyBust: 17.13, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 9000, fiveGoal: 47.90, fiveBust: 7.69, fiveUn: 44.41, tenGoal: 81.30, tenBust: 16.69, tenUn: 2.01, twentyGoal: 82.78, twentyBust: 17.22, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 300000, firstBet: 10000, fiveGoal: 47.90, fiveBust: 7.68, fiveUn: 44.42, tenGoal: 80.67, tenBust: 16.70, tenUn: 2.63, twentyGoal: 82.67, twentyBust: 17.32, twentyUn: 0.01 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 1000, fiveGoal: 48.74, fiveBust: 7.68, fiveUn: 43.58, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 2000, fiveGoal: 48.74, fiveBust: 7.69, fiveUn: 43.57, tenGoal: 81.88, tenBust: 16.62, tenUn: 1.50, twentyGoal: 82.97, twentyBust: 17.03, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 3000, fiveGoal: 48.74, fiveBust: 7.68, fiveUn: 43.58, tenGoal: 81.90, tenBust: 16.60, tenUn: 1.50, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 4000, fiveGoal: 48.71, fiveBust: 7.68, fiveUn: 43.61, tenGoal: 81.90, tenBust: 16.60, tenUn: 1.50, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 5000, fiveGoal: 48.76, fiveBust: 7.67, fiveUn: 43.57, tenGoal: 81.92, tenBust: 16.58, tenUn: 1.50, twentyGoal: 83.01, twentyBust: 16.99, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 6000, fiveGoal: 48.73, fiveBust: 7.68, fiveUn: 43.59, tenGoal: 81.90, tenBust: 16.60, tenUn: 1.50, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 7000, fiveGoal: 48.73, fiveBust: 7.68, fiveUn: 43.59, tenGoal: 81.89, tenBust: 16.61, tenUn: 1.50, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 8000, fiveGoal: 48.75, fiveBust: 7.68, fiveUn: 43.57, tenGoal: 81.88, tenBust: 16.61, tenUn: 1.51, twentyGoal: 82.98, twentyBust: 17.02, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 9000, fiveGoal: 48.73, fiveBust: 7.67, fiveUn: 43.60, tenGoal: 81.89, tenBust: 16.60, tenUn: 1.51, twentyGoal: 82.99, twentyBust: 17.01, twentyUn: 0 },
+      { label: "슈퍼마틴(4마틴,올인)", start: 400000, firstBet: 10000, fiveGoal: 48.28, fiveBust: 7.68, fiveUn: 44.04, tenGoal: 81.84, tenBust: 16.64, tenUn: 1.52, twentyGoal: 82.94, twentyBust: 17.06, twentyUn: 0 }
+    ];
+    let probSort = { key: "tenGoal", dir: "desc" };
+
+    // 초등학생도 이해할 수 있게, 처음부터 끝까지 전부 풀어쓴 배팅방법 설명 (다른 항목을 참조하지 않고 각각 완결됨)
+    // 표의 label과 정확히 일치해야 함
+    const BETTING_GUIDES = {
+      "슈퍼마틴(4마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계로 가서 3배를 배팅하고, 또 지면 3단계에서 7배, 또 지면 4단계에서 15배를 배팅해요. 이렇게 질 때마다 배팅금액이 크게 뛰어올라요. 만약 1~4단계 중 언제든 한 번이라도 이기면, 그동안 잃었던 돈을 전부 되찾고 처음 그대로 1배로 돌아가서 다시 시작해요. 하지만 4단계(15배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요. 그리고 돈이 모자라서 정해진 금액을 다 못 걸 때는 게임을 끝내지 않고 남은 돈 전부를 걸어요. 이때 이기면 정해진 금액보다 적게 벌고 1단계로 돌아가고, 지면 가진 돈을 모두 잃고 게임이 끝나요.",
+      "슈퍼마틴(5마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계 3배, 또 지면 3단계 7배, 또 지면 4단계 15배, 또 지면 5단계 31배를 배팅해요. 이렇게 질 때마다 배팅금액이 크게 뛰어올라요. 만약 1~5단계 중 언제든 한 번이라도 이기면, 그동안 잃었던 돈을 전부 되찾고 처음 그대로 1배로 돌아가서 다시 시작해요. 하지만 5단계(31배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요. 그리고 돈이 모자라서 정해진 금액을 다 못 걸 때는 게임을 끝내지 않고 남은 돈 전부를 걸어요. 이때 이기면 정해진 금액보다 적게 벌고 1단계로 돌아가고, 지면 가진 돈을 모두 잃고 게임이 끝나요.",
+      "일반마틴(4마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계에서 2배, 또 지면 3단계에서 4배, 또 지면 4단계에서 8배를 배팅해요. 매번 딱 2배씩만 늘어나는 게 특징이에요. 1~4단계 중 언제든 한 번이라도 이기면 그동안 잃었던 돈을 되찾고 아주 조금 더 벌게 되며, 다시 1배로 돌아가서 시작해요. 하지만 4단계(8배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요. 그리고 돈이 모자라서 정해진 금액을 다 못 걸 때는 게임을 끝내지 않고 남은 돈 전부를 걸어요. 이때 이기면 정해진 금액보다 적게 벌고 1단계로 돌아가고, 지면 가진 돈을 모두 잃고 게임이 끝나요.",
+      "일반마틴(5마틴)": "1단계에서는 1배를 배팅해요. 지면 2단계 2배, 또 지면 3단계 4배, 또 지면 4단계 8배, 또 지면 5단계 16배를 배팅해요. 매번 딱 2배씩만 늘어나는 게 특징이에요. 1~5단계 중 언제든 한 번이라도 이기면 그동안 잃었던 돈을 되찾고 아주 조금 더 벌게 되며, 다시 1배로 돌아가서 시작해요. 하지만 5단계(16배)에서도 지면 더 이상 배팅할 수 없어서 게임이 끝나요. 그리고 돈이 모자라서 정해진 금액을 다 못 걸 때는 게임을 끝내지 않고 남은 돈 전부를 걸어요. 이때 이기면 정해진 금액보다 적게 벌고 1단계로 돌아가고, 지면 가진 돈을 모두 잃고 게임이 끝나요.",
+      "슈퍼마틴(5마틴,올인)": "1단계에서는 1배를 배팅해요. 지면 2단계 3배, 또 지면 3단계 7배, 또 지면 4단계 15배를 배팅해요. 그런데 4단계에서도 지면, 5단계(마지막 단계)에서는 정해진 배수(31배)를 따르지 않고 지금 남아있는 돈을 전부 걸어요. 이 마지막 올인 배팅에서 이기면 크게 되찾고 1단계로 돌아가지만, 지면 가진 돈을 모두 잃고 게임이 끝나요. 물론 1~4단계 중 언제든 이기면 그동안 잃은 돈을 되찾고 바로 1단계(1배)로 돌아가요. 그리고 돈이 모자라서 정해진 금액을 다 못 걸 때는 게임을 끝내지 않고 남은 돈 전부를 걸어요. 이때 이기면 정해진 금액보다 적게 벌고 1단계로 돌아가고, 지면 가진 돈을 모두 잃고 게임이 끝나요.",
+      "슈퍼마틴(4마틴,올인)": "1단계에서는 1배를 배팅해요. 지면 2단계 3배, 또 지면 3단계 7배를 배팅해요. 그런데 3단계에서도 지면, 4단계(마지막 단계)에서는 정해진 배수(15배)를 따르지 않고 지금 남아있는 돈을 전부 걸어요. 이 마지막 올인 배팅에서 이기면 크게 되찾고 1단계로 돌아가지만, 지면 가진 돈을 모두 잃고 게임이 끝나요. 물론 1~3단계 중 언제든 이기면 그동안 잃은 돈을 되찾고 바로 1단계(1배)로 돌아가요. 그리고 돈이 모자라서 정해진 금액을 다 못 걸 때는 게임을 끝내지 않고 남은 돈 전부를 걸어요. 이때 이기면 정해진 금액보다 적게 벌고 1단계로 돌아가고, 지면 가진 돈을 모두 잃고 게임이 끝나요."
+    };
+
+    function renderGuideTable(filterLabel) {
+      const entries = filterLabel
+        ? Object.entries(BETTING_GUIDES).filter(([label]) => label === filterLabel)
+        : Object.entries(BETTING_GUIDES);
+
+      guideTableBody.innerHTML = entries.map(([label, text]) => `
+        <tr>
+          <td>${label}</td>
+          <td>${text}</td>
+        </tr>
+      `).join("");
+
+      guideModalTitle.textContent = filterLabel ? `${filterLabel} 설명` : "배팅방법 설명서";
+      guideModalHint.textContent = filterLabel
+        ? "초등학생도 이해할 수 있게 쉽게 풀어썼어요."
+        : "초등학생도 이해할 수 있게 쉽게 풀어썼어요. 확률표에서 이름을 누르면 그 방법만 바로 볼 수도 있어요.";
+      guideShowAllBtn.classList.toggle("hidden", !filterLabel);
+    }
+
+    function openGuideModal(filterLabel) {
+      renderGuideTable(filterLabel || null);
+      guideModalOverlay.classList.remove("hidden");
+    }
+    function closeGuideModal() {
+      guideModalOverlay.classList.add("hidden");
+    }
+    viewGuideBtn.addEventListener("click", () => openGuideModal(null));
+    guideShowAllBtn.addEventListener("click", () => renderGuideTable(null));
+    guideModalClose.addEventListener("click", closeGuideModal);
+    guideModalOverlay.addEventListener("click", (e) => {
+      if (e.target === guideModalOverlay) closeGuideModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !guideModalOverlay.classList.contains("hidden")) closeGuideModal();
+    });
+
+    probTableBody.addEventListener("click", (e) => {
+      const btn = e.target.closest(".label-link");
+      if (!btn) return;
+      openGuideModal(btn.dataset.label);
+    });
+
+    // 첫배팅금액별 고정 목표수익 (시작금액과 무관)
+    const TARGET_PROFIT_BY_FIRSTBET = { 1000: 4000, 2000: 8000, 3000: 12000, 4000: 16000, 5000: 20000, 6000: 24000, 7000: 28000, 8000: 32000, 9000: 36000, 10000: 40000 };
+
+    function probSortValue(r, key) {
+      if (key === "target10") return TARGET_PROFIT_BY_FIRSTBET[r.firstBet] || 0;
+      return r[key];
+    }
+
+    const probFilter = { label: "", start: "", firstBet: "" };
+
+    function populateProbFilters() {
+      const labels = [...new Set(PROBABILITY_DATA.map(r => r.label))];
+      const starts = [...new Set(PROBABILITY_DATA.map(r => r.start))].sort((a, b) => a - b);
+      const firstBets = [...new Set(PROBABILITY_DATA.map(r => r.firstBet))].sort((a, b) => a - b);
+
+      filterLabelSelect.innerHTML = `<option value="">전체</option>` +
+        labels.map(l => `<option value="${l}">${l}</option>`).join("");
+      filterStartSelect.innerHTML = `<option value="">전체</option>` +
+        starts.map(s => `<option value="${s}">${formatMoney(s)}</option>`).join("");
+      filterFirstBetSelect.innerHTML = `<option value="">전체</option>` +
+        firstBets.map(b => `<option value="${b}">${formatMoney(b)}</option>`).join("");
+    }
+
+    function applyProbFilter(rows) {
+      return rows.filter(r =>
+        (!probFilter.label || r.label === probFilter.label) &&
+        (!probFilter.start || String(r.start) === probFilter.start) &&
+        (!probFilter.firstBet || String(r.firstBet) === probFilter.firstBet)
+      );
+    }
+
+    function renderProbTable() {
+      const filtered = applyProbFilter(PROBABILITY_DATA);
+      filterStatusText.textContent = `${filtered.length} / ${PROBABILITY_DATA.length}행 표시 중`;
+      const sorted = filtered.sort((a, b) => {
+        const va = probSortValue(a, probSort.key), vb = probSortValue(b, probSort.key);
+        if (typeof va === "string") {
+          return probSort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        return probSort.dir === "asc" ? va - vb : vb - va;
+      });
+
+      probTableBody.innerHTML = sorted.map(r => `
+        <tr>
+          <td><button type="button" class="label-link" data-label="${r.label}">${r.label}</button></td>
+          <td>${formatMoney(r.start)}</td>
+          <td>${formatMoney(r.firstBet)}</td>
+          <td>${formatMoney(TARGET_PROFIT_BY_FIRSTBET[r.firstBet] || 0)}</td>
+          <td>${r.fiveGoal.toFixed(2)}%</td>
+          <td>${r.fiveBust.toFixed(2)}%</td>
+          <td>${r.fiveUn.toFixed(2)}%</td>
+          <td>${r.tenGoal.toFixed(2)}%</td>
+          <td>${r.tenBust.toFixed(2)}%</td>
+          <td>${r.tenUn.toFixed(2)}%</td>
+          <td>${r.twentyGoal.toFixed(2)}%</td>
+          <td>${r.twentyBust.toFixed(2)}%</td>
+          <td>${r.twentyUn.toFixed(2)}%</td>
+        </tr>
+      `).join("");
+
+      document.querySelectorAll("#probTable th[data-key]").forEach(th => {
+        th.classList.toggle("sorted-asc", th.dataset.key === probSort.key && probSort.dir === "asc");
+        th.classList.toggle("sorted-desc", th.dataset.key === probSort.key && probSort.dir === "desc");
+      });
+    }
+
+    document.querySelectorAll("#probTable th[data-key]").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        if (probSort.key === key) {
+          probSort.dir = probSort.dir === "asc" ? "desc" : "asc";
+        } else {
+          probSort.key = key;
+          probSort.dir = "desc";
+        }
+        renderProbTable();
+      });
+    });
+
+    function openProbModal() {
+      populateProbFilters();
+      renderProbTable();
+      probModalOverlay.classList.remove("hidden");
+    }
+    filterLabelSelect.addEventListener("change", () => {
+      probFilter.label = filterLabelSelect.value;
+      renderProbTable();
+    });
+    filterStartSelect.addEventListener("change", () => {
+      probFilter.start = filterStartSelect.value;
+      renderProbTable();
+    });
+    filterFirstBetSelect.addEventListener("change", () => {
+      probFilter.firstBet = filterFirstBetSelect.value;
+      renderProbTable();
+    });
+    filterResetBtn.addEventListener("click", () => {
+      probFilter.label = "";
+      probFilter.start = "";
+      probFilter.firstBet = "";
+      filterLabelSelect.value = "";
+      filterStartSelect.value = "";
+      filterFirstBetSelect.value = "";
+      renderProbTable();
+    });
+    function closeProbModal() {
+      probModalOverlay.classList.add("hidden");
+    }
+    viewProbBtn.addEventListener("click", openProbModal);
+    probModalClose.addEventListener("click", closeProbModal);
+    probModalOverlay.addEventListener("click", (e) => {
+      if (e.target === probModalOverlay) closeProbModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !probModalOverlay.classList.contains("hidden")) closeProbModal();
+    });
+
+    // 게임별 폴더: 배팅방법을 고르면 bcmk.vercel.app/supermartin 처럼 그 게임의 주소로 이동한다.
+    // 각 폴더(index.html 복사본, sim/build_games.js 가 생성)는 window.BCMK_GAME 으로 열리자마자 그 배팅방법의 세팅 화면에 들어간다.
+    const STRATEGY_SLUG = { superMartin: "supermartin", classicMartin: "classicmartin", paroli: "paroli", system1326: "1326", dalembert: "dalembert" };
+    const GAME_FOLDER = window.BCMK_GAME && STRATEGIES[window.BCMK_GAME] ? window.BCMK_GAME : null;
+
+    document.querySelectorAll(".strategy-card").forEach(card => {
+      card.addEventListener("click", () => {
+        if (!GAME_FOLDER) {
+          location.href = STRATEGY_SLUG[card.dataset.strategy] + "/";
+          return;
+        }
+        state.strategyId = card.dataset.strategy;
+        clearSetupInputs();
+        applyStrategyToSetupUI(state.strategyId);
+        showPage("setup");
+      });
+    });
+
+    backToStrategyBtn.addEventListener("click", () => {
+      if (GAME_FOLDER) { location.href = "../"; return; }
+      state.strategyId = null;
+      showPage("strategy");
+    });
+
+    startBtn.addEventListener("click", startGame);
+    $("autoBtn").addEventListener("click", () => { if (AUTO.on) stopAuto(); else startAuto(); });
+    resetBtn.addEventListener("click", resetGame);
+    $("retryBtn").addEventListener("click", () => { startGame(); if (state.started) startAuto(); });
+    $("unlimitedBtn").addEventListener("click", toggleExtendBox);
+    $("extendBtns").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-cap]");
+      if (b) continueExtended(Number(b.dataset.cap));
+    });
+    winBtn.addEventListener("click", () => recordRound("승리"));
+    tieBtn.addEventListener("click", () => recordRound("TIE"));
+    lossBtn.addEventListener("click", () => recordRound("패배"));
+    super6Btn.addEventListener("click", () => recordRound("SUPER6"));
+    gameOverBtn.addEventListener("click", resetGame);
+
+    startAmountInput.addEventListener("input", () => {
+      auto.lastEdited = "start";
+      recalcAutoFields("start");
+    });
+    baseBetInput.addEventListener("input", () => {
+      auto.lastEdited = "base";
+      recalcAutoFields("base");
+    });
+    martinLimitInput.addEventListener("input", () => {
+      recalcAutoFields("martin");
+    });
+    targetAmountInput.addEventListener("input", () => {
+      auto.targetEdited = true;
+    });
+
+    [startAmountInput, baseBetInput, martinLimitInput, targetAmountInput].forEach(input => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          if (!state.started || state.finished) startGame();
+        }
+      });
+    });
+
+    setIdleMessage("시작 버튼을 눌러 첫 판을 생성하세요.");
+    setGameOverButton(false);
+    if (GAME_FOLDER) {
+      state.strategyId = GAME_FOLDER;
+      clearSetupInputs();
+      applyStrategyToSetupUI(GAME_FOLDER);
+      document.querySelectorAll(".desc").forEach(el => { el.classList.add("hidden"); });
+      showPage("setup");
+    } else {
+      showPage("strategy");
+    }
+    updateStatus();
+  </script>
+</body>
+</html>

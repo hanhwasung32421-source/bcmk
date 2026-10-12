@@ -695,6 +695,13 @@
     .extend-title{ display:block; margin-bottom: 8px; font-size: 13px; font-weight: 800; color: var(--text-sub); }
     .extend-btns{ display:flex; gap: 8px; }
     .extend-btns .btn{ flex: 1; height: 44px; font-size: 14px; padding: 0 4px; }
+    .roads{ margin-top: 4px; }
+    .road-title{ margin: 12px 0 6px; font-size: 13px; font-weight: 900; color: #eef3ff; display:flex; align-items:center; justify-content:space-between; gap: 8px; flex-wrap: wrap; }
+    .road-title small{ font-size: 11px; font-weight: 700; color: var(--text-hint); }
+    .road-canvas{ display:block; width: 100%; height: 100px; border-radius: 10px; border: 1px solid rgba(255,255,255,.18); background: #fff; }
+    .road-summary{ font-size: 12px; font-weight: 700; color: var(--text-sub); margin-top: 4px; }
+    .road-legend{ display:flex; flex-wrap:wrap; gap: 4px 12px; font-size: 11px; color: var(--text-hint); margin-top: 6px; }
+    .road-legend i{ display:inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
       100%{ transform: translateX(30px) rotate(10deg); }
@@ -951,6 +958,25 @@
             <div class="extend-btns" id="extendBtns"></div>
           </div>
           <div id="autoTally" class="auto-tally hidden"></div>
+          <div class="roads" id="roads">
+            <div class="road-title">구슬판 <small>가로 30칸 × 세로 10칸</small></div>
+            <canvas id="roadBead" class="road-canvas"></canvas>
+            <div class="road-summary" id="roadSummary"></div>
+            <div class="road-legend">
+              <span><i style="background:#1f5fe0"></i>플레이어</span>
+              <span><i style="background:#e0302f"></i>뱅커</span>
+              <span><i style="background:#1fa35c"></i>타이</span>
+              <span><i style="background:#f2a900"></i>슈퍼6(뱅커 6점 승)</span>
+            </div>
+            <div class="road-title">대로 <small>타이는 초록 사선</small></div>
+            <canvas id="roadBig" class="road-canvas"></canvas>
+            <div class="road-title">중국점 · 큰눈이 <small>빨강=규칙 / 파랑=불규칙</small></div>
+            <canvas id="roadEye" class="road-canvas"></canvas>
+            <div class="road-title">중국점 · 작은눈이</div>
+            <canvas id="roadSmall" class="road-canvas"></canvas>
+            <div class="road-title">중국점 · 바퀴벌레</div>
+            <canvas id="roadRoach" class="road-canvas"></canvas>
+          </div>
         </div>
       </section>
     </div>
@@ -989,7 +1015,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 6 };
+    const LAST_EDIT = { date: "2026-10-12", version: 7 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1214,7 +1240,7 @@
         else if (result === "패배") c.loss++;
         else if (result === "SUPER6") c.s6++;
         else c.betTie++;
-        recordRound(result);
+        recordRound(result, ROAD_FROM_AUTO[outcome]);
         updateAutoTally();
       }, AUTO.fast ? 16 : 300);
     }
@@ -1238,6 +1264,7 @@
       if (state.awaitingDecision) autoStep();
     }
     function resetAuto() {
+      roadReset(); // 게임 시작/초기화 때만 호출됨
       setRetryVisible(false);
       AUTO.used = false;
       AUTO.fast = false;
@@ -1263,6 +1290,208 @@
     }
 
     function getAutoSide() { return state.currentSide; }
+    // ---------- 카지노 로드 (구슬판 / 대로 / 중국점) ----------
+    // 한 판의 실제 결과를 P(플레이어) / B(뱅커) / S(슈퍼6: 뱅커가 6점으로 승) / T(타이)로 쌓아 가로 30칸 × 세로 10칸 판에 그린다.
+    //  구슬판 : 판마다 한 칸, 위에서 아래로 채우고 다음 칸으로 (타이 포함)
+    //  대로   : 같은 쪽이 이기면 아래로, 바뀌면 오른쪽 새 줄. 세로 10칸을 넘으면 오른쪽으로 꺾음(용꼬리). 타이는 직전 칸에 초록 사선
+    //  중국점 : 대로에서 파생. 큰눈이(1줄 전) · 작은눈이(2줄 전) · 바퀴벌레(3줄 전)와 비교해 빨강(규칙적) / 파랑(불규칙)
+    // 손으로 진행할 때는 배팅 쪽과 승리/패배로 실제 결과를 거꾸로 추정한다(패배 = 반대쪽 승, SUPER6 = 뱅커 6점 승).
+    const ROAD_ROWS = 10, ROAD_COLS = 30;
+    const ROAD = { seq: [] };
+    const ROAD_FROM_AUTO = { player: "P", banker: "B", super6: "S", tie: "T" };
+    const ROAD_COLOR = { P: "#1f5fe0", B: "#e0302f", T: "#1fa35c", Y: "#f2a900", R: "#e0302f", Bl: "#1f5fe0" };
+
+    function outcomeFromResult(side, result) {
+      if (result === "TIE") return "T";
+      if (result === "SUPER6") return "S";
+      if (result === "승리") return side === "플레이어" ? "P" : "B";
+      return side === "플레이어" ? "B" : "P"; // 패배
+    }
+    function roadReset() {
+      ROAD.seq.length = 0;
+      drawRoads();
+    }
+    function roadPush(o) {
+      ROAD.seq.push(o);
+      if (ROAD.seq.length > 6000) ROAD.seq = ROAD.seq.slice(-4000);
+      drawRoads();
+    }
+
+    // keys: 같은 값이면 같은 줄, 바뀌면 새 줄. 반환: 칸 좌표(x,y), 논리 줄/행(c,r), 줄별 길이
+    function layoutRoad(keys, rows) {
+      const occ = new Set();
+      const pos = [];
+      const cols = [];
+      let x = 0, y = 0, c = -1, r = 0, startX = 0, tail = false;
+      for (let i = 0; i < keys.length; i++) {
+        if (i === 0 || keys[i] !== keys[i - 1]) {
+          c++; r = 0; tail = false;
+          x = i === 0 ? 0 : startX + 1;
+          y = 0;
+          while (occ.has(x + "," + y)) x++;
+          startX = x;
+          cols.push(1);
+        } else {
+          r++; cols[c]++;
+          if (!tail && y + 1 < rows && !occ.has(x + "," + (y + 1))) y++;
+          else { tail = true; x++; }
+        }
+        occ.add(x + "," + y);
+        pos.push({ x, y, c, r });
+      }
+      return { pos, cols };
+    }
+
+    function buildBigRoad(seq) {
+      const keys = [], meta = [];
+      let pending = 0;
+      for (const o of seq) {
+        if (o === "T") { if (meta.length) meta[meta.length - 1].ties++; else pending++; continue; }
+        keys.push(o === "P" ? "P" : "B");
+        meta.push({ s6: o === "S", ties: 0 });
+      }
+      if (meta.length) meta[0].ties += pending;
+      return { keys, meta, lay: layoutRoad(keys, ROAD_ROWS) };
+    }
+
+    // 중국점: k = 1(큰눈이) / 2(작은눈이) / 3(바퀴벌레). 빨강 'R' = 앞 줄을 따라감, 파랑 'Bl' = 따라가지 않음
+    function deriveRoad(pos, cols, k) {
+      const out = [];
+      for (const p of pos) {
+        const c = p.c + 1, r = p.r + 1; // 1부터 시작하는 줄/행 번호
+        let v = null;
+        if (r === 1) {
+          if (c >= k + 2) v = cols[c - 2] === cols[c - 2 - k] ? "R" : "Bl";
+        } else if (c >= k + 1) {
+          const left = cols[c - k - 1]; // k줄 왼쪽 줄의 길이
+          v = left >= r ? "R" : left === r - 1 ? "Bl" : "R";
+        }
+        if (v) out.push(v);
+      }
+      return out;
+    }
+
+    function prepRoadCanvas(cv) {
+      const w = cv.clientWidth;
+      if (!w) return null;
+      const s = w / ROAD_COLS;
+      const h = s * ROAD_ROWS;
+      const dpr = window.devicePixelRatio || 1;
+      cv.style.height = h + "px";
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+      const ctx = cv.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#d3d8e3";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= ROAD_COLS; i++) { ctx.moveTo(Math.round(i * s) + .5, 0); ctx.lineTo(Math.round(i * s) + .5, h); }
+      for (let j = 0; j <= ROAD_ROWS; j++) { ctx.moveTo(0, Math.round(j * s) + .5); ctx.lineTo(w, Math.round(j * s) + .5); }
+      ctx.stroke();
+      return { ctx, s };
+    }
+    function roadCenter(b, x, y) { return [(x + .5) * b.s, (y + .5) * b.s]; }
+    function roadCircle(b, x, y, color, fill, scale) {
+      const [cx, cy] = roadCenter(b, x, y);
+      const rad = b.s * (scale || .38);
+      b.ctx.beginPath();
+      b.ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      if (fill) { b.ctx.fillStyle = color; b.ctx.fill(); }
+      else { b.ctx.strokeStyle = color; b.ctx.lineWidth = Math.max(1.5, b.s * .12); b.ctx.stroke(); }
+    }
+    function roadText(b, x, y, text, color, scale) {
+      const [cx, cy] = roadCenter(b, x, y);
+      b.ctx.fillStyle = color;
+      b.ctx.font = `800 ${Math.max(7, b.s * (scale || .5))}px system-ui, sans-serif`;
+      b.ctx.textAlign = "center";
+      b.ctx.textBaseline = "middle";
+      b.ctx.fillText(text, cx, cy + b.s * .03);
+    }
+    function roadSlash(b, x, y, color, width) {
+      b.ctx.strokeStyle = color;
+      b.ctx.lineWidth = width || Math.max(1.5, b.s * .12);
+      b.ctx.beginPath();
+      b.ctx.moveTo((x + .8) * b.s, (y + .2) * b.s);
+      b.ctx.lineTo((x + .2) * b.s, (y + .8) * b.s);
+      b.ctx.stroke();
+    }
+    function roadOffset(pos) {
+      let maxX = -1;
+      for (const p of pos) if (p.x > maxX) maxX = p.x;
+      return Math.max(0, maxX + 1 - ROAD_COLS);
+    }
+
+    function drawRoads() {
+      const beadCv = $("roadBead");
+      if (!beadCv) return;
+      const seq = ROAD.seq;
+
+      // 구슬판
+      let b = prepRoadCanvas(beadCv);
+      if (!b) return;
+      const totalCols = Math.ceil(seq.length / ROAD_ROWS);
+      const off = Math.max(0, totalCols - ROAD_COLS);
+      seq.forEach((o, i) => {
+        const x = Math.floor(i / ROAD_ROWS) - off, y = i % ROAD_ROWS;
+        if (x < 0) return;
+        const color = o === "T" ? ROAD_COLOR.T : o === "P" ? ROAD_COLOR.P : ROAD_COLOR.B;
+        roadCircle(b, x, y, color, true, .42);
+        roadText(b, x, y, o === "P" ? "플" : o === "T" ? "타" : "뱅", "#ffffff", .46);
+        if (o === "S") { // 슈퍼6: 뱅커 구슬 오른쪽 위에 노란 "6" 배지
+          b.ctx.beginPath();
+          b.ctx.arc((x + .8) * b.s, (y + .22) * b.s, b.s * .2, 0, Math.PI * 2);
+          b.ctx.fillStyle = ROAD_COLOR.Y;
+          b.ctx.fill();
+          roadText(b, x + .3, y - .28, "6", "#3a2700", .3);
+        }
+      });
+
+      // 대로
+      const big = buildBigRoad(seq);
+      b = prepRoadCanvas($("roadBig"));
+      if (b) {
+        const o2 = roadOffset(big.lay.pos);
+        big.lay.pos.forEach((p, i) => {
+          const x = p.x - o2;
+          if (x < 0) return;
+          roadCircle(b, x, p.y, big.keys[i] === "P" ? ROAD_COLOR.P : ROAD_COLOR.B, false, .34);
+          const m = big.meta[i];
+          if (m.s6) roadCircle(b, x, p.y, ROAD_COLOR.Y, true, .13);
+          if (m.ties > 0) {
+            roadSlash(b, x, p.y, ROAD_COLOR.T);
+            if (m.ties > 1) roadText(b, x + .28, p.y + .3, String(m.ties), ROAD_COLOR.T, .34);
+          }
+        });
+      }
+
+      // 중국점 3종
+      [["roadEye", 1, "ring"], ["roadSmall", 2, "dot"], ["roadRoach", 3, "slash"]].forEach(([id, k, shape]) => {
+        const cv = $(id);
+        const bb = prepRoadCanvas(cv);
+        if (!bb) return;
+        const keys = deriveRoad(big.lay.pos, big.lay.cols, k);
+        const lay = layoutRoad(keys, ROAD_ROWS);
+        const o3 = roadOffset(lay.pos);
+        lay.pos.forEach((p, i) => {
+          const x = p.x - o3;
+          if (x < 0) return;
+          const color = keys[i] === "R" ? ROAD_COLOR.R : ROAD_COLOR.Bl;
+          if (shape === "ring") roadCircle(bb, x, p.y, color, false, .3);
+          else if (shape === "dot") roadCircle(bb, x, p.y, color, true, .28);
+          else roadSlash(bb, x, p.y, color, Math.max(1.5, bb.s * .14));
+        });
+      });
+
+      // 요약
+      const cnt = { P: 0, B: 0, S: 0, T: 0 };
+      seq.forEach(o => { cnt[o]++; });
+      const sum = $("roadSummary");
+      if (sum) sum.textContent = `플레이어 ${cnt.P} · 뱅커 ${cnt.B + cnt.S} (슈퍼6 ${cnt.S}) · 타이 ${cnt.T} · 총 ${seq.length}판`;
+    }
+    window.addEventListener("resize", () => drawRoads());
+
 
     function getStrategy() {
       return state.strategyId ? STRATEGIES[state.strategyId] : null;
@@ -1520,8 +1749,9 @@
       }, AUTO.on ? (AUTO.fast ? 20 : 240) : 500);
     }
 
-    function recordRound(result) {
+    function recordRound(result, outcome) {
       if (!state.awaitingDecision || state.finished) return;
+      roadPush(outcome || outcomeFromResult(getAutoSide(), result));
       const strategy = getStrategy();
 
       if (result === "TIE") {
@@ -1757,6 +1987,7 @@
       setGameOverButton(false);
       gameStrategyLabel.textContent = strategy.label;
       showPage("game");
+      requestAnimationFrame(drawRoads);
       updateStatus();
       requestNextRound();
     }

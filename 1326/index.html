@@ -1082,7 +1082,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 13 };
+    const LAST_EDIT = { date: "2026-10-12", version: 14 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1512,7 +1512,7 @@
           if (x < 0) return;
           roadCircle(b, x, p.y, big.keys[i] === "P" ? ROAD_COLOR.P : ROAD_COLOR.B, false, .34);
           const m = big.meta[i];
-          if (m.s6) roadCircle(b, x, p.y, ROAD_COLOR.Y, true, .13);
+          if (m.s6) roadText(b, x, p.y, "6", ROAD_COLOR.B, .5); // 슈퍼6: 빨간 링 안에 6
           if (m.ties > 0) {
             roadSlash(b, x, p.y, ROAD_COLOR.T);
             if (m.ties > 1) roadText(b, x + .28, p.y + .3, String(m.ties), ROAD_COLOR.T, .34);

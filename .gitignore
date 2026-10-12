@@ -7,3 +7,5 @@
 !/sim/
 !/sim/simulate.js
 !/sim/autobet-data.json
+!/sim/methods.js
+!/sim/exact_probs.js

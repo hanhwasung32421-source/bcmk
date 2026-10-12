@@ -702,6 +702,42 @@
     .road-summary{ font-size: 12px; font-weight: 700; color: var(--text-sub); margin-top: 4px; }
     .road-legend{ display:flex; flex-wrap:wrap; gap: 4px 12px; font-size: 11px; color: var(--text-hint); margin-top: 6px; }
     .road-legend i{ display:inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .shuffle-box.dealing{ height: 268px; }
+    .deal-table{
+      position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; gap:4px; padding: 8px 8px 6px;
+      background: radial-gradient(circle at 50% 0%, #1d7a4c, #0b4a2d 70%);
+    }
+    .deal-bet{ text-align:center; font-size: 12px; font-weight: 800; color: #ffe9a8; min-height: 16px; }
+    .deal-hands{ display:grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; min-height: 0; }
+    .deal-side{ border: 1px solid rgba(255,255,255,.28); border-radius: 12px; padding: 6px 4px; display:flex; flex-direction:column; align-items:center; gap: 6px; background: rgba(0,0,0,.14); }
+    .deal-side.player{ border-color: #7ab8ff; }
+    .deal-side.banker{ border-color: #ff9a9a; }
+    .deal-label{ font-weight: 900; font-size: 13px; color: #fff; }
+    .deal-label b{ display:inline-block; min-width: 20px; margin-left: 4px; padding: 0 5px; border-radius: 8px; background: rgba(0,0,0,.35); font-size: 15px; text-align:center; }
+    .deal-cards{ display:flex; gap: 4px; align-items:center; justify-content:center; min-height: 62px; flex-wrap: nowrap; }
+    .pcard{
+      width: 38px; height: 54px; border-radius: 6px; background: #fff; color: #111; flex-shrink: 0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; line-height: 1.05;
+      font-weight: 900; box-shadow: 0 3px 7px rgba(0,0,0,.4); animation: dealIn .3s ease-out;
+    }
+    .pcard.red{ color: #d62b2b; }
+    .pcard.third{ transform: rotate(90deg); margin: 0 8px; }
+    .pc-r{ font-size: 15px; }
+    .pc-s{ font-size: 17px; }
+    .deal-result{ text-align:center; font-weight: 900; font-size: 15px; min-height: 20px; color: #fff; }
+    .deal-result.player{ color: #a9d1ff; }
+    .deal-result.banker{ color: #ffb9b9; }
+    .deal-result.tie{ color: #93f0b8; }
+    .deal-info{ text-align:center; font-size: 10.5px; color: rgba(255,255,255,.72); min-height: 13px; }
+    @keyframes dealIn{ from{ opacity: 0; translate: 0 -26px; scale: .7; } to{ opacity: 1; translate: 0 0; scale: 1; } }
+    @media (max-width: 430px){
+      .pcard{ width: 32px; height: 46px; }
+      .pcard.third{ margin: 0 7px; }
+      .pc-r{ font-size: 13px; }
+      .pc-s{ font-size: 15px; }
+      .shuffle-box.dealing{ height: 252px; }
+    }
+    .road-canvas{ border: 2px solid #b8923a; }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
       100%{ transform: translateX(30px) rotate(10deg); }
@@ -932,6 +968,21 @@
             <div class="table-glow"></div>
             <div class="deck-card left"></div>
             <div class="deck-card right"></div>
+            <div id="dealTable" class="deal-table hidden">
+              <div class="deal-bet" id="dealBet"></div>
+              <div class="deal-hands">
+                <div class="deal-side player">
+                  <div class="deal-label">플레이어 <b id="dealPTotal"></b></div>
+                  <div class="deal-cards" id="dealPCards"></div>
+                </div>
+                <div class="deal-side banker">
+                  <div class="deal-label">뱅커 <b id="dealBTotal"></b></div>
+                  <div class="deal-cards" id="dealBCards"></div>
+                </div>
+              </div>
+              <div class="deal-result" id="dealResult"></div>
+              <div class="deal-info" id="dealInfo"></div>
+            </div>
             <div id="resultSide" class="result-side">
               <div id="sideBadge" class="side-badge">대기중</div>
               <div class="side-meta" id="sideMeta">시작 버튼을 눌러 첫 판을 생성하세요.</div>
@@ -959,7 +1010,7 @@
           </div>
           <div id="autoTally" class="auto-tally hidden"></div>
           <div class="roads" id="roads">
-            <div class="road-title">구슬판 <small>가로 30칸 × 세로 10칸</small></div>
+            <div class="road-title">구슬판 <small>가로 20칸 × 세로 6칸</small></div>
             <canvas id="roadBead" class="road-canvas"></canvas>
             <div class="road-summary" id="roadSummary"></div>
             <div class="road-legend">
@@ -968,7 +1019,7 @@
               <span><i style="background:#1fa35c"></i>타이</span>
               <span><i style="background:#f2a900"></i>슈퍼6(뱅커 6점 승)</span>
             </div>
-            <div class="road-title">대로 <small>타이는 초록 사선</small></div>
+            <div class="road-title">대로 <small>가로 30칸 × 세로 6칸 · 타이는 초록 사선</small></div>
             <canvas id="roadBig" class="road-canvas"></canvas>
             <div class="road-title">중국점 · 큰눈이 <small>빨강=규칙 / 파랑=불규칙</small></div>
             <canvas id="roadEye" class="road-canvas"></canvas>
@@ -1015,7 +1066,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 7 };
+    const LAST_EDIT = { date: "2026-10-12", version: 8 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1187,33 +1238,15 @@
     };
 
     // ---------- 자동검증 ----------
-    // 한 판의 실제 결과(플레이어 / 뱅커 / 슈퍼6 / 타이)를 실제 바카라(8덱) 확률대로 뽑은 뒤,
+    // 한 판의 실제 결과(플레이어 / 뱅커 / 슈퍼6 / 타이)는 아래 6덱 슈에서 실제로 카드를 나눠 결정하고,
     // 화면에 나온 배팅 쪽(플레이어/뱅커)에 맞춰 승리 / 패배 / TIE / SUPER6 로 판정해 자동으로 누른다.
-    // 확률 출처: Wizard of Odds, 8덱 전체 조합 4,998,398,275,503,360 기준
-    //   플레이어 승 0.446247 · 뱅커 승 0.458597 · 타이 0.095156
-    //   슈퍼6(뱅커가 6점으로 승) 0.053864 = 2장 0.037247 + 3장 0.016617 (뱅커 승에 포함)
-    //   https://wizardofodds.com/games/baccarat/basics/  /  https://wizardofodds.com/games/baccarat/side-bets/lucky-6/
-    const AUTO_P_PLAYER = 0.446247;
-    const AUTO_P_SUPER6 = 0.053864;
-    const AUTO_P_BANKER = 0.458597 - 0.053864; // 슈퍼6가 아닌 뱅커 승. 나머지(0.095156)는 타이
     const AUTO = { on: false, used: false, fast: false, timer: null, counts: null };
+    const DEAL = { timers: [], handId: 0, active: false }; // playDeal 이 사용 (아래 딜러 블록)
     function newAutoCounts() {
       return { player: 0, banker: 0, super6: 0, tie: 0, win: 0, loss: 0, betTie: 0, s6: 0 };
     }
     AUTO.counts = newAutoCounts();
 
-    function autoRandom() {
-      const buf = new Uint32Array(1);
-      crypto.getRandomValues(buf);
-      return buf[0] / 4294967296;
-    }
-    function pickAutoOutcome() {
-      const r = autoRandom();
-      if (r < AUTO_P_PLAYER) return "player";
-      if (r < AUTO_P_PLAYER + AUTO_P_BANKER) return "banker";
-      if (r < AUTO_P_PLAYER + AUTO_P_BANKER + AUTO_P_SUPER6) return "super6";
-      return "tie";
-    }
     // 배팅한 쪽(side)과 실제 결과(outcome)로 버튼 판정을 결정
     function resultForBet(outcome, side) {
       if (outcome === "tie") return "TIE";
@@ -1229,19 +1262,26 @@
     }
     function autoStep() {
       clearTimeout(AUTO.timer);
-      if (!AUTO.on) return;
+      if (!AUTO.on || DEAL.active) return;
       AUTO.timer = setTimeout(() => {
-        if (!(AUTO.on && state.awaitingDecision && !state.finished)) return;
-        const outcome = pickAutoOutcome();
-        const result = resultForBet(outcome, getAutoSide());
-        const c = AUTO.counts;
-        c[outcome]++;
-        if (result === "승리") c.win++;
-        else if (result === "패배") c.loss++;
-        else if (result === "SUPER6") c.s6++;
-        else c.betTie++;
-        recordRound(result, ROAD_FROM_AUTO[outcome]);
-        updateAutoTally();
+        if (!(AUTO.on && state.awaitingDecision && !state.finished) || DEAL.active) return;
+        const hid = DEAL.handId;
+        const side = getAutoSide();
+        DEAL.active = true;
+        playDeal(`${side} 배팅 · ${sideMeta.textContent}`, AUTO.fast, (outcome) => {
+          DEAL.active = false;
+          // 카드를 나누는 도중 게임이 바뀌었거나 손으로 판정했다면 이 판은 버린다
+          if (hid !== DEAL.handId || !state.awaitingDecision || state.finished) { autoStep(); return; }
+          const result = resultForBet(outcome, side);
+          const c = AUTO.counts;
+          c[outcome]++;
+          if (result === "승리") c.win++;
+          else if (result === "패배") c.loss++;
+          else if (result === "SUPER6") c.s6++;
+          else c.betTie++;
+          recordRound(result, ROAD_FROM_AUTO[outcome]);
+          updateAutoTally();
+        });
       }, AUTO.fast ? 16 : 300);
     }
     function stopAuto() {
@@ -1265,6 +1305,7 @@
     }
     function resetAuto() {
       roadReset(); // 게임 시작/초기화 때만 호출됨
+      dealReset();
       setRetryVisible(false);
       AUTO.used = false;
       AUTO.fast = false;
@@ -1284,19 +1325,19 @@
       const pd = (v) => decisive > 0 ? (v / decisive * 100).toFixed(1) : "-";
       el.classList.remove("hidden");
       el.innerHTML =
-        `자동검증 <b>${n}</b>판 · 실제 결과 (괄호 안은 실제 확률)<br>` +
-        `플레이어 <b>${c.player}</b> ${pc(c.player)}% (44.62) · 뱅커 <b>${bankerAll}</b> ${pc(bankerAll)}% (45.86) · 그중 슈퍼6 <b>${c.super6}</b> ${pc(c.super6)}% (5.39) · 타이 <b>${c.tie}</b> ${pc(c.tie)}% (9.52)<br>` +
+        `자동검증 <b>${n}</b>판 · 실제 결과 (괄호 안은 6덱 이론 확률)<br>` +
+        `플레이어 <b>${c.player}</b> ${pc(c.player)}% (${(DECK6_P.player * 100).toFixed(2)}) · 뱅커 <b>${bankerAll}</b> ${pc(bankerAll)}% (${((DECK6_P.banker) * 100).toFixed(2)}) · 그중 슈퍼6 <b>${c.super6}</b> ${pc(c.super6)}% (${(DECK6_P.super6 * 100).toFixed(2)}) · 타이 <b>${c.tie}</b> ${pc(c.tie)}% (${(DECK6_P.tie * 100).toFixed(2)})<br>` +
         `내 배팅 기준 · 승리 <b>${c.win}</b> · 패배 <b>${c.loss}</b> · TIE <b>${c.betTie}</b> · SUPER6 <b>${c.s6}</b> → 승리계열 ${pd(c.win + c.s6)}% / 패배 ${pd(c.loss)}% (TIE 제외)`;
     }
 
     function getAutoSide() { return state.currentSide; }
     // ---------- 카지노 로드 (구슬판 / 대로 / 중국점) ----------
-    // 한 판의 실제 결과를 P(플레이어) / B(뱅커) / S(슈퍼6: 뱅커가 6점으로 승) / T(타이)로 쌓아 가로 30칸 × 세로 10칸 판에 그린다.
+    // 한 판의 실제 결과를 P(플레이어) / B(뱅커) / S(슈퍼6: 뱅커가 6점으로 승) / T(타이)로 쌓아 가로 30칸(구슬판 20칸) × 세로 6칸 판에 그린다.
     //  구슬판 : 판마다 한 칸, 위에서 아래로 채우고 다음 칸으로 (타이 포함)
     //  대로   : 같은 쪽이 이기면 아래로, 바뀌면 오른쪽 새 줄. 세로 10칸을 넘으면 오른쪽으로 꺾음(용꼬리). 타이는 직전 칸에 초록 사선
     //  중국점 : 대로에서 파생. 큰눈이(1줄 전) · 작은눈이(2줄 전) · 바퀴벌레(3줄 전)와 비교해 빨강(규칙적) / 파랑(불규칙)
     // 손으로 진행할 때는 배팅 쪽과 승리/패배로 실제 결과를 거꾸로 추정한다(패배 = 반대쪽 승, SUPER6 = 뱅커 6점 승).
-    const ROAD_ROWS = 10, ROAD_COLS = 30;
+    const ROAD_ROWS = 6, ROAD_COLS = 30, BEAD_COLS = 20;
     const ROAD = { seq: [] };
     const ROAD_FROM_AUTO = { player: "P", banker: "B", super6: "S", tie: "T" };
     const ROAD_COLOR = { P: "#1f5fe0", B: "#e0302f", T: "#1fa35c", Y: "#f2a900", R: "#e0302f", Bl: "#1f5fe0" };
@@ -1371,10 +1412,10 @@
       return out;
     }
 
-    function prepRoadCanvas(cv) {
+    function prepRoadCanvas(cv, cols) {
       const w = cv.clientWidth;
       if (!w) return null;
-      const s = w / ROAD_COLS;
+      const s = w / cols;
       const h = s * ROAD_ROWS;
       const dpr = window.devicePixelRatio || 1;
       cv.style.height = h + "px";
@@ -1387,7 +1428,7 @@
       ctx.strokeStyle = "#d3d8e3";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      for (let i = 0; i <= ROAD_COLS; i++) { ctx.moveTo(Math.round(i * s) + .5, 0); ctx.lineTo(Math.round(i * s) + .5, h); }
+      for (let i = 0; i <= cols; i++) { ctx.moveTo(Math.round(i * s) + .5, 0); ctx.lineTo(Math.round(i * s) + .5, h); }
       for (let j = 0; j <= ROAD_ROWS; j++) { ctx.moveTo(0, Math.round(j * s) + .5); ctx.lineTo(w, Math.round(j * s) + .5); }
       ctx.stroke();
       return { ctx, s };
@@ -1429,16 +1470,16 @@
       const seq = ROAD.seq;
 
       // 구슬판
-      let b = prepRoadCanvas(beadCv);
+      let b = prepRoadCanvas(beadCv, BEAD_COLS);
       if (!b) return;
       const totalCols = Math.ceil(seq.length / ROAD_ROWS);
-      const off = Math.max(0, totalCols - ROAD_COLS);
+      const off = Math.max(0, totalCols - BEAD_COLS);
       seq.forEach((o, i) => {
         const x = Math.floor(i / ROAD_ROWS) - off, y = i % ROAD_ROWS;
         if (x < 0) return;
         const color = o === "T" ? ROAD_COLOR.T : o === "P" ? ROAD_COLOR.P : ROAD_COLOR.B;
         roadCircle(b, x, y, color, true, .42);
-        roadText(b, x, y, o === "P" ? "플" : o === "T" ? "타" : "뱅", "#ffffff", .46);
+        roadText(b, x, y, o === "P" ? "闲" : o === "T" ? "和" : "庄", "#ffffff", .46);
         if (o === "S") { // 슈퍼6: 뱅커 구슬 오른쪽 위에 노란 "6" 배지
           b.ctx.beginPath();
           b.ctx.arc((x + .8) * b.s, (y + .22) * b.s, b.s * .2, 0, Math.PI * 2);
@@ -1450,7 +1491,7 @@
 
       // 대로
       const big = buildBigRoad(seq);
-      b = prepRoadCanvas($("roadBig"));
+      b = prepRoadCanvas($("roadBig"), ROAD_COLS);
       if (b) {
         const o2 = roadOffset(big.lay.pos);
         big.lay.pos.forEach((p, i) => {
@@ -1469,7 +1510,7 @@
       // 중국점 3종
       [["roadEye", 1, "ring"], ["roadSmall", 2, "dot"], ["roadRoach", 3, "slash"]].forEach(([id, k, shape]) => {
         const cv = $(id);
-        const bb = prepRoadCanvas(cv);
+        const bb = prepRoadCanvas(cv, ROAD_COLS);
         if (!bb) return;
         const keys = deriveRoad(big.lay.pos, big.lay.cols, k);
         const lay = layoutRoad(keys, ROAD_ROWS);
@@ -1491,6 +1532,163 @@
       if (sum) sum.textContent = `플레이어 ${cnt.P} · 뱅커 ${cnt.B + cnt.S} (슈퍼6 ${cnt.S}) · 타이 ${cnt.T} · 총 ${seq.length}판`;
     }
     window.addEventListener("resize", () => drawRoads());
+
+    // ---------- 6덱 슈 + 카드 딜러 (자동검증) ----------
+    // 실제 카지노(punto banco)처럼 6덱(312장)을 섞은 슈에서 카드를 한 장씩 꺼낸다.
+    //  1) 슈를 새로 섞으면 첫 카드를 공개하고, 그 숫자(A=1, 그림=10)만큼 더 소각한다.
+    //  2) 플레이어 → 뱅커 → 플레이어 → 뱅커 순으로 두 장씩, 이어서 세 번째 카드 규칙대로 필요한 만큼만 더 나눈다.
+    //     내추럴(첫 두 장이 8·9)이면 추가 없음 / 플레이어 0~5 받고 6~7 스탠드 / 뱅커는 표에 따라(아래 bankerDraws)
+    //  3) 컷카드: 슈 끝에서 7번째 카드 앞. 컷카드에 닿으면 그 판이 마지막 판이고 다음 판 전에 새로 섞는다.
+    // 한 판의 결과(플레이어 / 뱅커 / 슈퍼6 = 뱅커가 6점으로 승 / 타이)는 실제로 나온 카드로 결정한다.
+    const SHOE_DECKS = 6, CUT_FROM_END = 7;
+    const DECK6_P = { player: 0.446279, banker: 0.458653, super6: 0.053844, tie: 0.095069 }; // 6덱 이론 확률 (sim/exact_probs.js 로 계산, 뱅커는 슈퍼6 포함)
+    const CARD_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    const CARD_SUITS = ["♠", "♥", "♦", "♣"];
+    const SHOE = { cards: [], pos: 0, no: 0, burn: 0 };
+
+    function randInt(n) { // 0 ≤ x < n, 편향 없는 정수 난수 (거부 샘플링)
+      const buf = new Uint32Array(1);
+      const limit = Math.floor(4294967296 / n) * n;
+      do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+      return buf[0] % n;
+    }
+    function cardValue(c) { return c.r >= 10 ? 0 : c.r; } // c.r: 1(A) ~ 13(K)
+    function cardText(c) { return CARD_RANKS[c.r - 1] + CARD_SUITS[c.s]; }
+
+    function shuffleShoe() {
+      const cards = [];
+      for (let d = 0; d < SHOE_DECKS; d++) for (let s = 0; s < 4; s++) for (let r = 1; r <= 13; r++) cards.push({ r, s });
+      for (let i = cards.length - 1; i > 0; i--) { // Fisher–Yates
+        const j = randInt(i + 1);
+        const t = cards[i]; cards[i] = cards[j]; cards[j] = t;
+      }
+      SHOE.cards = cards;
+      SHOE.no += 1;
+      const first = cards[0];
+      SHOE.burn = first.r >= 10 ? 10 : first.r; // 첫 카드를 공개하고 그 숫자만큼 소각
+      SHOE.pos = 1 + SHOE.burn;
+      return first;
+    }
+    function shoeNeedsShuffle() {
+      return SHOE.cards.length === 0 || SHOE.pos >= SHOE.cards.length - CUT_FROM_END;
+    }
+    function shoeDraw() { return SHOE.cards[SHOE.pos++]; }
+
+    function bankerDraws(bt, p3) { // p3: 플레이어 세 번째 카드 가치, null = 플레이어가 스탠드
+      if (p3 === null) return bt <= 5;
+      if (bt <= 2) return true;
+      if (bt === 3) return p3 !== 8;
+      if (bt === 4) return p3 >= 2 && p3 <= 7;
+      if (bt === 5) return p3 >= 4 && p3 <= 7;
+      if (bt === 6) return p3 === 6 || p3 === 7;
+      return false;
+    }
+
+    // 한 판을 슈에서 실제로 나눈다. seq: 나눠진 순서대로 [{to: "P"|"B", card}]
+    function dealHandFromShoe() {
+      const seq = [];
+      const P = [], B = [];
+      const give = (to) => { const card = shoeDraw(); (to === "P" ? P : B).push(card); seq.push({ to, card }); return card; };
+      give("P"); give("B"); give("P"); give("B");
+      const sum = (h) => h.reduce((t, c) => t + cardValue(c), 0) % 10;
+      let natural = false;
+      if (sum(P) >= 8 || sum(B) >= 8) natural = true;
+      else {
+        let p3 = null;
+        if (sum(P) <= 5) p3 = cardValue(give("P"));
+        if (bankerDraws(sum(B), p3)) give("B");
+      }
+      const pt = sum(P), bt = sum(B);
+      const outcome = pt > bt ? "player" : bt > pt ? (bt === 6 ? "super6" : "banker") : "tie";
+      return { seq, pt, bt, natural, outcome };
+    }
+
+    // ----- 화면 -----
+    function dealCancel() {
+      DEAL.timers.forEach(clearTimeout);
+      DEAL.timers = [];
+      DEAL.active = false;
+    }
+    function dealLater(ms, fn) { DEAL.timers.push(setTimeout(fn, ms)); }
+    function hideDealTable() {
+      const t = $("dealTable");
+      if (!t) return;
+      t.classList.add("hidden");
+      $("shuffleBox").classList.remove("dealing");
+    }
+    function dealReset() { // 게임 시작/초기화: 슈를 비워 다음 판에서 새로 섞게 한다
+      dealCancel();
+      DEAL.handId++;
+      SHOE.cards = [];
+      SHOE.pos = 0;
+      SHOE.no = 0;
+      hideDealTable();
+    }
+    function cardHtml(c, third) {
+      const red = c.s === 1 || c.s === 2;
+      return `<div class="pcard${red ? " red" : ""}${third ? " third" : ""}"><span class="pc-r">${CARD_RANKS[c.r - 1]}</span><span class="pc-s">${CARD_SUITS[c.s]}</span></div>`;
+    }
+    function dealShoeInfo() {
+      const left = SHOE.cards.length - SHOE.pos;
+      return `6덱 슈 #${SHOE.no} · 남은 카드 ${left}장 / ${SHOE.cards.length}장 · 컷카드까지 ${Math.max(0, left - CUT_FROM_END)}장`;
+    }
+    function dealOutcomeText(h) {
+      const score = `${h.pt} : ${h.bt}`;
+      if (h.outcome === "player") return { text: `플레이어 승 (${score})`, cls: "player" };
+      if (h.outcome === "banker") return { text: `뱅커 승 (${score})`, cls: "banker" };
+      if (h.outcome === "super6") return { text: `뱅커 승 · 슈퍼6! (${score})`, cls: "banker" };
+      return { text: `타이 (${score})`, cls: "tie" };
+    }
+
+    // 한 판을 나누고 화면에 보여준 뒤 onDone(outcome) 호출. fast=true 면 애니메이션 없이 바로.
+    function playDeal(betText, fast, onDone) {
+      const table = $("dealTable");
+      const CARD_MS = 350, HOLD_MS = 600;
+      const pEl = $("dealPCards"), bEl = $("dealBCards");
+      const pTot = $("dealPTotal"), bTot = $("dealBTotal"), res = $("dealResult"), info = $("dealInfo");
+      $("shuffleBox").classList.add("dealing");
+      table.classList.remove("hidden");
+      $("dealBet").textContent = betText;
+      pEl.innerHTML = ""; bEl.innerHTML = "";
+      pTot.textContent = ""; bTot.textContent = "";
+      res.textContent = ""; res.className = "deal-result";
+
+      let t = 0;
+      if (shoeNeedsShuffle()) {
+        const first = shuffleShoe();
+        info.textContent = `6덱(312장)을 섞었습니다. 첫 카드 ${cardText(first)} 공개 → ${SHOE.burn}장 소각`;
+        res.textContent = "카드를 섞는 중...";
+        if (!fast) t += 1400;
+      }
+      const h = dealHandFromShoe();
+      const totals = { P: 0, B: 0 };
+      const counts = { P: 0, B: 0 };
+      const draw = (i) => {
+        const { to, card } = h.seq[i];
+        counts[to]++;
+        totals[to] = (totals[to] + cardValue(card)) % 10;
+        (to === "P" ? pEl : bEl).insertAdjacentHTML("beforeend", cardHtml(card, counts[to] === 3));
+        (to === "P" ? pTot : bTot).textContent = totals[to];
+        res.textContent = "";
+      };
+      const finish = () => {
+        const o = dealOutcomeText(h);
+        res.textContent = (h.natural ? "내추럴 · " : "") + o.text;
+        res.className = "deal-result " + o.cls;
+        info.textContent = dealShoeInfo();
+      };
+      if (fast) {
+        for (let i = 0; i < h.seq.length; i++) draw(i);
+        finish();
+        dealLater(0, () => onDone(h.outcome));
+        return;
+      }
+      dealLater(t, () => { res.textContent = "카드를 나눕니다..."; });
+      h.seq.forEach((_, i) => dealLater(t + 300 + i * CARD_MS, () => draw(i)));
+      const end = t + 300 + h.seq.length * CARD_MS;
+      dealLater(end, finish);
+      dealLater(end + HOLD_MS, () => onDone(h.outcome));
+    }
 
 
     function getStrategy() {
@@ -1716,6 +1914,8 @@
       setDecisionButtons(false);
       setGameOverButton(false);
       resultSide.classList.remove("show");
+      DEAL.handId++;
+      hideDealTable();
       shuffleBox.classList.add("active");
 
       const strategy = getStrategy();

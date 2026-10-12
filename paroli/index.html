@@ -738,6 +738,7 @@
       .shuffle-box.dealing{ height: 252px; }
     }
     .road-canvas{ border: 2px solid #b8923a; }
+    .btn.stop{ background: linear-gradient(90deg, #c0392b, #ef5350); font-size: 15px; }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
       100%{ transform: translateX(30px) rotate(10deg); }
@@ -989,6 +990,8 @@
             </div>
           </div>
 
+          <button id="stopBtn" class="btn stop hidden" type="button">■ STOP · 이번 판이 끝나면 멈춥니다</button>
+
           <div class="game-actions">
             <button id="winBtn" class="btn win" disabled>승리</button>
             <button id="tieBtn" class="btn tie" disabled>TIE</button>
@@ -1067,7 +1070,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 11 };
+    const LAST_EDIT = { date: "2026-10-12", version: 12 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1291,15 +1294,17 @@
       const btn = $("autoBtn");
       btn.textContent = "자동검증";
       btn.classList.remove("on");
+      $("stopBtn").classList.add("hidden");
       btn.disabled = state.finished;
     }
     function startAuto() {
       AUTO.on = true;
       AUTO.used = true;
-      AUTO.fast = !!state.unlimited;
+      AUTO.fast = false; // 이어서 하기도 일반 자동검증과 같은 속도로 진행
       const btn = $("autoBtn");
       btn.textContent = "정지";
       btn.classList.add("on");
+      $("stopBtn").classList.remove("hidden");
       btn.disabled = false;
       updateAutoTally();
       if (state.awaitingDecision) autoStep();
@@ -2768,6 +2773,11 @@
 
     startBtn.addEventListener("click", startGame);
     $("autoBtn").addEventListener("click", () => { if (AUTO.on) stopAuto(); else startAuto(); });
+    $("stopBtn").addEventListener("click", () => {
+      const dealing = DEAL.active;
+      stopAuto(); // 다음 판 자동 진행을 막는다. 이미 카드를 나누는 중인 판은 끝까지 진행되어 결과가 기록된다.
+      if (dealing) $("gameSummaryText").textContent = "STOP: 진행 중인 판이 끝나면 멈춥니다.";
+    });
     resetBtn.addEventListener("click", resetGame);
     $("retryBtn").addEventListener("click", () => { startGame(); if (state.started) startAuto(); });
     $("unlimitedBtn").addEventListener("click", toggleExtendBox);

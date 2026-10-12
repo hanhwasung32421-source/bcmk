@@ -1017,7 +1017,7 @@
               <span><i style="background:#1f5fe0"></i>플레이어</span>
               <span><i style="background:#e0302f"></i>뱅커</span>
               <span><i style="background:#1fa35c"></i>타이</span>
-              <span><i style="background:#f2a900"></i>슈퍼6(뱅커 6점 승)</span>
+              <span><i style="background:#e0302f"></i>슈퍼6 (뱅커 6점 승 · 구슬에 6 표시)</span>
             </div>
             <div class="road-title">대로 <small>가로 30칸 × 세로 6칸 · 타이는 초록 사선</small></div>
             <canvas id="roadBig" class="road-canvas"></canvas>
@@ -1066,7 +1066,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 10 };
+    const LAST_EDIT = { date: "2026-10-12", version: 11 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1479,14 +1479,8 @@
         if (x < 0) return;
         const color = o === "T" ? ROAD_COLOR.T : o === "P" ? ROAD_COLOR.P : ROAD_COLOR.B;
         roadCircle(b, x, y, color, true, .42);
-        roadText(b, x, y, o === "P" ? "闲" : o === "T" ? "和" : "庄", "#ffffff", .46);
-        if (o === "S") { // 슈퍼6: 뱅커 구슬 오른쪽 위에 노란 "6" 배지
-          b.ctx.beginPath();
-          b.ctx.arc((x + .8) * b.s, (y + .22) * b.s, b.s * .2, 0, Math.PI * 2);
-          b.ctx.fillStyle = ROAD_COLOR.Y;
-          b.ctx.fill();
-          roadText(b, x + .3, y - .28, "6", "#3a2700", .3);
-        }
+        // 구슬 안 글자: 플레이어 P(파랑) · 뱅커 B(빨강) · 타이 T(초록) · 슈퍼6는 뱅커 구슬(빨강)에 6
+        roadText(b, x, y, o === "P" ? "P" : o === "T" ? "T" : o === "S" ? "6" : "B", "#ffffff", .5);
       });
 
       // 대로

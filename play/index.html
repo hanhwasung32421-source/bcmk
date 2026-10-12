@@ -146,6 +146,25 @@
     .h-sub{ color: var(--text-hint); font-size: 11.5px; margin-top: 2px; }
     .h-net{ font-weight: 900; white-space: nowrap; }
     .h-net.pos{ color: var(--win); } .h-net.neg{ color: var(--loss); } .h-net.zero{ color: var(--text-sub); }
+    .last-panel{ border-radius: 18px; padding: 12px; background: rgba(20,33,61,.92); border: 1px solid rgba(255,255,255,.12); }
+    .last-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 6px; }
+    .last-title{ font-size: 13px; font-weight: 900; color: #eef3ff; }
+    .last-no{ font-size: 12px; font-weight: 800; color: var(--text-hint); }
+    .last-result{ font-size: 16px; font-weight: 900; margin-bottom: 6px; }
+    .last-result.player{ color: #a9d1ff; } .last-result.banker{ color: #ffb9b9; } .last-result.tie{ color: #93f0b8; }
+    .last-cards{ display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; font-size: 13px; }
+    .last-cards div{ padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.06); }
+    .last-cards .lc-label{ display:block; font-size: 11px; color: var(--text-hint); margin-bottom: 2px; }
+    .lc-card{ display:inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 5px; background: #fff; color: #111; font-weight: 900; }
+    .lc-card.red{ color: #d62b2b; }
+    .last-bets{ display:flex; flex-direction:column; gap: 4px; }
+    .lb-row{ display:grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items:center; padding: 5px 8px; border-radius: 9px; background: rgba(255,255,255,.05); font-size: 12.5px; }
+    .lb-row .lb-name{ font-weight: 800; }
+    .lb-row .lb-bet{ color: var(--text-hint); }
+    .lb-row .lb-res{ min-width: 92px; text-align: right; font-weight: 900; }
+    .lb-res.win{ color: var(--win); } .lb-res.loss{ color: var(--loss); } .lb-res.push{ color: var(--text-sub); }
+    .last-total{ margin-top: 8px; text-align: right; font-size: 15px; font-weight: 900; }
+    .last-total.pos{ color: var(--win); } .last-total.neg{ color: var(--loss); }
     .over{ margin-top: 8px; padding: 12px; border-radius: 14px; text-align:center; background: rgba(255,92,92,.16); border: 1px solid rgba(255,92,92,.5); font-weight: 800; }
     @media (max-width: 430px){
       .pcard{ width: 32px; height: 46px; } .pcard.third{ margin: 0 7px; }
@@ -257,6 +276,13 @@
             <button id="dealBtn" class="btn primary deal-btn" type="button">시작 (DEAL)</button>
             <div class="msg" id="msg"></div>
           </div>
+          <div id="lastPanel" class="last-panel hidden">
+            <div class="last-head"><span class="last-title">전판 결과</span><span class="last-no" id="lastNo"></span></div>
+            <div class="last-result" id="lastResult"></div>
+            <div class="last-cards" id="lastCards"></div>
+            <div class="last-bets" id="lastBets"></div>
+            <div class="last-total" id="lastTotal"></div>
+          </div>
           <div id="overBox" class="over hidden">
             잔액이 부족해 더 이상 배팅할 수 없습니다.
             <div style="margin-top:10px"><button id="restartBtn" class="btn primary small" type="button">새 게임</button></div>
@@ -271,7 +297,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 15 };
+    const LAST_EDIT = { date: "2026-10-12", version: 16 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -627,6 +653,7 @@
       clearTable();
       $("shoeInfo").textContent = "";
       $("overBox").classList.add("hidden");
+      $("lastPanel").classList.add("hidden");
       $("history").className = "history empty";
       $("history").textContent = "아직 진행한 판이 없습니다.";
       $("banner").className = "banner";
@@ -686,7 +713,6 @@
       updateUI();
     });
     $("rebetBtn").addEventListener("click", () => {
-      if (state.phase === "result") startBetting();
       if (!canBet() || !state.lastBets) return;
       state.bets = zeroBets(); state.betLog = [];
       let ok = true;
@@ -707,18 +733,7 @@
       updateUI();
     });
 
-    function startBetting() { // 결과 화면 → 다음 판 배팅
-      state.phase = "bet";
-      state.bets = zeroBets(); state.betLog = [];
-      clearTable();
-      $("banner").className = "banner";
-      $("banner").textContent = "배팅 후 시작(DEAL)을 누르세요";
-      setMsg("");
-      updateUI();
-    }
-
     $("dealBtn").addEventListener("click", () => {
-      if (state.phase === "result") { startBetting(); return; }
       if (state.phase !== "bet") return;
       if (betTotal(state.bets) < MIN_BET) { setMsg("배팅을 먼저 해주세요. (칩을 고르고 배팅 칸을 누르세요)"); return; }
       runRound();
@@ -800,18 +815,33 @@
       $("shoeInfo").textContent = shoeInfoText();
       if (h.winner === "P") $("handP").classList.add("win");
       if (h.winner === "B") $("handB").classList.add("win");
-      AREAS.forEach(a => {
-        if (!bets[a]) return;
-        const el = $("res-" + a);
-        const v = res[a];
-        el.textContent = v === 0 ? "무승부" : signed(v);
-        el.className = "ba-res " + (v > 0 ? "win" : v < 0 ? "loss" : "push");
-        if (v > 0) document.querySelector(`.bet-area[data-area="${a}"]`).classList.add("won");
-      });
       addHistory(state.round, h, bets, net);
-      state.phase = state.balance < MIN_BET ? "over" : "result";
-      setMsg(net > 0 ? `이번 판 ${signed(net)}원` : net < 0 ? `이번 판 ${signed(net)}원` : "이번 판 손익 없음");
+      showLastPanel(state.round, h, bets, res, net);
+      // 바로 다음 판 배팅 가능 (칩/배팅 칸 초기화, 카드·결과 문구는 다음 DEAL 전까지 그대로 보여줌)
+      state.bets = zeroBets(); state.betLog = [];
+      state.phase = state.balance < MIN_BET ? "over" : "bet";
+      setMsg(state.phase === "bet" ? "다음 판 배팅하세요 · 직전 판 상세는 아래 '전판 결과'" : "");
       updateUI();
+    }
+
+    function showLastPanel(no, h, bets, res, net) {
+      $("lastPanel").classList.remove("hidden");
+      $("lastNo").textContent = `${no}번째 판`;
+      const winText = h.winner === "P" ? "플레이어 승" : h.winner === "B" ? (h.b6 ? "뱅커 승 · 슈퍼6!" : "뱅커 승") : "타이";
+      const lr = $("lastResult");
+      lr.className = "last-result " + (h.winner === "P" ? "player" : h.winner === "B" ? "banker" : "tie");
+      lr.textContent = `${h.natural ? "내추럴 · " : ""}${winText} (${h.pt} : ${h.bt})${h.pPair ? " · 플레이어 페어" : ""}${h.bPair ? " · 뱅커 페어" : ""}`;
+      const cs = (cards) => cards.map(c => `<span class="lc-card${c.s === 1 || c.s === 2 ? " red" : ""}">${cardText(c)}</span>`).join("");
+      $("lastCards").innerHTML = `<div><span class="lc-label">플레이어 ${h.pt}점</span>${cs(h.P)}</div><div><span class="lc-label">뱅커 ${h.bt}점</span>${cs(h.B)}</div>`;
+      const rows = AREAS.filter(a => bets[a]).map(a => {
+        const v = res[a];
+        const word = v > 0 ? "승" : v < 0 ? "패" : "무승부";
+        return `<div class="lb-row"><span class="lb-name">${AREA_NAME[a]}</span><span class="lb-bet">${fmt(bets[a])}</span><span class="lb-res ${v > 0 ? "win" : v < 0 ? "loss" : "push"}">${word} ${v === 0 ? "" : signed(v)}</span></div>`;
+      });
+      $("lastBets").innerHTML = rows.join("");
+      const lt = $("lastTotal");
+      lt.className = "last-total " + (net > 0 ? "pos" : net < 0 ? "neg" : "");
+      lt.textContent = `합계 ${signed(net)}원`;
     }
 
     function addHistory(no, h, bets, net) {
@@ -854,11 +884,11 @@
       });
       $("undoBtn").disabled = !bettingNow || !state.betLog.length;
       $("clearBtn").disabled = !bettingNow || !total;
-      $("rebetBtn").disabled = !(bettingNow || state.phase === "result") || !state.lastBets;
+      $("rebetBtn").disabled = !bettingNow || !state.lastBets;
       $("doubleBtn").disabled = !bettingNow || !total;
       const deal = $("dealBtn");
       deal.disabled = state.phase === "dealing" || state.phase === "over";
-      deal.textContent = state.phase === "dealing" ? "카드 진행 중..." : state.phase === "result" ? "다음 판" : state.phase === "over" ? "게임 종료" : "시작 (DEAL)";
+      deal.textContent = state.phase === "dealing" ? "카드 진행 중..." : state.phase === "over" ? "게임 종료" : "시작 (DEAL)";
       $("overBox").classList.toggle("hidden", state.phase !== "over");
     }
 

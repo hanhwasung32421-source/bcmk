@@ -688,6 +688,9 @@
     .auto-btn:disabled{ opacity: .4; cursor: not-allowed; }
     .auto-tally{ font-size: 12px; line-height: 1.6; color: var(--text-sub); background: rgba(255,255,255,.05); border: 1px dashed rgba(255,255,255,.2); border-radius: 12px; padding: 8px 10px; }
     .auto-tally b{ color: var(--white); }
+    .game-reset{ display:flex; gap: 8px; margin-top: 4px; }
+    .game-reset .btn{ flex: 1; height: 48px; font-size: 14px; padding: 0 6px; }
+    .game-reset .btn.retry-auto{ flex: 1.7; }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
       100%{ transform: translateX(30px) rotate(10deg); }
@@ -934,6 +937,8 @@
 
           <div class="game-reset">
             <button id="resetBtn" class="btn secondary">초기화</button>
+            <button id="retryBtn" class="btn secondary hidden" type="button">재시도</button>
+            <button id="retryAutoBtn" class="btn secondary retry-auto hidden" type="button">재시도(자동검증)</button>
           </div>
 
           <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
@@ -976,7 +981,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 2 };
+    const LAST_EDIT = { date: "2026-10-12", version: 3 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1162,6 +1167,10 @@
       if (r < AUTO_P_WIN + AUTO_P_SUPER6 + AUTO_P_TIE) return "TIE";
       return "패배";
     }
+    function setRetryVisible(visible) {
+      $("retryBtn").classList.toggle("hidden", !visible);
+      $("retryAutoBtn").classList.toggle("hidden", !visible);
+    }
     function autoStep() {
       clearTimeout(AUTO.timer);
       if (!AUTO.on) return;
@@ -1187,6 +1196,7 @@
       if (state.awaitingDecision) autoStep();
     }
     function resetAuto() {
+      setRetryVisible(false);
       AUTO.used = false;
       stopAuto();
       $("autoBtn").disabled = false;
@@ -1388,6 +1398,7 @@
     function finishGame(reason, showGameOverButton = false) {
       state.finished = true;
       stopAuto();
+      setRetryVisible(true);
       logSessionResult(reason);
       state.awaitingDecision = false;
       setDecisionButtons(false);
@@ -2219,6 +2230,8 @@
     startBtn.addEventListener("click", startGame);
     $("autoBtn").addEventListener("click", () => { if (AUTO.on) stopAuto(); else startAuto(); });
     resetBtn.addEventListener("click", resetGame);
+    $("retryBtn").addEventListener("click", startGame);
+    $("retryAutoBtn").addEventListener("click", () => { startGame(); if (state.started) startAuto(); });
     winBtn.addEventListener("click", () => recordRound("승리"));
     tieBtn.addEventListener("click", () => recordRound("TIE"));
     lossBtn.addEventListener("click", () => recordRound("패배"));

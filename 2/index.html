@@ -466,7 +466,7 @@
           <div class="game-reset">
             <button id="resetBtn" class="btn secondary" type="button">초기화</button>
             <button id="retryBtn" class="btn secondary hidden" type="button">재시도</button>
-            <button id="retryAutoBtn" class="btn secondary retry-auto hidden" type="button">재시도(자동검증)</button>
+            <button id="unlimitedBtn" class="btn secondary retry-auto hidden" type="button">무제한 이어서 하기</button>
           </div>
 
           <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
@@ -494,7 +494,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 3 };
+    const LAST_EDIT = { date: "2026-10-12", version: 4 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -954,6 +954,8 @@ function createOscarEngine(method, unit) {
     const state = {
       method: null,
       engine: null,
+      unlimited: false,
+      endKind: null,
       started: false,
       finished: false,
       awaitingDecision: false,
@@ -970,33 +972,61 @@ function createOscarEngine(method, unit) {
     };
 
     // ---------- 자동검증 ----------
-    // 승리/패배/TIE/SUPER6 를 확률대로 자동으로 눌러 게임이 끝날 때까지 진행한다.
-    // 확률은 통계 시뮬레이션과 같은 가정: 승리 40.25% · SUPER6 5% · TIE 9.5% · 패배 45.25% (승리+SUPER6 = 패배 = 45.25%, 승/패 약 50:50)
-    const AUTO = { on: false, used: false, timer: null };
-    const AUTO_P_WIN = 0.4025, AUTO_P_SUPER6 = 0.05, AUTO_P_TIE = 0.095;
+    // 한 판의 실제 결과(플레이어 / 뱅커 / 슈퍼6 / 타이)를 실제 바카라(8덱) 확률대로 뽑은 뒤,
+    // 화면에 나온 배팅 쪽(플레이어/뱅커)에 맞춰 승리 / 패배 / TIE / SUPER6 로 판정해 자동으로 누른다.
+    // 확률 출처: Wizard of Odds, 8덱 전체 조합 4,998,398,275,503,360 기준
+    //   플레이어 승 0.446247 · 뱅커 승 0.458597 · 타이 0.095156
+    //   슈퍼6(뱅커가 6점으로 승) 0.053864 = 2장 0.037247 + 3장 0.016617 (뱅커 승에 포함)
+    //   https://wizardofodds.com/games/baccarat/basics/  /  https://wizardofodds.com/games/baccarat/side-bets/lucky-6/
+    const AUTO_P_PLAYER = 0.446247;
+    const AUTO_P_SUPER6 = 0.053864;
+    const AUTO_P_BANKER = 0.458597 - 0.053864; // 슈퍼6가 아닌 뱅커 승. 나머지(0.095156)는 타이
+    const AUTO = { on: false, used: false, fast: false, timer: null, counts: null };
+    function newAutoCounts() {
+      return { player: 0, banker: 0, super6: 0, tie: 0, win: 0, loss: 0, betTie: 0, s6: 0 };
+    }
+    AUTO.counts = newAutoCounts();
 
     function autoRandom() {
       const buf = new Uint32Array(1);
       crypto.getRandomValues(buf);
       return buf[0] / 4294967296;
     }
-    function pickAutoResult() {
+    function pickAutoOutcome() {
       const r = autoRandom();
-      if (r < AUTO_P_WIN) return "승리";
-      if (r < AUTO_P_WIN + AUTO_P_SUPER6) return "SUPER6";
-      if (r < AUTO_P_WIN + AUTO_P_SUPER6 + AUTO_P_TIE) return "TIE";
+      if (r < AUTO_P_PLAYER) return "player";
+      if (r < AUTO_P_PLAYER + AUTO_P_BANKER) return "banker";
+      if (r < AUTO_P_PLAYER + AUTO_P_BANKER + AUTO_P_SUPER6) return "super6";
+      return "tie";
+    }
+    // 배팅한 쪽(side)과 실제 결과(outcome)로 버튼 판정을 결정
+    function resultForBet(outcome, side) {
+      if (outcome === "tie") return "TIE";
+      if (side === "플레이어") return outcome === "player" ? "승리" : "패배";
+      if (outcome === "banker") return "승리";
+      if (outcome === "super6") return "SUPER6";
       return "패배";
     }
     function setRetryVisible(visible) {
       $("retryBtn").classList.toggle("hidden", !visible);
-      $("retryAutoBtn").classList.toggle("hidden", !visible);
+      $("unlimitedBtn").classList.toggle("hidden", !visible);
     }
     function autoStep() {
       clearTimeout(AUTO.timer);
       if (!AUTO.on) return;
       AUTO.timer = setTimeout(() => {
-        if (AUTO.on && state.awaitingDecision && !state.finished) recordRound(pickAutoResult());
-      }, 150);
+        if (!(AUTO.on && state.awaitingDecision && !state.finished)) return;
+        const outcome = pickAutoOutcome();
+        const result = resultForBet(outcome, getAutoSide());
+        const c = AUTO.counts;
+        c[outcome]++;
+        if (result === "승리") c.win++;
+        else if (result === "패배") c.loss++;
+        else if (result === "SUPER6") c.s6++;
+        else c.betTie++;
+        recordRound(result);
+        updateAutoTally();
+      }, AUTO.fast ? 8 : 150);
     }
     function stopAuto() {
       AUTO.on = false;
@@ -1009,15 +1039,19 @@ function createOscarEngine(method, unit) {
     function startAuto() {
       AUTO.on = true;
       AUTO.used = true;
+      AUTO.fast = !!state.unlimited;
       const btn = $("autoBtn");
       btn.textContent = "정지";
       btn.classList.add("on");
+      btn.disabled = false;
       updateAutoTally();
       if (state.awaitingDecision) autoStep();
     }
     function resetAuto() {
       setRetryVisible(false);
       AUTO.used = false;
+      AUTO.fast = false;
+      AUTO.counts = newAutoCounts();
       stopAuto();
       $("autoBtn").disabled = false;
       updateAutoTally();
@@ -1025,14 +1059,20 @@ function createOscarEngine(method, unit) {
     function updateAutoTally() {
       const el = $("autoTally");
       if (!AUTO.used) { el.classList.add("hidden"); return; }
-      const count = (name) => state.history.filter(h => h.result === name).length;
-      const win = count("승리"), loss = count("패배"), tie = count("TIE"), s6 = count("SUPER6");
-      const total = win + loss + tie + s6;
-      const p = (n, d) => d > 0 ? (n / d * 100).toFixed(1) + "%" : "-";
-      const decisive = win + s6 + loss;
+      const c = AUTO.counts;
+      const n = c.player + c.banker + c.super6 + c.tie;
+      const bankerAll = c.banker + c.super6;
+      const decisive = c.win + c.s6 + c.loss;
+      const pc = (v) => n > 0 ? (v / n * 100).toFixed(2) : "-";
+      const pd = (v) => decisive > 0 ? (v / decisive * 100).toFixed(1) : "-";
       el.classList.remove("hidden");
-      el.innerHTML = `자동검증 ${total}판 · 승리 <b>${win}</b>(${p(win, total)}) · 패배 <b>${loss}</b>(${p(loss, total)}) · TIE <b>${tie}</b>(${p(tie, total)}) · SUPER6 <b>${s6}</b>(${p(s6, total)})<br>승리계열(승리+SUPER6) ${p(win + s6, decisive)} / 패배 ${p(loss, decisive)} (TIE 제외)`;
+      el.innerHTML =
+        `자동검증 <b>${n}</b>판 · 실제 결과 (괄호 안은 실제 확률)<br>` +
+        `플레이어 <b>${c.player}</b> ${pc(c.player)}% (44.62) · 뱅커 <b>${bankerAll}</b> ${pc(bankerAll)}% (45.86) · 그중 슈퍼6 <b>${c.super6}</b> ${pc(c.super6)}% (5.39) · 타이 <b>${c.tie}</b> ${pc(c.tie)}% (9.52)<br>` +
+        `내 배팅 기준 · 승리 <b>${c.win}</b> · 패배 <b>${c.loss}</b> · TIE <b>${c.betTie}</b> · SUPER6 <b>${c.s6}</b> → 승리계열 ${pd(c.win + c.s6)}% / 패배 ${pd(c.loss)}% (TIE 제외)`;
     }
+
+    function getAutoSide() { return state.side; }
 
     function getRandomSide() {
       const buf = new Uint32Array(1);
@@ -1054,8 +1094,12 @@ function createOscarEngine(method, unit) {
     }
     function setSummary(msg) { gameSummaryText.textContent = msg; }
 
+    function handText(n) {
+      return state.unlimited ? `${n}판` : `${n}/${state.cap}판`;
+    }
+
     function updateStatus() {
-      roundInfo.textContent = state.started && state.hand > 0 ? `${state.hand}/${state.cap}판` : "-";
+      roundInfo.textContent = state.started && state.hand > 0 ? handText(state.hand) : "-";
       betInfo.textContent = state.started ? formatMoney(state.bet) : "-";
       moneyInfo.textContent = state.started ? formatMoney(state.money) : "-";
       goalInfo.textContent = state.started ? formatMoney(state.goalAmount) : "-";
@@ -1069,7 +1113,6 @@ function createOscarEngine(method, unit) {
     }
 
     function renderHistory() {
-      updateAutoTally();
       if (state.history.length === 0) {
         historyEl.className = "history empty";
         historyEl.textContent = "아직 진행 기록이 없습니다.";
@@ -1093,8 +1136,10 @@ function createOscarEngine(method, unit) {
 
     function finishGame(kind, reason) {
       state.finished = true;
+      state.endKind = kind;
       stopAuto();
       setRetryVisible(true);
+      $("unlimitedBtn").disabled = state.money <= 0;
       state.awaitingDecision = false;
       setDecisionButtons(false);
       setGameOverButton(true);
@@ -1120,7 +1165,7 @@ function createOscarEngine(method, unit) {
 
       const nextHand = state.hand + 1;
       const nextBet = computeBet();
-      roundInfo.textContent = `${nextHand}/${state.cap}판`;
+      roundInfo.textContent = handText(nextHand);
       betInfo.textContent = formatMoney(nextBet);
       setSummary(`${nextHand}판 생성 중... 카드 셔플 후 결과가 공개됩니다.`);
 
@@ -1134,12 +1179,12 @@ function createOscarEngine(method, unit) {
         sideBadge.textContent = state.side;
         sideBadge.className = `side-badge ${state.side === "플레이어" ? "player" : "banker"}`;
         const shortNote = nextBet < state.engine.formulaBet() || (state.method.allIn && nextBet === state.money) ? " (남은 돈 전부)" : "";
-        sideMeta.textContent = `${state.hand}/${state.cap}판 · ${state.engine.describe()} · 배팅금액 ${formatMoney(state.bet)}${shortNote}`;
+        sideMeta.textContent = `${handText(state.hand)} · ${state.engine.describe()} · 배팅금액 ${formatMoney(state.bet)}${shortNote}${state.unlimited ? " · 무제한" : ""}`;
         setSummary(`${state.hand}판 결과가 나왔습니다. 승리·패배·TIE·SUPER6 중 선택하세요.`);
         updateStatus();
         setDecisionButtons(true);
         autoStep();
-      }, AUTO.on ? 120 : 500);
+      }, AUTO.on ? (AUTO.fast ? 10 : 120) : 500);
     }
 
     function recordRound(result) {
@@ -1158,13 +1203,18 @@ function createOscarEngine(method, unit) {
         round: state.hand, stage: stageText, side: state.side,
         bet: state.bet, delta, total: state.money, result
       });
+      if (AUTO.on && state.history.length > 300) state.history.length = 300;
       renderHistory();
 
       let lostOut = false;
       if (result === "승리" || result === "SUPER6") {
         eng.afterWin(state.bet, delta);
       } else if (result === "패배") {
-        if (eng.afterLoss(state.bet) || state.money <= 0) lostOut = true;
+        const ruined = state.money <= 0;
+        if (eng.afterLoss(state.bet) || ruined) {
+          if (state.unlimited && !ruined) eng.reset(); // 무제한: 마틴 한도에서 졌지만 돈이 남았으면 1단계부터 계속
+          else lostOut = true;
+        }
       }
       // TIE: 금액·단계 유지, 1판으로 계산
 
@@ -1176,11 +1226,11 @@ function createOscarEngine(method, unit) {
           : (state.method.limit ? `진행 종료. ${state.method.limit}마틴까지 모두 패배해 파산했습니다.` : "진행 종료. 파산했습니다."));
         return;
       }
-      if (state.money >= state.goalAmount) {
+      if (!state.unlimited && state.money >= state.goalAmount) {
         finishGame("goal", `진행 종료. 목표금액 ${formatMoney(state.goalAmount)} 이상을 달성했습니다.`);
         return;
       }
-      if (state.hand >= state.cap) {
+      if (!state.unlimited && state.hand >= state.cap) {
         finishGame("un", `진행 종료. ${state.cap}판 안에 목표금액을 달성하지 못했습니다.`);
         return;
       }
@@ -1192,6 +1242,8 @@ function createOscarEngine(method, unit) {
 
     function resetGame() {
       resetAuto();
+      state.unlimited = false;
+      state.endKind = null;
       state.method = null;
       state.engine = null;
       state.started = false;
@@ -1215,6 +1267,22 @@ function createOscarEngine(method, unit) {
       showPage("setup");
     }
 
+    // 끝난 시점 그대로 이어서 진행: 목표·판수 제한을 없애고 돈이 다 떨어질 때까지 계속
+    function continueUnlimited() {
+      if (!state.started || !state.finished || state.money <= 0) return;
+      state.unlimited = true;
+      state.cap = Infinity;
+      if (state.endKind === "bust") state.engine.reset();
+      state.finished = false;
+      state.endKind = null;
+      endBox.classList.add("hidden");
+      setRetryVisible(false);
+      setGameOverButton(false);
+      if (AUTO.used) startAuto();
+      updateStatus();
+      requestNextRound();
+    }
+
     function startGame(method) {
       if (!method) return;
       resetAuto();
@@ -1223,6 +1291,8 @@ function createOscarEngine(method, unit) {
       const rates = row ? getRates(row, cap) : null;
 
       state.method = method;
+      state.unlimited = false;
+      state.endKind = null;
       state.engine = createEngine(method, firstBet);
       state.started = true;
       state.finished = false;
@@ -1250,8 +1320,8 @@ function createOscarEngine(method, unit) {
 
     $("autoBtn").addEventListener("click", () => { if (AUTO.on) stopAuto(); else startAuto(); });
     resetBtn.addEventListener("click", resetGame);
-    $("retryBtn").addEventListener("click", () => startGame(state.method));
-    $("retryAutoBtn").addEventListener("click", () => { startGame(state.method); startAuto(); });
+    $("retryBtn").addEventListener("click", () => { startGame(state.method); startAuto(); });
+    $("unlimitedBtn").addEventListener("click", continueUnlimited);
     gameOverBtn.addEventListener("click", resetGame);
     winBtn.addEventListener("click", () => recordRound("승리"));
     tieBtn.addEventListener("click", () => recordRound("TIE"));

@@ -691,6 +691,10 @@
     .game-reset{ display:flex; gap: 8px; margin-top: 4px; }
     .game-reset .btn{ flex: 1; height: 48px; font-size: 14px; padding: 0 6px; }
     .game-reset .btn.retry-auto{ flex: 1.7; }
+    .extend-box{ margin-top: 8px; padding: 10px; border-radius: 14px; background: rgba(111,137,255,.12); border: 1px solid rgba(111,137,255,.35); }
+    .extend-title{ display:block; margin-bottom: 8px; font-size: 13px; font-weight: 800; color: var(--text-sub); }
+    .extend-btns{ display:flex; gap: 8px; }
+    .extend-btns .btn{ flex: 1; height: 44px; font-size: 14px; padding: 0 4px; }
     @keyframes shuffleLeft{
       0%{ transform: translateX(0) rotate(-10deg); }
       100%{ transform: translateX(30px) rotate(10deg); }
@@ -942,6 +946,10 @@
           </div>
 
           <div class="summary" id="gameSummaryText">게임 대기 중입니다.</div>
+          <div id="extendBox" class="extend-box hidden">
+            <span class="extend-title">몇 판까지 이어서 검증할까요?</span>
+            <div class="extend-btns" id="extendBtns"></div>
+          </div>
           <div id="autoTally" class="auto-tally hidden"></div>
         </div>
       </section>
@@ -981,7 +989,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 5 };
+    const LAST_EDIT = { date: "2026-10-12", version: 6 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1142,6 +1150,7 @@
       currentSide: null,
       history: [],
       unlimited: false,
+      extendCap: 0,
       endKind: null
     };
 
@@ -1188,6 +1197,7 @@
       return "패배";
     }
     function setRetryVisible(visible) {
+      if (!visible) $("extendBox").classList.add("hidden");
       $("retryBtn").classList.toggle("hidden", !visible);
       $("unlimitedBtn").classList.toggle("hidden", !visible);
     }
@@ -1206,7 +1216,7 @@
         else c.betTie++;
         recordRound(result);
         updateAutoTally();
-      }, AUTO.fast ? 8 : 150);
+      }, AUTO.fast ? 16 : 300);
     }
     function stopAuto() {
       AUTO.on = false;
@@ -1356,9 +1366,13 @@
       super6Btn.classList.toggle("hidden", visible);
     }
 
+    function roundText(n) {
+      return state.extendCap ? `${n}/${state.extendCap}판` : `${n}판`;
+    }
+
     function updateStatus() {
       roundInfo.textContent = state.started && state.roundNumber > 0
-        ? `${state.roundNumber}판`
+        ? roundText(state.roundNumber)
         : "-";
       betInfo.textContent = state.started
         ? `${formatMoney(state.currentBet)}`
@@ -1464,6 +1478,11 @@
         return;
       }
 
+      if (state.extendCap && state.roundNumber >= state.extendCap) {
+        finishGame(`진행 종료. ${state.extendCap}판까지 진행했습니다.`, true, "cap");
+        return;
+      }
+
       state.awaitingDecision = false;
       setDecisionButtons(false);
       setGameOverButton(false);
@@ -1481,7 +1500,7 @@
         return;
       }
 
-      roundInfo.textContent = `${nextRound}판`;
+      roundInfo.textContent = roundText(nextRound);
       betInfo.textContent = `${formatMoney(nextBet)}`;
       summaryText.textContent = `${nextRound}판 생성 중... 카드 셔플 후 결과가 공개됩니다.`;
       gameSummaryText.textContent = `${nextRound}판 생성 중... 카드 셔플 후 결과가 공개됩니다.`;
@@ -1498,7 +1517,7 @@
         updateStatus();
         setDecisionButtons(true);
         autoStep();
-      }, AUTO.on ? (AUTO.fast ? 10 : 120) : 500);
+      }, AUTO.on ? (AUTO.fast ? 20 : 240) : 500);
     }
 
     function recordRound(result) {
@@ -1601,6 +1620,7 @@
       }
       resetAuto();
       state.unlimited = false;
+      state.extendCap = 0;
       state.endKind = null;
 
       state.started = false;
@@ -1638,10 +1658,24 @@
       updateStatus();
     }
 
-    // 끝난 시점 그대로 이어서 진행: 목표 제한을 없애고 돈이 다 떨어질 때까지 계속
-    function continueUnlimited() {
-      if (!state.started || !state.finished || state.currentAmount <= 0) return;
+    // "무제한 이어서 하기": 다음 60의 배수 판수 3개(예: 60 / 120 / 180판까지)를 고르게 한다.
+    function extendTargets(hand) {
+      const base = Math.floor(hand / 60) * 60;
+      return [base + 60, base + 120, base + 180];
+    }
+    function toggleExtendBox() {
+      const box = $("extendBox");
+      if (!box.classList.contains("hidden")) { box.classList.add("hidden"); return; }
+      $("extendBtns").innerHTML = extendTargets(state.roundNumber).map(n =>
+        `<button type="button" class="btn secondary" data-cap="${n}">${n}판까지</button>`).join("");
+      box.classList.remove("hidden");
+    }
+
+    // 끝난 시점 그대로 이어서 진행: 목표 제한을 없애고 고른 판수까지(돈이 먼저 떨어지면 거기서 종료) 계속
+    function continueExtended(cap) {
+      if (!state.started || !state.finished || state.currentAmount <= 0 || !(cap > state.roundNumber)) return;
       state.unlimited = true;
+      state.extendCap = cap;
       if (state.endKind === "limit") state.stage = 1;
       state.finished = false;
       state.endKind = null;
@@ -1699,6 +1733,7 @@
 
       state.started = true;
       state.unlimited = false;
+      state.extendCap = 0;
       state.endKind = null;
       state.finished = false;
       state.awaitingDecision = false;
@@ -2299,7 +2334,11 @@
     $("autoBtn").addEventListener("click", () => { if (AUTO.on) stopAuto(); else startAuto(); });
     resetBtn.addEventListener("click", resetGame);
     $("retryBtn").addEventListener("click", () => { startGame(); if (state.started) startAuto(); });
-    $("unlimitedBtn").addEventListener("click", continueUnlimited);
+    $("unlimitedBtn").addEventListener("click", toggleExtendBox);
+    $("extendBtns").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-cap]");
+      if (b) continueExtended(Number(b.dataset.cap));
+    });
     winBtn.addEventListener("click", () => recordRound("승리"));
     tieBtn.addEventListener("click", () => recordRound("TIE"));
     lossBtn.addEventListener("click", () => recordRound("패배"));

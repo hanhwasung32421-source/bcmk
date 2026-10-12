@@ -325,6 +325,18 @@
       .shuffle-box.dealing{ height: 252px; }
     }
     .road-canvas{ border: 2px solid #b8923a; }
+    .game-cols{ display:flex; flex-direction: column-reverse; gap: 14px; }
+    .game-left, .game-right{ min-width: 0; display:flex; flex-direction: column; gap: 14px; }
+    .road-bottom{ display:flex; align-items:flex-start; margin-top: 2px; }
+    .road-bead-col, .road-derived-col{ width: 50%; min-width: 0; }
+    .road-derived-col .road-canvas{ border-width: 1px; border-radius: 0; margin: 0; }
+    .road-derived-col .road-canvas:first-of-type{ border-radius: 8px 8px 0 0; }
+    .road-derived-col .road-canvas:last-of-type{ border-radius: 0 0 8px 8px; }
+    .road-bead-col .road-title, .road-derived-col .road-title{ margin-top: 8px; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
+    @media (min-width: 900px){
+      .wrap.game-wide{ max-width: 1280px; }
+      .game-cols{ display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 18px; }
+    }
     @keyframes shuffleLeft{ 0%{ transform: translateX(0) rotate(-10deg); } 100%{ transform: translateX(30px) rotate(10deg); } }
     @keyframes shuffleRight{ 0%{ transform: translateX(0) rotate(10deg); } 100%{ transform: translateX(-30px) rotate(-10deg); } }
   </style>
@@ -471,6 +483,34 @@
           <button id="autoBtn" class="auto-btn" type="button">자동검증</button>
         </div>
         <div class="game-stack">
+          <div class="game-cols">
+            <div class="game-left">
+          <div class="roads" id="roads">
+            <div class="road-title">대로 <small>가로 20칸 × 세로 6칸 · 타이는 초록 사선</small></div>
+            <canvas id="roadBig" class="road-canvas"></canvas>
+            <div class="road-bottom">
+              <div class="road-bead-col">
+                <div class="road-title">구슬판 <small>10칸 × 6칸</small></div>
+                <canvas id="roadBead" class="road-canvas"></canvas>
+              </div>
+              <div class="road-derived-col">
+                <div class="road-title">중국점 <small>큰눈이 · 작은눈이 · 바퀴벌레</small></div>
+                <canvas id="roadEye" class="road-canvas"></canvas>
+                <canvas id="roadSmall" class="road-canvas"></canvas>
+                <canvas id="roadRoach" class="road-canvas"></canvas>
+              </div>
+            </div>
+            <div class="road-summary" id="roadSummary"></div>
+            <div class="road-legend">
+              <span><i style="background:#1f5fe0"></i>플레이어</span>
+              <span><i style="background:#e0302f"></i>뱅커</span>
+              <span><i style="background:#1fa35c"></i>타이</span>
+              <span><i style="background:#f2a900"></i>슈퍼6(뱅커 6점 승)</span>
+              <span>중국점: 빨강 = 앞 줄 패턴 따라감 / 파랑 = 안 따라감</span>
+            </div>
+          </div>
+            </div>
+            <div class="game-right">
           <div class="game-stat">
             <div class="game-stat-row four">
               <div class="game-stat-split">
@@ -537,26 +577,6 @@
             <div class="extend-btns" id="extendBtns"></div>
           </div>
           <div id="autoTally" class="auto-tally hidden"></div>
-          <div class="roads" id="roads">
-            <div class="road-title">구슬판 <small>가로 20칸 × 세로 6칸</small></div>
-            <canvas id="roadBead" class="road-canvas"></canvas>
-            <div class="road-summary" id="roadSummary"></div>
-            <div class="road-legend">
-              <span><i style="background:#1f5fe0"></i>플레이어</span>
-              <span><i style="background:#e0302f"></i>뱅커</span>
-              <span><i style="background:#1fa35c"></i>타이</span>
-              <span><i style="background:#f2a900"></i>슈퍼6(뱅커 6점 승)</span>
-            </div>
-            <div class="road-title">대로 <small>가로 30칸 × 세로 6칸 · 타이는 초록 사선</small></div>
-            <canvas id="roadBig" class="road-canvas"></canvas>
-            <div class="road-title">중국점 · 큰눈이 <small>빨강=규칙 / 파랑=불규칙</small></div>
-            <canvas id="roadEye" class="road-canvas"></canvas>
-            <div class="road-title">중국점 · 작은눈이</div>
-            <canvas id="roadSmall" class="road-canvas"></canvas>
-            <div class="road-title">중국점 · 바퀴벌레</div>
-            <canvas id="roadRoach" class="road-canvas"></canvas>
-          </div>
-
           <div id="endBox" class="end-box hidden">
             <div class="end-title" id="endTitle">진행 종료</div>
             <div class="end-grid">
@@ -564,6 +584,9 @@
               <div class="end-item"><div class="end-label">시작시드</div><div class="end-value" id="endStart">0</div></div>
               <div class="end-item"><div class="end-label">총 수익</div><div class="end-value" id="endProfit">0</div></div>
               <div class="end-item"><div class="end-label">총 금액</div><div class="end-value" id="endTotal">0</div></div>
+            </div>
+          </div>
+
             </div>
           </div>
 
@@ -579,7 +602,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 9 };
+    const LAST_EDIT = { date: "2026-10-12", version: 10 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -903,6 +926,7 @@ function createOscarEngine(method, unit) {
       gamePage.classList.toggle("hidden", page !== "game");
       wrap.classList.toggle("wide", page === "stats");
       wrap.classList.toggle("setup-wide", page === "setup");
+      wrap.classList.toggle("game-wide", page === "game");
       window.scrollTo(0, 0);
     }
 
@@ -1151,12 +1175,12 @@ function createOscarEngine(method, unit) {
 
     function getAutoSide() { return state.side; }
     // ---------- 카지노 로드 (구슬판 / 대로 / 중국점) ----------
-    // 한 판의 실제 결과를 P(플레이어) / B(뱅커) / S(슈퍼6: 뱅커가 6점으로 승) / T(타이)로 쌓아 가로 30칸(구슬판 20칸) × 세로 6칸 판에 그린다.
+    // 한 판의 실제 결과를 P(플레이어) / B(뱅커) / S(슈퍼6: 뱅커가 6점으로 승) / T(타이)로 쌓아 대로 20×6 · 구슬판 10×6 · 중국점 3종 30×6(작은 칸) 판에 그린다.
     //  구슬판 : 판마다 한 칸, 위에서 아래로 채우고 다음 칸으로 (타이 포함)
     //  대로   : 같은 쪽이 이기면 아래로, 바뀌면 오른쪽 새 줄. 세로 10칸을 넘으면 오른쪽으로 꺾음(용꼬리). 타이는 직전 칸에 초록 사선
     //  중국점 : 대로에서 파생. 큰눈이(1줄 전) · 작은눈이(2줄 전) · 바퀴벌레(3줄 전)와 비교해 빨강(규칙적) / 파랑(불규칙)
     // 손으로 진행할 때는 배팅 쪽과 승리/패배로 실제 결과를 거꾸로 추정한다(패배 = 반대쪽 승, SUPER6 = 뱅커 6점 승).
-    const ROAD_ROWS = 6, ROAD_COLS = 30, BEAD_COLS = 20;
+    const ROAD_ROWS = 6, ROAD_COLS = 20, BEAD_COLS = 10, DERIVED_COLS = 30; // 대로 20×6 · 구슬판 10×6 · 중국점 30×6(작은 칸)
     const ROAD = { seq: [] };
     const ROAD_FROM_AUTO = { player: "P", banker: "B", super6: "S", tie: "T" };
     const ROAD_COLOR = { P: "#1f5fe0", B: "#e0302f", T: "#1fa35c", Y: "#f2a900", R: "#e0302f", Bl: "#1f5fe0" };
@@ -1277,10 +1301,10 @@ function createOscarEngine(method, unit) {
       b.ctx.lineTo((x + .2) * b.s, (y + .8) * b.s);
       b.ctx.stroke();
     }
-    function roadOffset(pos) {
+    function roadOffset(pos, cols) {
       let maxX = -1;
       for (const p of pos) if (p.x > maxX) maxX = p.x;
-      return Math.max(0, maxX + 1 - ROAD_COLS);
+      return Math.max(0, maxX + 1 - cols);
     }
 
     function drawRoads() {
@@ -1312,7 +1336,7 @@ function createOscarEngine(method, unit) {
       const big = buildBigRoad(seq);
       b = prepRoadCanvas($("roadBig"), ROAD_COLS);
       if (b) {
-        const o2 = roadOffset(big.lay.pos);
+        const o2 = roadOffset(big.lay.pos, ROAD_COLS);
         big.lay.pos.forEach((p, i) => {
           const x = p.x - o2;
           if (x < 0) return;
@@ -1329,11 +1353,11 @@ function createOscarEngine(method, unit) {
       // 중국점 3종
       [["roadEye", 1, "ring"], ["roadSmall", 2, "dot"], ["roadRoach", 3, "slash"]].forEach(([id, k, shape]) => {
         const cv = $(id);
-        const bb = prepRoadCanvas(cv, ROAD_COLS);
+        const bb = prepRoadCanvas(cv, DERIVED_COLS);
         if (!bb) return;
         const keys = deriveRoad(big.lay.pos, big.lay.cols, k);
         const lay = layoutRoad(keys, ROAD_ROWS);
-        const o3 = roadOffset(lay.pos);
+        const o3 = roadOffset(lay.pos, DERIVED_COLS);
         lay.pos.forEach((p, i) => {
           const x = p.x - o3;
           if (x < 0) return;

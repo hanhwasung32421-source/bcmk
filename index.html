@@ -1066,7 +1066,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 9 };
+    const LAST_EDIT = { date: "2026-10-12", version: 10 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1337,7 +1337,7 @@
     //  대로   : 같은 쪽이 이기면 아래로, 바뀌면 오른쪽 새 줄. 세로 10칸을 넘으면 오른쪽으로 꺾음(용꼬리). 타이는 직전 칸에 초록 사선
     //  중국점 : 대로에서 파생. 큰눈이(1줄 전) · 작은눈이(2줄 전) · 바퀴벌레(3줄 전)와 비교해 빨강(규칙적) / 파랑(불규칙)
     // 손으로 진행할 때는 배팅 쪽과 승리/패배로 실제 결과를 거꾸로 추정한다(패배 = 반대쪽 승, SUPER6 = 뱅커 6점 승).
-    const ROAD_ROWS = 6, ROAD_COLS = 30, BEAD_COLS = 20;
+    const ROAD_ROWS = 6, ROAD_COLS = 30, BEAD_COLS = 20, DERIVED_COLS = 30;
     const ROAD = { seq: [] };
     const ROAD_FROM_AUTO = { player: "P", banker: "B", super6: "S", tie: "T" };
     const ROAD_COLOR = { P: "#1f5fe0", B: "#e0302f", T: "#1fa35c", Y: "#f2a900", R: "#e0302f", Bl: "#1f5fe0" };
@@ -1458,10 +1458,10 @@
       b.ctx.lineTo((x + .2) * b.s, (y + .8) * b.s);
       b.ctx.stroke();
     }
-    function roadOffset(pos) {
+    function roadOffset(pos, cols) {
       let maxX = -1;
       for (const p of pos) if (p.x > maxX) maxX = p.x;
-      return Math.max(0, maxX + 1 - ROAD_COLS);
+      return Math.max(0, maxX + 1 - cols);
     }
 
     function drawRoads() {
@@ -1493,7 +1493,7 @@
       const big = buildBigRoad(seq);
       b = prepRoadCanvas($("roadBig"), ROAD_COLS);
       if (b) {
-        const o2 = roadOffset(big.lay.pos);
+        const o2 = roadOffset(big.lay.pos, ROAD_COLS);
         big.lay.pos.forEach((p, i) => {
           const x = p.x - o2;
           if (x < 0) return;
@@ -1510,11 +1510,11 @@
       // 중국점 3종
       [["roadEye", 1, "ring"], ["roadSmall", 2, "dot"], ["roadRoach", 3, "slash"]].forEach(([id, k, shape]) => {
         const cv = $(id);
-        const bb = prepRoadCanvas(cv, ROAD_COLS);
+        const bb = prepRoadCanvas(cv, DERIVED_COLS);
         if (!bb) return;
         const keys = deriveRoad(big.lay.pos, big.lay.cols, k);
         const lay = layoutRoad(keys, ROAD_ROWS);
-        const o3 = roadOffset(lay.pos);
+        const o3 = roadOffset(lay.pos, DERIVED_COLS);
         lay.pos.forEach((p, i) => {
           const x = p.x - o3;
           if (x < 0) return;

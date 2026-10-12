@@ -338,6 +338,11 @@
       .game-cols{ display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 18px; }
     }
     .btn.stop{ background: linear-gradient(90deg, #c0392b, #ef5350); font-size: 15px; }
+    .head-right{ display:flex; align-items:center; gap: 6px; flex-shrink: 0; }
+    .speed-toggle{ display:inline-flex; align-items:center; height: 24px; border-radius: 999px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06); overflow: hidden; font-size: 11px; color: var(--text-hint); }
+    .speed-toggle span{ padding: 0 6px 0 9px; font-weight: 700; }
+    .speed-toggle button{ height: 100%; padding: 0 9px; border: 0; background: transparent; color: var(--text-sub); font-size: 11px; font-weight: 800; cursor: pointer; }
+    .speed-toggle button.on{ background: rgba(111,137,255,.6); color: #fff; }
     @keyframes shuffleLeft{ 0%{ transform: translateX(0) rotate(-10deg); } 100%{ transform: translateX(30px) rotate(10deg); } }
     @keyframes shuffleRight{ 0%{ transform: translateX(0) rotate(10deg); } 100%{ transform: translateX(-30px) rotate(-10deg); } }
   </style>
@@ -481,7 +486,14 @@
       <section class="card">
         <div class="game-head">
           <h2 class="section-title">2p 게임 · <span id="gameMethodLabel"></span></h2>
-          <button id="autoBtn" class="auto-btn" type="button">자동검증</button>
+          <div class="head-right">
+            <div class="speed-toggle" id="speedToggle" title="자동검증 진행 속도">
+              <span>속도</span>
+              <button type="button" class="on" data-speed="1">1배</button>
+              <button type="button" data-speed="3">3배</button>
+            </div>
+            <button id="autoBtn" class="auto-btn" type="button">자동검증</button>
+          </div>
         </div>
         <div class="game-stack">
           <div class="game-cols">
@@ -605,7 +617,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 12 };
+    const LAST_EDIT = { date: "2026-10-12", version: 13 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -1086,7 +1098,8 @@ function createOscarEngine(method, unit) {
     // ---------- 자동검증 ----------
     // 한 판의 실제 결과(플레이어 / 뱅커 / 슈퍼6 / 타이)는 아래 6덱 슈에서 실제로 카드를 나눠 결정하고,
     // 화면에 나온 배팅 쪽(플레이어/뱅커)에 맞춰 승리 / 패배 / TIE / SUPER6 로 판정해 자동으로 누른다.
-    const AUTO = { on: false, used: false, fast: false, timer: null, counts: null };
+    const AUTO = { on: false, used: false, fast: false, speed: 1, timer: null, counts: null }; // speed: 1배(기본) / 3배
+    function autoMs(ms) { return Math.max(8, Math.round(ms / AUTO.speed)); }
     const DEAL = { timers: [], handId: 0, active: false }; // playDeal 이 사용 (아래 딜러 블록)
     function newAutoCounts() {
       return { player: 0, banker: 0, super6: 0, tie: 0, win: 0, loss: 0, betTie: 0, s6: 0 };
@@ -1128,7 +1141,7 @@ function createOscarEngine(method, unit) {
           recordRound(result, ROAD_FROM_AUTO[outcome]);
           updateAutoTally();
         });
-      }, AUTO.fast ? 16 : 300);
+      }, autoMs(300));
     }
     function stopAuto() {
       AUTO.on = false;
@@ -1485,7 +1498,7 @@ function createOscarEngine(method, unit) {
     // 한 판을 나누고 화면에 보여준 뒤 onDone(outcome) 호출. fast=true 면 애니메이션 없이 바로.
     function playDeal(betText, fast, onDone) {
       const table = $("dealTable");
-      const CARD_MS = 350, HOLD_MS = 600;
+      const CARD_MS = autoMs(350), HOLD_MS = autoMs(600);
       const pEl = $("dealPCards"), bEl = $("dealBCards");
       const pTot = $("dealPTotal"), bTot = $("dealBTotal"), res = $("dealResult"), info = $("dealInfo");
       $("shuffleBox").classList.add("dealing");
@@ -1500,7 +1513,7 @@ function createOscarEngine(method, unit) {
         const first = shuffleShoe();
         info.textContent = `6덱(312장)을 섞었습니다. 첫 카드 ${cardText(first)} 공개 → ${SHOE.burn}장 소각`;
         res.textContent = "카드를 섞는 중...";
-        if (!fast) t += 1400;
+        if (!fast) t += autoMs(1400);
       }
       const h = dealHandFromShoe();
       const totals = { P: 0, B: 0 };
@@ -1526,8 +1539,8 @@ function createOscarEngine(method, unit) {
         return;
       }
       dealLater(t, () => { res.textContent = "카드를 나눕니다..."; });
-      h.seq.forEach((_, i) => dealLater(t + 300 + i * CARD_MS, () => draw(i)));
-      const end = t + 300 + h.seq.length * CARD_MS;
+      h.seq.forEach((_, i) => dealLater(t + autoMs(300) + i * CARD_MS, () => draw(i)));
+      const end = t + autoMs(300) + h.seq.length * CARD_MS;
       dealLater(end, finish);
       dealLater(end + HOLD_MS, () => onDone(h.outcome));
     }
@@ -1645,7 +1658,7 @@ function createOscarEngine(method, unit) {
         updateStatus();
         setDecisionButtons(true);
         autoStep();
-      }, AUTO.on ? (AUTO.fast ? 20 : 240) : 500);
+      }, AUTO.on ? autoMs(240) : 500);
     }
 
     function recordRound(result, outcome) {
@@ -1797,6 +1810,12 @@ function createOscarEngine(method, unit) {
     }
 
     $("autoBtn").addEventListener("click", () => { if (AUTO.on) stopAuto(); else startAuto(); });
+    $("speedToggle").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-speed]");
+      if (!b) return;
+      AUTO.speed = Number(b.dataset.speed); // 진행 중에도 다음 대기 시간부터 바로 적용
+      $("speedToggle").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    });
     $("stopBtn").addEventListener("click", () => {
       const dealing = DEAL.active;
       stopAuto(); // 다음 판 자동 진행을 막는다. 이미 카드를 나누는 중인 판은 끝까지 진행되어 결과가 기록된다.

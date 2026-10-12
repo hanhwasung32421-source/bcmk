@@ -297,7 +297,7 @@
 
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 16 };
+    const LAST_EDIT = { date: "2026-10-12", version: 17 };
 
     function renderVersionBadge() {
       const today = new Date();
@@ -601,7 +601,7 @@
       phase: "start",        // start | bet | dealing | result | over
       startMoney: 0, balance: 0, round: 0,
       bets: zeroBets(), betLog: [], lastBets: null,
-      chip: 1000, speed: 1, token: 0, history: []
+      chip: 1000, speed: 1, token: 0, history: [], shuffling: false, shufflePromise: null
     };
     const ms = (x) => Math.max(8, Math.round(x / state.speed));
     const sleep = (t) => new Promise(r => setTimeout(r, t));
@@ -648,6 +648,7 @@
       state.lastBets = null;
       state.history = [];
       state.phase = "bet";
+      state.shuffling = false;
       SHOE.cards = []; SHOE.pos = 0; SHOE.no = 0;
       roadReset();
       clearTable();
@@ -660,6 +661,7 @@
       $("banner").textContent = "배팅 후 시작(DEAL)을 누르세요";
       setMsg("");
       updateUI();
+      prepareShoe(true); // 입장하자마자 6덱을 섞는다
     }
 
     $("exitBtn").addEventListener("click", () => {
@@ -734,7 +736,7 @@
     });
 
     $("dealBtn").addEventListener("click", () => {
-      if (state.phase !== "bet") return;
+      if (state.phase !== "bet" || state.shuffling) return;
       if (betTotal(state.bets) < MIN_BET) { setMsg("배팅을 먼저 해주세요. (칩을 고르고 배팅 칸을 누르세요)"); return; }
       runRound();
     });
@@ -767,6 +769,25 @@
       return r;
     }
 
+    // 6덱을 섞고 첫 카드 공개·소각까지 미리 해 둔다. 게임 입장 직후와 컷카드 도달 직후에 바로 진행해서, 시작(DEAL)을 누르면 곧바로 딜링된다.
+    function prepareShoe(atStart) {
+      const token = state.token;
+      state.shuffling = true;
+      if (atStart) { $("banner").className = "banner"; $("banner").textContent = "6덱(312장)을 섞는 중..."; $("shoeInfo").textContent = ""; }
+      else $("shoeInfo").textContent = "컷카드에 도달했습니다 · 6덱을 새로 섞는 중...";
+      updateUI();
+      state.shufflePromise = (async () => {
+        await sleep(ms(1500));
+        if (token !== state.token) return;
+        const first = shuffleShoe();
+        $("shoeInfo").textContent = `첫 카드 ${cardText(first)} 공개 → ${SHOE.burn}장 소각 · ${shoeInfoText()}`;
+        if (atStart) $("banner").textContent = "배팅 후 시작(DEAL)을 누르세요";
+        state.shuffling = false;
+        updateUI();
+      })();
+      return state.shufflePromise;
+    }
+
     async function runRound() {
       const token = ++state.token;
       const alive = () => token === state.token;
@@ -778,18 +799,12 @@
       setMsg("");
       $("banner").className = "banner";
 
-      if (shoeNeedsShuffle()) {
-        const first = shuffleShoe();
-        $("banner").textContent = "6덱(312장)을 섞는 중...";
-        $("shoeInfo").textContent = `첫 카드 ${cardText(first)} 공개 → ${SHOE.burn}장 소각`;
-        await sleep(ms(1500));
-        if (!alive()) return;
-      }
+      if (shoeNeedsShuffle()) { await prepareShoe(true); if (!alive()) return; } // 보통은 이미 준비되어 있어 바로 딜링
       const h = dealHandFromShoe();
       $("banner").textContent = "카드를 나눕니다...";
       const totals = { P: 0, B: 0 }, counts = { P: 0, B: 0 };
       for (let i = 0; i < h.seq.length; i++) {
-        await sleep(ms(i === 0 ? 450 : 380));
+        await sleep(ms(i === 0 ? 120 : 380));
         if (!alive()) return;
         const { to, card } = h.seq[i];
         counts[to]++;
@@ -822,6 +837,7 @@
       state.phase = state.balance < MIN_BET ? "over" : "bet";
       setMsg(state.phase === "bet" ? "다음 판 배팅하세요 · 직전 판 상세는 아래 '전판 결과'" : "");
       updateUI();
+      if (state.phase === "bet" && shoeNeedsShuffle()) prepareShoe(false);
     }
 
     function showLastPanel(no, h, bets, res, net) {
@@ -887,8 +903,8 @@
       $("rebetBtn").disabled = !bettingNow || !state.lastBets;
       $("doubleBtn").disabled = !bettingNow || !total;
       const deal = $("dealBtn");
-      deal.disabled = state.phase === "dealing" || state.phase === "over";
-      deal.textContent = state.phase === "dealing" ? "카드 진행 중..." : state.phase === "over" ? "게임 종료" : "시작 (DEAL)";
+      deal.disabled = state.phase === "dealing" || state.phase === "over" || state.shuffling;
+      deal.textContent = state.shuffling ? "카드 섞는 중..." : state.phase === "dealing" ? "카드 진행 중..." : state.phase === "over" ? "게임 종료" : "시작 (DEAL)";
       $("overBox").classList.toggle("hidden", state.phase !== "over");
     }
 

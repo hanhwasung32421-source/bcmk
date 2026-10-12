@@ -774,6 +774,9 @@
 
     <div id="strategyPage" class="page">
       <section class="card">
+        <div class="btn-row" style="margin-top:0;margin-bottom:14px">
+          <a class="btn primary" href="play/" style="display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:18px;">🎴 일반게임 시뮬레이션</a>
+        </div>
         <h2 class="section-title">배팅방법 선택</h2>
         <p class="hint">카지노의 수학적 우위(하우스 엣지)로 인해 장기적으로 100% 이기는 전략은 없습니다. 아래 방식들은 자금을 얼마나 안전하게 운용하며 즐기는지의 차이일 뿐입니다.</p>
         <div class="strategy-list">
@@ -1081,7 +1084,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 수정할 때마다 이 값을 그날 날짜(YYYY-MM-DD)와 버전(2부터 시작, 같은 날 재수정 시 +1)으로 갱신할 것.
-    const LAST_EDIT = { date: "2026-10-12", version: 14 };
+    const LAST_EDIT = { date: "2026-10-12", version: 15 };
 
     function renderVersionBadge() {
       const today = new Date();

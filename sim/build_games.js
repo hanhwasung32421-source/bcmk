@@ -21,12 +21,13 @@ const anchor = '  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-j
 if (!src.includes(anchor)) throw new Error("index.html 에서 Supabase script 태그를 찾지 못했습니다.");
 if (!src.includes("<title>바카라 마틴 메이커</title>")) throw new Error("index.html 의 <title> 을 찾지 못했습니다.");
 if (!src.includes('href="2/"')) throw new Error('index.html 에서 href="2/" 를 찾지 못했습니다.');
+if (!src.includes('href="play/"')) throw new Error('index.html 에서 href="play/" 를 찾지 못했습니다.');
 
 for (const g of GAMES) {
   let html = src;
   html = html.replace(anchor, () => `  <script>window.BCMK_GAME = ${JSON.stringify(g.id)};</script>\n${anchor}`);
   html = html.replace("<title>바카라 마틴 메이커</title>", () => `<title>바카라 마틴 메이커 · ${g.name}</title>`);
-  html = html.split('href="2/"').join('href="../2/"');
+  html = html.split('href="2/"').join('href="../2/"').split('href="play/"').join('href="../play/"');
   const dir = path.join(ROOT, g.slug);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "index.html"), html);
